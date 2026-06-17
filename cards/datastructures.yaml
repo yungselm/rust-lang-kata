@@ -1,0 +1,229 @@
+# Data structures & complexity — recall cards (no formal DS&A background assumed).
+- type: concept
+  question: |
+    What does Big-O notation describe?
+  answer: |
+    An asymptotic upper bound on how an algorithm's cost (time or space) grows
+    as the input size n grows — ignoring constant factors and lower-order terms.
+    It captures scaling/worst-case shape, not exact runtime in seconds.
+  tags: [bigo, concept]
+
+- type: concept
+  question: |
+    Order these from slowest-growing to fastest-growing:
+    O(n), O(1), O(n^2), O(log n), O(n log n).
+  answer: |
+    O(1) < O(log n) < O(n) < O(n log n) < O(n^2).
+    (Constant, logarithmic, linear, linearithmic, quadratic.)
+  tags: [bigo, concept]
+
+- type: concept
+  question: |
+    `Vec<T>`: complexity of indexing `v[i]`, `push`, and `pop` (from the end)?
+  answer: |
+    `v[i]`: O(1) (contiguous memory).
+    `push`: amortized O(1).
+    `pop` (end): O(1).
+  tags: [vec, bigo, concept]
+
+- type: concept
+  question: |
+    `Vec<T>`: complexity of `insert(i, x)` or `remove(i)` at an arbitrary index?
+  answer: |
+    O(n): every element after index i must shift over by one. Only inserting or
+    removing at the END is O(1) (amortized).
+  tags: [vec, bigo, concept]
+
+- type: concept
+  question: |
+    `Vec<T>`: complexity of checking whether it contains a value (unsorted)?
+  answer: |
+    O(n) — a linear scan. If you need fast membership tests, use a `HashSet`
+    (O(1) avg) or sort and `binary_search` (O(log n)).
+  tags: [vec, bigo, concept]
+
+- type: concept
+  question: |
+    Why is `Vec::push` "amortized O(1)" rather than O(1)?
+  answer: |
+    When capacity is full, the Vec allocates a larger buffer (typically 2x) and
+    moves all elements — that single push is O(n). But because capacity doubles,
+    those expensive pushes are rare; averaged over many pushes the cost per push
+    is constant. That averaging is "amortized".
+  tags: [vec, bigo, concept]
+
+- type: concept
+  question: |
+    `HashMap<K, V>`: average and worst-case complexity of get / insert / remove,
+    and what must `K` implement?
+  answer: |
+    Average O(1); worst case O(n) (pathological hash collisions). Keys must
+    implement `Hash + Eq`.
+  tags: [hashmap, bigo, concept]
+
+- type: concept
+  question: |
+    Does `HashMap` keep its keys in any particular order?
+  answer: |
+    No. Iteration order is unspecified and, by default, randomized per program
+    run (for HashDoS resistance). If you need sorted keys or ordered iteration,
+    use `BTreeMap`.
+  tags: [hashmap, concept]
+
+- type: concept
+  question: |
+    `BTreeMap<K, V>`: complexity of get / insert / remove, and what does it give
+    you that `HashMap` doesn't?
+  answer: |
+    O(log n) for get / insert / remove. Keys are kept sorted, enabling ordered
+    iteration and range queries (`map.range(a..b)`). Keys must implement `Ord`.
+  tags: [btreemap, bigo, concept]
+
+- type: concept
+  question: |
+    `HashSet` vs `BTreeSet`: membership-test complexity and ordering?
+  answer: |
+    `HashSet`: O(1) average membership, no ordering.
+    `BTreeSet`: O(log n) membership, elements kept sorted (supports ranges).
+  tags: [set, bigo, concept]
+
+- type: concept
+  question: |
+    What is `VecDeque`, and which operations does it make O(1) that `Vec` does
+    not?
+  answer: |
+    A double-ended queue backed by a ring buffer. `push_front`/`pop_front` AND
+    `push_back`/`pop_back` are all O(1). On a `Vec`, front operations are O(n).
+    Indexing is still O(1).
+  tags: [vecdeque, bigo, concept]
+
+- type: concept
+  question: |
+    What is the default growable sequence in Rust, and when would you prefer
+    `VecDeque` or `LinkedList`?
+  answer: |
+    Default to `Vec` — contiguous, cache-friendly, O(1) index and back-ops.
+    Prefer `VecDeque` when you need fast insertion/removal at BOTH ends (queues).
+    `LinkedList` is almost never worth it in practice (poor cache locality).
+  tags: [vec, vecdeque, concept]
+
+- type: concept
+  question: |
+    Difference between `[T; N]` (array) and `Vec<T>`?
+  answer: |
+    `[T; N]`: fixed length known at compile time, stored inline (often on the
+    stack), no allocation. `Vec<T>`: growable, heap-allocated, stores a pointer,
+    length, and capacity. Use an array when the size is fixed and known.
+  tags: [array, vec, concept]
+
+- type: concept
+  question: |
+    `slice::binary_search`: complexity, precondition, and return value?
+  answer: |
+    O(log n). The slice MUST be sorted. Returns `Result<usize, usize>`:
+    `Ok(index)` if found, or `Err(insertion_index)` where the value would be
+    inserted to keep order.
+  code: |
+    let v = [1, 3, 5, 7];
+    assert_eq!(v.binary_search(&5), Ok(2));
+    assert_eq!(v.binary_search(&4), Err(2)); // would insert at index 2
+  tags: [search, bigo, concept]
+
+- type: concept
+  question: |
+    Linear search vs binary search — complexity and the tradeoff?
+  answer: |
+    Linear: O(n), works on ANY (unsorted) data. Binary: O(log n) but requires
+    SORTED data. Sorting first costs O(n log n), so binary search pays off when
+    you search the same data many times.
+  tags: [search, bigo, concept]
+
+- type: concept
+  question: |
+    Complexity of `slice::sort` vs `slice::sort_unstable`, and when to use each?
+  answer: |
+    Both O(n log n). `sort` is stable (preserves the relative order of equal
+    elements) and allocates scratch space. `sort_unstable` is usually faster and
+    in-place but may reorder equal elements. Prefer `sort_unstable` unless you
+    need stability.
+  tags: [sort, bigo, concept]
+
+- type: concept
+  question: |
+    What does the `HashMap` `entry` API solve? Give the canonical counting idiom.
+  answer: |
+    It avoids a double lookup for "insert if absent, otherwise update". You get
+    a handle to the slot and modify it once.
+  code: |
+    use std::collections::HashMap;
+    let mut counts: HashMap<char, i32> = HashMap::new();
+    for c in "aabbc".chars() {
+        *counts.entry(c).or_insert(0) += 1;
+    }
+    // {'a': 2, 'b': 2, 'c': 1}
+  tags: [hashmap, concept]
+
+- type: concept
+  question: |
+    `String` vs `&str` — what's the difference and which do you take as a
+    function parameter?
+  answer: |
+    `String`: owned, growable, heap-allocated UTF-8. `&str`: a borrowed,
+    fixed-size view into UTF-8 data. Take `&str` in arguments for flexibility
+    (a `&String` coerces to `&str`); return/store `String` when you own the data.
+  tags: [string, concept]
+
+- type: concept
+  question: |
+    `Vec`: difference between `len()` and `capacity()`, and why use
+    `Vec::with_capacity(n)`?
+  answer: |
+    `len()` = number of elements currently stored; `capacity()` = slots
+    allocated (>= len). `with_capacity(n)` pre-allocates so a known number of
+    pushes won't trigger repeated O(n) reallocations.
+  tags: [vec, concept]
+
+- type: concept
+  question: |
+    Difference between time complexity and space complexity?
+  answer: |
+    Time: how runtime scales with input size n. Space: how much EXTRA memory
+    (beyond the input) scales with n. Example: deduping with a `HashSet` is O(n)
+    time but also O(n) extra space.
+  tags: [bigo, concept]
+
+- type: concept
+  question: |
+    How do you use a `Vec` as a stack (LIFO), and what are the operations' costs?
+  answer: |
+    `push(x)` to add and `pop()` to remove — both operate on the END, which is
+    the "top". `push` is amortized O(1), `pop` is O(1).
+  tags: [stack, vec, concept]
+
+- type: concept
+  question: |
+    How do you implement an efficient FIFO queue in Rust?
+  answer: |
+    Use `VecDeque`: `push_back` to enqueue, `pop_front` to dequeue — both O(1).
+    Using a `Vec` with `remove(0)` to dequeue would be O(n) each time.
+  tags: [queue, vecdeque, concept]
+
+- type: concept
+  question: |
+    Both array traversal and linked-list traversal are "O(n)". Why is a `Vec`
+    usually much faster in practice?
+  answer: |
+    Constant factors and memory layout, which Big-O hides. A `Vec` is contiguous,
+    so the CPU cache prefetches the next elements (few cache misses). A linked
+    list scatters nodes across the heap, causing a cache miss per hop.
+  tags: [bigo, vec, concept]
+
+- type: concept
+  question: |
+    What must a type implement to be used as a `HashMap`/`HashSet` key, versus a
+    `BTreeMap`/`BTreeSet` key?
+  answer: |
+    Hash-based (`HashMap`/`HashSet`): `Hash + Eq`. Tree-based
+    (`BTreeMap`/`BTreeSet`): `Ord`. Keys that are "equal" must hash equally
+    (hash) or compare consistently (Ord).
+  tags: [hashmap, btreemap, concept]

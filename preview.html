@@ -1,0 +1,58 @@
+<!doctype html>
+<!-- Standalone test harness. Open in a browser to exercise the editor + diff
+     WITHOUT Anki. "Show answer" simulates the front->back flip via sessionStorage. -->
+<html>
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="vendor/_codemirror.css">
+<style id="cardcss"></style>
+<style>
+  body { background:#1e1e1e; margin:0; padding:24px; }
+  #btn { margin:14px auto; display:block; background:#0e639c; color:#fff; border:0;
+         padding:8px 18px; border-radius:5px; font-size:14px; cursor:pointer; }
+</style>
+</head>
+<body>
+<div id="mount"></div>
+<button id="btn">Show answer ▶</button>
+
+<script src="vendor/_codemirror.js"></script>
+<script src="vendor/_simple.js"></script>
+<script src="vendor/_rust.js"></script>
+<script src="vendor/_closebrackets.js"></script>
+<script src="vendor/_matchbrackets.js"></script>
+<script src="templates/_cards.js"></script>
+<script>
+// ---- test fixture ----
+function b64(s){ return btoa(unescape(encodeURIComponent(s))); }
+var LANG = "rust";
+var STARTER = "fn double(v: Vec<i32>) -> Vec<i32> {\n\n}";
+var SOLUTION = "fn double(v: Vec<i32>) -> Vec<i32> {\n    v.into_iter().map(|x| x * 2).collect()\n}";
+var INSTR = "Write a function `double` that doubles every element of a Vec using iterators.";
+
+// pull the real card CSS so the preview matches Anki exactly
+fetch("templates/style.css").then(r=>r.text()).then(t=>{
+  document.getElementById("cardcss").textContent = t.replace(/\.card/g, ".card");
+});
+
+function front(){
+  document.getElementById("mount").innerHTML =
+    '<div class="card"><div class="instr">'+INSTR+'</div>'+
+    '<div class="label">Your code</div><div id="editor" class="codebox"></div>'+
+    '<div id="cm-data" style="display:none" data-lang="'+LANG+'" data-starter="'+b64(STARTER)+'"></div></div>';
+  ankiCodeFront();
+}
+function back(){
+  document.getElementById("mount").innerHTML =
+    '<div class="card"><div class="instr">'+INSTR+'</div>'+
+    '<div id="status" class="status"></div>'+
+    '<div class="label">Your answer</div><div id="editor" class="codebox"></div>'+
+    '<div class="label">Solution</div><div id="solution" class="codebox"></div>'+
+    '<div id="cm-data" style="display:none" data-lang="'+LANG+'" data-solution="'+b64(SOLUTION)+'"></div></div>';
+  ankiCodeBack();
+}
+document.getElementById("btn").onclick = back;
+front();
+</script>
+</body>
+</html>

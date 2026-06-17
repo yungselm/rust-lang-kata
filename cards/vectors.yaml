@@ -1,0 +1,461 @@
+# Vec<T> operations — building, accessing, mutating, sorting, slicing.
+# Non-resizing params take &mut [i32] (clippy::ptr_arg); resizing ones keep &mut Vec.
+- instruction: |
+    Write `running_max(v: &[i32]) -> Vec<i32>` where element i is the maximum of
+    v[0..=i]. Build the result by pushing.
+  starter: |
+    fn running_max(v: &[i32]) -> Vec<i32> {
+
+    }
+  solution: |
+    fn running_max(v: &[i32]) -> Vec<i32> {
+        let mut out = Vec::new();
+        let mut best = i32::MIN;
+        for &x in v {
+            best = best.max(x);
+            out.push(best);
+        }
+        out
+    }
+  notes: |
+    `push` is the tool for building a Vec whose elements you compute one at a
+    time. (When you already know all the elements, use the `vec![]` macro
+    instead — clippy's `vec_init_then_push` will remind you.)
+  source: "std Vec::push"
+  tags: [rust, vec]
+
+- instruction: |
+    Write `three_ones() -> Vec<i32>` returning [1, 1, 1] using the `vec!` macro.
+  starter: |
+    fn three_ones() -> Vec<i32> {
+
+    }
+  solution: |
+    fn three_ones() -> Vec<i32> {
+        vec![1; 3]
+    }
+  notes: |
+    `vec![value; count]` repeats a value; `vec![1, 2, 3]` lists elements.
+  source: "std vec! macro"
+  tags: [rust, vec]
+
+- instruction: |
+    Write `squares(n: usize) -> Vec<usize>` of 0^2..(n-1)^2, pre-allocating with
+    `with_capacity`.
+  starter: |
+    fn squares(n: usize) -> Vec<usize> {
+
+    }
+  solution: |
+    fn squares(n: usize) -> Vec<usize> {
+        let mut v = Vec::with_capacity(n);
+        for i in 0..n {
+            v.push(i * i);
+        }
+        v
+    }
+  notes: |
+    `with_capacity(n)` reserves space up front so the pushes don't reallocate.
+  source: "std Vec::with_capacity"
+  tags: [rust, vec]
+
+- instruction: |
+    Write `get_or(v: &[i32], i: usize) -> i32` returning the element at `i`, or
+    -1 if out of bounds. Use the safe accessor.
+  starter: |
+    fn get_or(v: &[i32], i: usize) -> i32 {
+
+    }
+  solution: |
+    fn get_or(v: &[i32], i: usize) -> i32 {
+        v.get(i).copied().unwrap_or(-1)
+    }
+  notes: |
+    `get(i)` returns `Option<&T>` (None if out of bounds) — unlike `v[i]`, which
+    panics. `copied()` then `unwrap_or(-1)` gives a plain `i32`.
+  source: "std slice::get"
+  tags: [rust, vec, indexing]
+
+- instruction: |
+    Write `increment_all(v: &mut [i32])` adding 1 to every element in place.
+  starter: |
+    fn increment_all(v: &mut [i32]) {
+
+    }
+  solution: |
+    fn increment_all(v: &mut [i32]) {
+        for x in v.iter_mut() {
+            *x += 1;
+        }
+    }
+  notes: |
+    Take `&mut [i32]`, not `&mut Vec`, when you only edit existing elements
+    (clippy::ptr_arg). `iter_mut()` yields `&mut T`; write through with `*x`.
+  source: "std slice::iter_mut"
+  tags: [rust, vec, mutation]
+
+- instruction: |
+    Write `pop_last(v: &mut Vec<i32>) -> Option<i32>` removing and returning the
+    last element.
+  starter: |
+    fn pop_last(v: &mut Vec<i32>) -> Option<i32> {
+
+    }
+  solution: |
+    fn pop_last(v: &mut Vec<i32>) -> Option<i32> {
+        v.pop()
+    }
+  notes: |
+    `pop()` is O(1) and returns `None` when empty. It changes the length, so the
+    parameter is `&mut Vec`, not `&mut [_]`.
+  source: "std Vec::pop"
+  tags: [rust, vec]
+
+- instruction: |
+    Write `insert_front(v: &mut Vec<i32>, x: i32)` inserting `x` at the front.
+  starter: |
+    fn insert_front(v: &mut Vec<i32>, x: i32) {
+
+    }
+  solution: |
+    fn insert_front(v: &mut Vec<i32>, x: i32) {
+        v.insert(0, x);
+    }
+  notes: |
+    `insert(i, x)` shifts everything after `i` right — O(n). For frequent
+    front-insertion use a `VecDeque`.
+  source: "std Vec::insert"
+  tags: [rust, vec]
+
+- instruction: |
+    Write `remove_at(v: &mut Vec<i32>, i: usize) -> i32` removing and returning
+    the element at `i` (preserving order).
+  starter: |
+    fn remove_at(v: &mut Vec<i32>, i: usize) -> i32 {
+
+    }
+  solution: |
+    fn remove_at(v: &mut Vec<i32>, i: usize) -> i32 {
+        v.remove(i)
+    }
+  notes: |
+    `remove(i)` shifts later elements left — O(n). Panics if `i` is out of bounds.
+  source: "std Vec::remove"
+  tags: [rust, vec]
+
+- instruction: |
+    Write `swap_remove_at(v: &mut Vec<i32>, i: usize) -> i32` removing element
+    `i` in O(1) (order may change).
+  starter: |
+    fn swap_remove_at(v: &mut Vec<i32>, i: usize) -> i32 {
+
+    }
+  solution: |
+    fn swap_remove_at(v: &mut Vec<i32>, i: usize) -> i32 {
+        v.swap_remove(i)
+    }
+  notes: |
+    `swap_remove` moves the LAST element into slot `i` and pops — O(1), but does
+    not preserve order.
+  source: "std Vec::swap_remove"
+  tags: [rust, vec]
+
+- instruction: |
+    Write `has(v: &[i32], x: i32) -> bool` testing membership.
+  starter: |
+    fn has(v: &[i32], x: i32) -> bool {
+
+    }
+  solution: |
+    fn has(v: &[i32], x: i32) -> bool {
+        v.contains(&x)
+    }
+  notes: |
+    `contains` takes a reference and scans linearly — O(n). For repeated lookups
+    prefer a `HashSet`.
+  source: "std slice::contains"
+  tags: [rust, vec]
+
+- instruction: |
+    Write `sorted(mut v: Vec<i32>) -> Vec<i32>` sorting ascending and returning.
+  starter: |
+    fn sorted(mut v: Vec<i32>) -> Vec<i32> {
+
+    }
+  solution: |
+    fn sorted(mut v: Vec<i32>) -> Vec<i32> {
+        v.sort();
+        v
+    }
+  notes: |
+    `sort()` sorts in place, O(n log n), stable. Taking `mut v` by value lets us
+    mutate then return it.
+  source: "std slice::sort"
+  tags: [rust, vec, sorting]
+
+- instruction: |
+    Write `sort_by_abs(mut v: Vec<i32>) -> Vec<i32>` sorting by absolute value.
+  starter: |
+    fn sort_by_abs(mut v: Vec<i32>) -> Vec<i32> {
+
+    }
+  solution: |
+    fn sort_by_abs(mut v: Vec<i32>) -> Vec<i32> {
+        v.sort_by_key(|x| x.abs());
+        v
+    }
+  notes: |
+    `sort_by_key(f)` sorts by a derived key. For a full custom comparison use
+    `sort_by(|a, b| ...)`.
+  source: "std slice::sort_by_key"
+  tags: [rust, vec, sorting]
+
+- instruction: |
+    Write `unique_sorted(mut v: Vec<i32>) -> Vec<i32>`: sorted with duplicates
+    removed.
+  starter: |
+    fn unique_sorted(mut v: Vec<i32>) -> Vec<i32> {
+
+    }
+  solution: |
+    fn unique_sorted(mut v: Vec<i32>) -> Vec<i32> {
+        v.sort_unstable();
+        v.dedup();
+        v
+    }
+  notes: |
+    `dedup()` removes CONSECUTIVE duplicates, so sort first. `sort_unstable` is a
+    good default — faster, no allocation.
+  source: "std Vec::dedup"
+  tags: [rust, vec, sorting]
+
+- instruction: |
+    Write `keep_positive(v: &mut Vec<i32>)` removing all non-positive elements
+    in place.
+  starter: |
+    fn keep_positive(v: &mut Vec<i32>) {
+
+    }
+  solution: |
+    fn keep_positive(v: &mut Vec<i32>) {
+        v.retain(|&x| x > 0);
+    }
+  notes: |
+    `retain` keeps elements where the predicate is true, in one in-place pass.
+    It changes the length, so `&mut Vec` is correct.
+  source: "std Vec::retain"
+  tags: [rust, vec, mutation]
+
+- instruction: |
+    Write `append_all(v: &mut Vec<i32>, more: &[i32])` appending copies of
+    `more` onto `v`.
+  starter: |
+    fn append_all(v: &mut Vec<i32>, more: &[i32]) {
+
+    }
+  solution: |
+    fn append_all(v: &mut Vec<i32>, more: &[i32]) {
+        v.extend_from_slice(more);
+    }
+  notes: |
+    `extend_from_slice` copies a whole slice onto the end. The general form is
+    `extend(iter)` for any iterator.
+  source: "std Vec::extend_from_slice"
+  tags: [rust, vec]
+
+- instruction: |
+    Write `ends(v: &[i32]) -> Option<(i32, i32)>` returning (first, last), or
+    None if empty. Use `?` on `first`/`last`.
+  starter: |
+    fn ends(v: &[i32]) -> Option<(i32, i32)> {
+
+    }
+  solution: |
+    fn ends(v: &[i32]) -> Option<(i32, i32)> {
+        Some((*v.first()?, *v.last()?))
+    }
+  notes: |
+    `first()`/`last()` return `Option<&T>`; `?` bails out with None on empty, and
+    `*` copies the values out.
+  source: "std slice::first / last"
+  tags: [rust, vec, option]
+
+- instruction: |
+    Write `middle(v: &[i32]) -> &[i32]` returning the slice without its first
+    and last elements.
+  starter: |
+    fn middle(v: &[i32]) -> &[i32] {
+
+    }
+  solution: |
+    fn middle(v: &[i32]) -> &[i32] {
+        &v[1..v.len() - 1]
+    }
+  notes: |
+    Slicing `&v[a..b]` borrows a sub-range (no copy); the result borrows from the
+    input. (Panics if `v.len() < 2` — guard in real code.)
+  source: "std slice indexing"
+  tags: [rust, vec, slices]
+
+- instruction: |
+    Write `swap_ends(v: &mut [i32])` swapping the first and last elements
+    (do nothing if fewer than 2).
+  starter: |
+    fn swap_ends(v: &mut [i32]) {
+
+    }
+  solution: |
+    fn swap_ends(v: &mut [i32]) {
+        let n = v.len();
+        if n >= 2 {
+            v.swap(0, n - 1);
+        }
+    }
+  notes: |
+    `swap(i, j)` exchanges two elements by index in O(1). It's a slice method, so
+    `&mut [i32]` is the right parameter.
+  source: "std slice::swap"
+  tags: [rust, vec]
+
+- instruction: |
+    Write `reverse_in_place(v: &mut [i32])` reversing the slice in place.
+  starter: |
+    fn reverse_in_place(v: &mut [i32]) {
+
+    }
+  solution: |
+    fn reverse_in_place(v: &mut [i32]) {
+        v.reverse();
+    }
+  notes: |
+    `reverse()` mutates in place. For a reversed COPY use
+    `v.iter().rev().copied().collect()`.
+  source: "std slice::reverse"
+  tags: [rust, vec]
+
+- instruction: |
+    Write `find_sorted(v: &[i32], x: i32) -> Option<usize>`: index of `x` in a
+    SORTED slice via binary search, or None.
+  starter: |
+    fn find_sorted(v: &[i32], x: i32) -> Option<usize> {
+
+    }
+  solution: |
+    fn find_sorted(v: &[i32], x: i32) -> Option<usize> {
+        v.binary_search(&x).ok()
+    }
+  notes: |
+    `binary_search` is O(log n) but REQUIRES a sorted slice. It returns
+    `Result<usize, usize>`; `.ok()` keeps only the found index.
+  source: "std slice::binary_search"
+  tags: [rust, vec, search]
+
+- instruction: |
+    Write `pairwise_sums(v: &[i32]) -> Vec<i32>`: sums of each adjacent pair
+    (length n-1).
+  starter: |
+    fn pairwise_sums(v: &[i32]) -> Vec<i32> {
+
+    }
+  solution: |
+    fn pairwise_sums(v: &[i32]) -> Vec<i32> {
+        v.windows(2).map(|w| w[0] + w[1]).collect()
+    }
+  notes: |
+    `windows(k)` yields OVERLAPPING sub-slices of length k. (Use `chunks(k)` for
+    non-overlapping groups.)
+  source: "std slice::windows"
+  tags: [rust, vec, slices]
+
+- instruction: |
+    Write `row_sums(v: &[i32], width: usize) -> Vec<i32>`: treat `v` as rows of
+    `width` and sum each row.
+  starter: |
+    fn row_sums(v: &[i32], width: usize) -> Vec<i32> {
+
+    }
+  solution: |
+    fn row_sums(v: &[i32], width: usize) -> Vec<i32> {
+        v.chunks(width).map(|c| c.iter().sum()).collect()
+    }
+  notes: |
+    `chunks(k)` yields non-overlapping groups (the last may be shorter).
+  source: "std slice::chunks"
+  tags: [rust, vec, slices]
+
+- instruction: |
+    Write `take_first_two(v: &mut Vec<i32>) -> Vec<i32>`: remove the first two
+    elements and return them as a Vec.
+  starter: |
+    fn take_first_two(v: &mut Vec<i32>) -> Vec<i32> {
+
+    }
+  solution: |
+    fn take_first_two(v: &mut Vec<i32>) -> Vec<i32> {
+        v.drain(0..2).collect()
+    }
+  notes: |
+    `drain(range)` removes a range and yields the removed items as an iterator,
+    leaving the rest shifted down.
+  source: "std Vec::drain"
+  tags: [rust, vec]
+
+- instruction: |
+    Write `cap_to(v: &mut Vec<i32>, n: usize)` shortening the Vec to at most `n`
+    elements.
+  starter: |
+    fn cap_to(v: &mut Vec<i32>, n: usize) {
+
+    }
+  solution: |
+    fn cap_to(v: &mut Vec<i32>, n: usize) {
+        v.truncate(n);
+    }
+  notes: |
+    `truncate(n)` drops elements past index n (no-op if already shorter). Related:
+    `clear()` empties it, `resize(n, val)` sets the length to exactly n.
+  source: "std Vec::truncate"
+  tags: [rust, vec]
+
+# --- concept cards ---
+- type: concept
+  question: |
+    Why take `&[T]` instead of `&Vec<T>` (and `&mut [T]` instead of `&mut Vec<T>`)
+    as a function parameter?
+  answer: |
+    `&[T]` is strictly more general: a `&Vec<T>`, an array, or any slice coerces
+    to it. Take `&[T]` to read and `&mut [T]` to edit existing elements. Only
+    take `&mut Vec<T>` when you must change the LENGTH (push, insert, remove,
+    truncate). clippy::ptr_arg nudges you here.
+  source: "clippy::ptr_arg / book §4.3"
+  tags: [rust, vec, concept]
+
+- type: concept
+  question: |
+    What does a `Vec<T>` store, and where does the data live?
+  answer: |
+    Three words: a pointer to a heap buffer, the length, and the capacity. That
+    header sits on the stack (or inline in its owner); the elements live on the
+    heap. Moving a Vec just copies the header.
+  source: "book §8.1 / std Vec"
+  tags: [rust, vec, concept]
+
+- type: concept
+  question: |
+    Difference between `v[i]` and `v.get(i)`?
+  answer: |
+    `v[i]` yields the element directly but PANICS if out of bounds. `v.get(i)`
+    returns `Option<&T>` (None when out of bounds) — the safe choice when the
+    index might be invalid. (`get_mut` gives `Option<&mut T>`.)
+  source: "std slice::get"
+  tags: [rust, vec, concept]
+
+- type: concept
+  question: |
+    Why must you usually `sort` before calling `dedup`?
+  answer: |
+    `dedup` only collapses CONSECUTIVE equal elements. Sorting brings equal
+    values together, so dedup then yields fully unique elements. If you can't
+    sort, dedup via a `HashSet` instead.
+  source: "std Vec::dedup"
+  tags: [rust, vec, concept]

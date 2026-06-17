@@ -1,0 +1,24 @@
+<div class="instr">{{Instruction}}</div>
+<div id="status" class="status"></div>
+
+<div class="label">Your answer</div>
+<div id="editor" class="codebox"></div>
+
+<div class="label">Solution</div>
+<div id="solution" class="codebox"></div>
+
+{{#Notes}}<div class="notes">{{Notes}}</div>{{/Notes}}
+{{#Source}}<div class="source">Source: {{Source}}</div>{{/Source}}
+
+<div id="cm-data" style="display:none"
+     data-lang="{{Lang}}"
+     data-solution="{{Solution}}"></div>
+
+<link rel="stylesheet" href="_codemirror.css">
+<script src="_codemirror.js"></script>
+<script src="_simple.js"></script>
+<script src="_rust.js"></script>
+<script src="_closebrackets.js"></script>
+<script src="_matchbrackets.js"></script>
+<script src="_cards.js"></script>
+<script>ankiCodeBack();</script>

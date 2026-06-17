@@ -1,0 +1,145 @@
+/* ===== Card layout ===== */
+.card {
+  background: #252526;
+  color: #d4d4d4;
+  font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+  padding: 14px;
+  text-align: left;
+  max-width: 820px;
+  margin: 0 auto;
+}
+
+/* Instruction box on top */
+.instr {
+  background: #2d2d30;
+  border: 1px solid #3c3c3c;
+  border-left: 4px solid #569cd6;
+  border-radius: 6px;
+  padding: 12px 14px;
+  font-size: 15px;
+  line-height: 1.5;
+  margin-bottom: 12px;
+  white-space: pre-wrap;
+}
+
+.label {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: #858585;
+  margin: 10px 2px 4px;
+}
+
+/* The square editor box */
+.codebox {
+  border: 1px solid #3c3c3c;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #1e1e1e;
+}
+
+/* Status line on the back */
+.status {
+  font-size: 14px;
+  font-weight: 600;
+  margin: 4px 2px 10px;
+  padding: 6px 10px;
+  border-radius: 5px;
+  display: inline-block;
+}
+.status.ok  { background: rgba(35,134,54,0.25);  color: #4ec96a; border: 1px solid #2ea043; }
+.status.bad { background: rgba(248,81,73,0.18);  color: #f08a84; border: 1px solid #da4f47; }
+
+.notes {
+  margin-top: 12px;
+  padding: 10px 12px;
+  background: #2d2d30;
+  border: 1px solid #3c3c3c;
+  border-radius: 6px;
+  font-size: 14px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+/* ===== CodeMirror sizing ===== */
+.CodeMirror,
+.cm-s-vscdark.CodeMirror {
+  height: auto;
+  min-height: 120px;
+  font-family: Consolas, "Cascadia Code", "Fira Code", "SF Mono", Menlo, monospace;
+  font-size: 14px;
+  line-height: 1.5;
+}
+.CodeMirror-scroll { min-height: 120px; }
+
+/* ===== VS Code "Dark+" inspired theme ===== */
+.cm-s-vscdark.CodeMirror { background: #1e1e1e; color: #d4d4d4; }
+.cm-s-vscdark .CodeMirror-gutters { background: #1e1e1e; border-right: 1px solid #2b2b2b; }
+.cm-s-vscdark .CodeMirror-linenumber { color: #6e7681; }
+.cm-s-vscdark .CodeMirror-cursor { border-left: 1px solid #aeafad; }
+.cm-s-vscdark .CodeMirror-selected { background: #264f78 !important; }
+.cm-s-vscdark .CodeMirror-activeline-background { background: #2a2d2e; }
+
+.cm-s-vscdark .cm-comment   { color: #6a9955; font-style: italic; }
+.cm-s-vscdark .cm-string    { color: #ce9178; }
+.cm-s-vscdark .cm-string-2  { color: #ce9178; }
+.cm-s-vscdark .cm-number    { color: #b5cea8; }
+.cm-s-vscdark .cm-atom      { color: #569cd6; }      /* true / false / None */
+.cm-s-vscdark .cm-keyword   { color: #569cd6; }      /* fn let match if for ... */
+.cm-s-vscdark .cm-def       { color: #dcdcaa; }      /* function / binding names */
+.cm-s-vscdark .cm-variable  { color: #9cdcfe; }
+.cm-s-vscdark .cm-variable-2{ color: #9cdcfe; }
+.cm-s-vscdark .cm-variable-3,
+.cm-s-vscdark .cm-type      { color: #4ec9b0; }      /* types / structs / enums */
+.cm-s-vscdark .cm-property  { color: #dcdcaa; }
+.cm-s-vscdark .cm-operator  { color: #d4d4d4; }
+.cm-s-vscdark .cm-meta      { color: #dcdcaa; }      /* attributes / macros */
+.cm-s-vscdark .cm-builtin   { color: #4ec9b0; }
+.cm-s-vscdark .cm-bracket   { color: #d4d4d4; }
+.cm-s-vscdark .cm-tag       { color: #569cd6; }
+.cm-s-vscdark .cm-attribute { color: #9cdcfe; }
+.cm-s-vscdark .CodeMirror-matchingbracket { color: #d4d4d4 !important; background: #3a3d41; }
+
+/* Incorrect lines on the back: transparent red wash */
+.cm-s-vscdark .wrong-line { background: rgba(248, 81, 73, 0.18); }
+
+/* ===== Concept (Q/A) cards ===== */
+.hint {
+  color: #858585;
+  font-size: 13px;
+  font-style: italic;
+  margin: 8px 2px;
+}
+.answer {
+  background: #2d2d30;
+  border: 1px solid #3c3c3c;
+  border-left: 4px solid #4ec9b0;
+  border-radius: 6px;
+  padding: 12px 14px;
+  font-size: 15px;
+  line-height: 1.55;
+  margin: 6px 0 4px;
+  white-space: pre-wrap;
+}
+/* inline `code` inside instruction / answer / notes */
+.instr code, .answer code, .notes code {
+  font-family: Consolas, "Cascadia Code", "Fira Code", Menlo, monospace;
+  font-size: .92em;
+  background: #1e1e1e;
+  border: 1px solid #3c3c3c;
+  border-radius: 4px;
+  padding: 1px 5px;
+  color: #d7ba7d;
+}
+
+/* Provenance line */
+.source {
+  margin-top: 10px;
+  font-size: 12px;
+  font-style: italic;
+  color: #6e7681;
+}
+.source code {
+  font-family: Consolas, "Cascadia Code", Menlo, monospace;
+  color: #9d8458;
+}

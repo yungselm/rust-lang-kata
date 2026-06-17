@@ -1,0 +1,476 @@
+# Pattern matching — match, if let/while let/let else, guards, bindings,
+# destructuring. Solutions are clippy-clean.
+- instruction: |
+    Given `enum Shape { Circle(f64), Rect(f64, f64) }`, write `area(s: Shape) -> f64`
+    using `match` to compute each shape's area.
+  starter: |
+    enum Shape {
+        Circle(f64),
+        Rect(f64, f64),
+    }
+
+    fn area(s: Shape) -> f64 {
+
+    }
+  solution: |
+    enum Shape {
+        Circle(f64),
+        Rect(f64, f64),
+    }
+
+    fn area(s: Shape) -> f64 {
+        match s {
+            Shape::Circle(r) => std::f64::consts::PI * r * r,
+            Shape::Rect(w, h) => w * h,
+        }
+    }
+  notes: |
+    Each arm destructures the variant's payload. `match` is exhaustive — every
+    variant must be covered.
+  source: "book §6.2 (match)"
+  tags: [rust, matching, enums]
+
+- instruction: |
+    Write `describe(x: Option<i32>) -> String`: "got N" for `Some(n)`,
+    "nothing" for `None`.
+  starter: |
+    fn describe(x: Option<i32>) -> String {
+
+    }
+  solution: |
+    fn describe(x: Option<i32>) -> String {
+        match x {
+            Some(n) => format!("got {n}"),
+            None => "nothing".to_string(),
+        }
+    }
+  notes: |
+    `Option` is an enum (`Some`/`None`). Inline `{n}` capture works on Rust 2021.
+  source: "book §6.2 (Option in match)"
+  tags: [rust, matching, option]
+
+- instruction: |
+    Write `status(r: Result<i32, String>) -> String`: "ok: N" or "err: E".
+  starter: |
+    fn status(r: Result<i32, String>) -> String {
+
+    }
+  solution: |
+    fn status(r: Result<i32, String>) -> String {
+        match r {
+            Ok(n) => format!("ok: {n}"),
+            Err(e) => format!("err: {e}"),
+        }
+    }
+  source: "book §9.2 (Result)"
+  tags: [rust, matching, results]
+
+- instruction: |
+    Write `double_or_zero(x: Option<i32>) -> i32` using `if let`/`else`:
+    double the inner value, or 0 if none.
+  starter: |
+    fn double_or_zero(x: Option<i32>) -> i32 {
+
+    }
+  solution: |
+    fn double_or_zero(x: Option<i32>) -> i32 {
+        if let Some(n) = x {
+            n * 2
+        } else {
+            0
+        }
+    }
+  notes: |
+    `if let` handles one pattern and ignores the rest — shorthand for a `match`
+    with a single arm plus `_`.
+  source: "book §6.3 (if let)"
+  tags: [rust, matching, if-let]
+
+- instruction: |
+    Write `drain_sum(v: &mut Vec<i32>) -> i32` using `while let` to pop every
+    element and sum them (the Vec ends up empty).
+  starter: |
+    fn drain_sum(v: &mut Vec<i32>) -> i32 {
+
+    }
+  solution: |
+    fn drain_sum(v: &mut Vec<i32>) -> i32 {
+        let mut total = 0;
+        while let Some(x) = v.pop() {
+            total += x;
+        }
+        total
+    }
+  notes: |
+    `while let` loops while the pattern matches; `pop()` yields `Some` until the
+    Vec is empty, then `None` ends it. (`&mut Vec` is right here — `pop` mutates
+    the length.)
+  source: "book §18.1 (while let)"
+  tags: [rust, matching, while-let]
+
+- instruction: |
+    Write `parse_or_zero(s: &str) -> i32` using `let ... else` to return 0 early
+    on a parse failure, otherwise return the parsed number.
+  starter: |
+    fn parse_or_zero(s: &str) -> i32 {
+
+    }
+  solution: |
+    fn parse_or_zero(s: &str) -> i32 {
+        let Ok(n) = s.parse::<i32>() else {
+            return 0;
+        };
+        n
+    }
+  notes: |
+    `let else` (Rust 1.65+) binds on the happy path and forces the `else` block
+    to diverge (return/break/panic), keeping `n` in scope afterward.
+  source: "book §18.1 (let else)"
+  tags: [rust, matching, let-else]
+
+- instruction: |
+    Write `sign(n: i32) -> &'static str` using a match GUARD for the positive
+    case: "positive", "zero", or "negative".
+  starter: |
+    fn sign(n: i32) -> &'static str {
+
+    }
+  solution: |
+    fn sign(n: i32) -> &'static str {
+        match n {
+            x if x > 0 => "positive",
+            0 => "zero",
+            _ => "negative",
+        }
+    }
+  notes: |
+    A guard (`if cond`) adds a runtime condition to an arm. Guards don't count
+    toward exhaustiveness, so you still need a catch-all.
+  source: "book §18.3 (match guards)"
+  tags: [rust, matching, guards]
+
+- instruction: |
+    Write `classify(n: i32) -> String` using an `@` binding: for 0..=9 return
+    "single digit: N", otherwise "big: N".
+  starter: |
+    fn classify(n: i32) -> String {
+
+    }
+  solution: |
+    fn classify(n: i32) -> String {
+        match n {
+            small @ 0..=9 => format!("single digit: {small}"),
+            other => format!("big: {other}"),
+        }
+    }
+  notes: |
+    `name @ pattern` tests the pattern AND binds the matched value to `name`.
+  source: "book §18.3 (@ bindings)"
+  tags: [rust, matching, bindings]
+
+- instruction: |
+    Write `is_vowel(c: char) -> bool` testing membership of a small set, using an
+    or-pattern.
+  starter: |
+    fn is_vowel(c: char) -> bool {
+
+    }
+  solution: |
+    fn is_vowel(c: char) -> bool {
+        matches!(c, 'a' | 'e' | 'i' | 'o' | 'u')
+    }
+  notes: |
+    `matches!(value, pattern)` is the idiomatic way to turn a pattern into a
+    bool — clippy rewrites a `match ... => true / _ => false` into this. The `|`
+    is an or-pattern.
+  source: "std matches! macro"
+  tags: [rust, matching, or-patterns]
+
+- instruction: |
+    Write `grade(score: u32) -> char` using inclusive RANGE patterns:
+    90..=100 -> 'A', 80..=89 -> 'B', 70..=79 -> 'C', else 'F'.
+  starter: |
+    fn grade(score: u32) -> char {
+
+    }
+  solution: |
+    fn grade(score: u32) -> char {
+        match score {
+            90..=100 => 'A',
+            80..=89 => 'B',
+            70..=79 => 'C',
+            _ => 'F',
+        }
+    }
+  notes: |
+    `a..=b` is an inclusive range pattern (only `..=`, not `..`, is allowed in
+    patterns for integers/chars).
+  source: "book §18.3 (range patterns)"
+  tags: [rust, matching, ranges]
+
+- instruction: |
+    Write `quadrant(p: (i32, i32)) -> u8`: 1 if both coords > 0, 2 if x<0 & y>0,
+    0 for the origin, else 9. Use tuple patterns + guards.
+  starter: |
+    fn quadrant(p: (i32, i32)) -> u8 {
+
+    }
+  solution: |
+    fn quadrant(p: (i32, i32)) -> u8 {
+        match p {
+            (0, 0) => 0,
+            (x, y) if x > 0 && y > 0 => 1,
+            (x, y) if x < 0 && y > 0 => 2,
+            _ => 9,
+        }
+    }
+  source: "book §18.3 (tuple patterns)"
+  tags: [rust, matching, tuples, guards]
+
+- instruction: |
+    Given `struct Point { x: i32, y: i32 }`, write `on_axis(p: Point) -> bool`:
+    true if the point lies on either axis. Destructure with `..` for the rest.
+  starter: |
+    struct Point {
+        x: i32,
+        y: i32,
+    }
+
+    fn on_axis(p: Point) -> bool {
+
+    }
+  solution: |
+    struct Point {
+        x: i32,
+        y: i32,
+    }
+
+    fn on_axis(p: Point) -> bool {
+        matches!(p, Point { x: 0, .. } | Point { y: 0, .. })
+    }
+  notes: |
+    `matches!` with struct patterns: `..` ignores the remaining fields, and the
+    or-pattern `|` covers either axis. (clippy prefers this over match->bool.)
+  source: "book §18.3 (struct patterns)"
+  tags: [rust, matching, structs]
+
+- instruction: |
+    Given an enum with a struct-like variant and a tuple variant, write
+    `describe(e: Event) -> String` matching both.
+  starter: |
+    enum Event {
+        Click { x: i32, y: i32 },
+        Key(char),
+    }
+
+    fn describe(e: Event) -> String {
+
+    }
+  solution: |
+    enum Event {
+        Click { x: i32, y: i32 },
+        Key(char),
+    }
+
+    fn describe(e: Event) -> String {
+        match e {
+            Event::Click { x, y } => format!("click at {x},{y}"),
+            Event::Key(c) => format!("key {c}"),
+        }
+    }
+  notes: |
+    Struct variants destructure with `{ field, .. }`; tuple variants with `(..)`.
+  source: "book §18.3 (enum variants)"
+  tags: [rust, matching, enums]
+
+- instruction: |
+    Write `describe_slice(v: &[i32]) -> String` using SLICE patterns: "empty",
+    "one: X", or "first F, last L".
+  starter: |
+    fn describe_slice(v: &[i32]) -> String {
+
+    }
+  solution: |
+    fn describe_slice(v: &[i32]) -> String {
+        match v {
+            [] => "empty".to_string(),
+            [x] => format!("one: {x}"),
+            [first, .., last] => format!("first {first}, last {last}"),
+        }
+    }
+  notes: |
+    Slice patterns match by length; `..` is a "rest" matching any number of
+    middle elements. These arms cover lengths 0, 1, and >= 2 — exhaustive.
+  source: "book §18.3 (slice patterns)"
+  tags: [rust, matching, slices]
+
+- instruction: |
+    Write `first_char(s: &Option<String>) -> Option<char>`: the first char of
+    the inner string if present. Rely on match ergonomics (no `ref`).
+  starter: |
+    fn first_char(s: &Option<String>) -> Option<char> {
+
+    }
+  solution: |
+    fn first_char(s: &Option<String>) -> Option<char> {
+        match s {
+            Some(text) => text.chars().next(),
+            None => None,
+        }
+    }
+  notes: |
+    Matching `&Option<String>` against `Some(text)` binds `text: &String`
+    automatically (default binding modes), so you don't move out of the borrow.
+  source: "book §18.3 (binding modes)"
+  tags: [rust, matching, ergonomics]
+
+- instruction: |
+    Write `to_num(word: &str) -> i32` matching string literals "one"/"two"/
+    "three" -> 1/2/3, else -1.
+  starter: |
+    fn to_num(word: &str) -> i32 {
+
+    }
+  solution: |
+    fn to_num(word: &str) -> i32 {
+        match word {
+            "one" => 1,
+            "two" => 2,
+            "three" => 3,
+            _ => -1,
+        }
+    }
+  source: "book §6.2 (literal patterns)"
+  tags: [rust, matching, strings]
+
+- instruction: |
+    Write `http_text(code: u32) -> &'static str` by returning a `match`
+    expression directly (no intermediate `let` binding).
+  starter: |
+    fn http_text(code: u32) -> &'static str {
+
+    }
+  solution: |
+    fn http_text(code: u32) -> &'static str {
+        match code {
+            200 => "OK",
+            404 => "Not Found",
+            500 => "Server Error",
+            _ => "Unknown",
+        }
+    }
+  notes: |
+    `match` is an expression: every arm yields the same type and the whole thing
+    is the function's value — no need to bind it to a variable first (clippy's
+    `let_and_return`).
+  source: "book §6.2 (match is an expression)"
+  tags: [rust, matching]
+
+- instruction: |
+    Write `flatten_opt(x: Option<Option<i32>>) -> i32`: the inner value or 0,
+    using a NESTED pattern.
+  starter: |
+    fn flatten_opt(x: Option<Option<i32>>) -> i32 {
+
+    }
+  solution: |
+    fn flatten_opt(x: Option<Option<i32>>) -> i32 {
+        match x {
+            Some(Some(n)) => n,
+            _ => 0,
+        }
+    }
+  notes: |
+    Patterns nest: `Some(Some(n))` matches only when both layers are present.
+  source: "book §18.3 (nested patterns)"
+  tags: [rust, matching, option]
+
+- instruction: |
+    Given `enum Temp { C(f64), F(f64) }`, write `is_freezing(t: Temp) -> bool`
+    (<= 0C or <= 32F).
+  starter: |
+    enum Temp {
+        C(f64),
+        F(f64),
+    }
+
+    fn is_freezing(t: Temp) -> bool {
+
+    }
+  solution: |
+    enum Temp {
+        C(f64),
+        F(f64),
+    }
+
+    fn is_freezing(t: Temp) -> bool {
+        match t {
+            Temp::C(c) => c <= 0.0,
+            Temp::F(f) => f <= 32.0,
+        }
+    }
+  source: "book §6.2 (match on enum)"
+  tags: [rust, matching, enums]
+
+- instruction: |
+    Write `max_pair(p: &(i32, i32)) -> i32` returning the larger element, matching
+    on the reference and dereferencing the binding.
+  starter: |
+    fn max_pair(p: &(i32, i32)) -> i32 {
+
+    }
+  solution: |
+    fn max_pair(p: &(i32, i32)) -> i32 {
+        match p {
+            (a, b) if a >= b => *a,
+            (_, b) => *b,
+        }
+    }
+  notes: |
+    Matching `&(i32, i32)` binds `a`, `b` as `&i32` (ergonomics); the guard
+    compares them and `*a` copies out the `i32`.
+  source: "book §18.3 (binding modes)"
+  tags: [rust, matching, ergonomics]
+
+# --- concept cards ---
+- type: concept
+  question: |
+    When should you prefer `if let` over a full `match`?
+  answer: |
+    When you only care about ONE pattern and want to ignore the rest.
+    `if let Some(x) = opt { ... } else { ... }` is shorthand for a `match` with
+    one real arm plus `_`. For two-plus meaningful cases, use `match`.
+  source: "book §6.3"
+  tags: [rust, matching, concept]
+
+- type: concept
+  question: |
+    Why does Rust force `match` to be exhaustive?
+  answer: |
+    So every possible value is handled. Add an enum variant and every
+    non-exhaustive match fails to compile, pointing you at code to update. Use
+    `_` (or a catch-all binding like `other`) for an intentional fallback.
+  source: "book §6.2"
+  tags: [rust, matching, concept]
+
+- type: concept
+  question: |
+    Difference between a refutable and an irrefutable pattern, and where is each
+    allowed?
+  answer: |
+    Irrefutable patterns always match (e.g. `let (a, b) = pair;`) and are
+    required by `let` and function params. Refutable patterns can fail (e.g.
+    `Some(x)`) and are used in `match`, `if let`, `while let`. A refutable
+    pattern in a plain `let` is an error — use `let else`.
+  source: "book §18.2"
+  tags: [rust, matching, concept]
+
+- type: concept
+  question: |
+    What are "default binding modes" (match ergonomics)?
+  answer: |
+    When you match a reference against a non-reference pattern, the bindings
+    automatically become references — so `match &opt { Some(x) => ... }` gives
+    `x: &T` without writing `ref`. Saves manual `ref`/`&` when matching borrows.
+  source: "book §18.3"
+  tags: [rust, matching, concept]
