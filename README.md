@@ -29,7 +29,9 @@ Two card styles:
   Tab to indent, auto-closing brackets, no autocomplete). You type the function
   body, on flip, lines that differ from the solution are washed transparent red,
   and the reference solution is shown below.
-  ![Code Card](https://raw.githubusercontent.com/yungselm/rust-lang-kata/main/media/code_card.gif)
+
+![Code Card](https://raw.githubusercontent.com/yungselm/rust-lang-kata/main/media/code_card.gif)
+
 - **Concept cards**: Simple question / answer recall (used for Big-O and other
   facts), with an optional highlighted example and images on the back.
 
