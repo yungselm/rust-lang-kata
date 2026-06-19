@@ -52,7 +52,7 @@ Preview the look without Anki by opening `preview.html` in a browser.
 
 ## Current decks (307 cards)
 
-**Core Rust (157)** — idiomatic patterns to drill to fluency:
+**Core Rust (157)** — idiomatic patterns to drill to fluency (decks under `Rust::Core::…`):
 
 | File | Cards | Focus |
 |------|-------|-------|
@@ -92,6 +92,45 @@ Every card records where its content comes from in a `source:` field (shown smal
 
 - **Core Rust decks** are grounded in primary, openly-licensed material: the [Rust standard library docs](https://doc.rust-lang.org/std/), [*The Rust Programming Language* ("the book")](https://doc.rust-lang.org/book/), [Rustlings](https://github.com/rust-lang/rustlings), and [Rust by Example](https://doc.rust-lang.org/rust-by-example/). Solutions are checked against `clippy` so they reflect current idiomatic style rather than any one author's habits.
 - **NeetCode 150 decks** follow the **[NeetCode 150](https://neetcode.io/practice)** list — a widely-used, pattern-organized index of common interview problems. We use that list **only as the index of which problems to cover and how to group them**. Every problem statement here is an **original paraphrase** written for this repo; LeetCode's problem text is copyrighted and is **not** reproduced, and nothing was scraped from LeetCode. Every solution is **original idiomatic Rust written and verified for this repo** (compiled, `clippy`-clean, and unit-tested via `check_cards.py`), implementing the standard well-known algorithm for each problem — not copied from LeetCode or NeetCode editorial solutions. A few problems are modeled to be testable in safe Rust (e.g. linked-list cycle and copy-with-random-pointer use index-based representations, binary trees use `Option<Box<TreeNode>>`, Clone Graph uses an adjacency list); each such card explains the modeling in its prompt.
+
+## Recommended deck settings
+
+This deck is designed for **FSRS** (Anki's modern scheduler — enable it once in any
+Deck Options page, it applies collection-wide). FSRS schedules from a desired-retention
+target, so the old SM-2 knobs (starting ease, easy bonus, interval modifier, hard/new
+interval, graduating/easy interval) don't apply and aren't listed.
+
+Set up two presets — one per study group:
+
+| Setting | `Rust Core` | `Rust NeetCode` |
+|---|---|---|
+| New cards / day | 14 | 1 |
+| Maximum reviews / day | 9999 | 9999 |
+| Desired retention | 0.90 | 0.90 |
+| Learning / relearning steps | 1m 10m / 10m | 1m 10m / 10m |
+| Maximum interval | 36500d | 36500d |
+| Leech threshold / action | 5 / tag only | 5 / tag only |
+| New card gather order | **Random notes** | **Deck** (keeps `01`–`18` topic order) |
+| New card sort order | Order gathered | Order gathered |
+
+NeetCode order is guaranteed by the `01`–`18` topic-number prefixes on the subdecks
+(`Rust::Neetcode::01 Arrays Hashing` … `18 Bit Manipulation`), so it stays correct
+under any gather order — no position fiddling needed. Within a topic, cards are in
+authored easy→hard order.
+
+To apply: open Deck Options on **`Rust::Core`**, create a preset `Rust Core` with the
+values above, then the preset menu → **Save to all subdecks** (the parent's 14/day cap
+then bounds the daily total across the six core subdecks). Repeat from **`Rust::Neetcode`**
+with `Rust NeetCode` (1/day). Study the two groups as two separate daily sessions →
+14 random core cards + 1 NeetCode card in topic order. Change any number anytime.
+
+> **Core must use gather order "Random notes."** On the default **Deck** order you'd
+> only see one subdeck at a time (e.g. all of `Datastructures`) until it empties.
+> NeetCode is the opposite — keep it on **Deck** so the `01`–`18` topics feed in order.
+
+(`build.py` also embeds these presets, but Anki's importer ignores embedded presets for
+non-Anki-generated `.apkg`s, so set them once as above — see `RELEASE.md` for shipping
+presets to others.)
 
 ## Adding / editing cards
 
