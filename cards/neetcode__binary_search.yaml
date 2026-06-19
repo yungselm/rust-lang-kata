@@ -1,0 +1,316 @@
+# NeetCode 150 — Binary Search. Original prompts; idiomatic, clippy-clean
+# Rust; example tests run by `python check_cards.py`.
+- instruction: |
+    Binary Search. Write `search(nums: &[i32], target: i32) -> Option<usize>` on a
+    strictly ascending slice: return the index of `target`, or None.
+    Example: ([-1, 0, 3, 5, 9, 12], 9) -> Some(4); ([..], 2) -> None.
+  starter: |
+    fn search(nums: &[i32], target: i32) -> Option<usize> {
+
+    }
+  solution: |
+    fn search(nums: &[i32], target: i32) -> Option<usize> {
+        let mut lo = 0;
+        let mut hi = nums.len();
+        while lo < hi {
+            let mid = lo + (hi - lo) / 2;
+            if nums[mid] == target {
+                return Some(mid);
+            } else if nums[mid] < target {
+                lo = mid + 1;
+            } else {
+                hi = mid;
+            }
+        }
+        None
+    }
+  notes: |
+    Half-open range [lo, hi): shrink toward the target by comparing the midpoint.
+    Using `lo + (hi - lo) / 2` avoids overflow. O(log n).
+  source: "NeetCode 150 · Binary Search"
+  tags: [rust, neetcode, binary-search]
+  tests: |
+    assert_eq!(search(&[-1, 0, 3, 5, 9, 12], 9), Some(4));
+    assert_eq!(search(&[-1, 0, 3, 5, 9, 12], 2), None);
+    assert_eq!(search(&[5], 5), Some(0));
+    assert_eq!(search(&[], 1), None);
+
+- instruction: |
+    Search a 2D Matrix. Each row is ascending and the first element of every row
+    exceeds the last of the previous row, so the matrix is one sorted sequence.
+    Write `search_matrix(matrix: &[Vec<i32>], target: i32) -> bool`.
+    Example: target 3 in [[1,3,5,7],[10,11,16,20],[23,30,34,60]] -> true.
+  starter: |
+    fn search_matrix(matrix: &[Vec<i32>], target: i32) -> bool {
+
+    }
+  solution: |
+    fn search_matrix(matrix: &[Vec<i32>], target: i32) -> bool {
+        let rows = matrix.len();
+        if rows == 0 {
+            return false;
+        }
+        let cols = matrix[0].len();
+        let mut lo = 0;
+        let mut hi = rows * cols;
+        while lo < hi {
+            let mid = lo + (hi - lo) / 2;
+            let val = matrix[mid / cols][mid % cols];
+            if val == target {
+                return true;
+            } else if val < target {
+                lo = mid + 1;
+            } else {
+                hi = mid;
+            }
+        }
+        false
+    }
+  notes: |
+    Treat the grid as a flat sorted array of length rows*cols and binary-search it;
+    map a flat index `i` back with `(i / cols, i % cols)`. O(log(m*n)).
+  source: "NeetCode 150 · Binary Search"
+  tags: [rust, neetcode, binary-search]
+  tests: |
+    let m = vec![
+        vec![1, 3, 5, 7],
+        vec![10, 11, 16, 20],
+        vec![23, 30, 34, 60],
+    ];
+    assert!(search_matrix(&m, 3));
+    assert!(search_matrix(&m, 60));
+    assert!(!search_matrix(&m, 13));
+    assert!(!search_matrix(&[], 1));
+
+- instruction: |
+    Koko Eating Bananas. Piles of bananas and `h` hours; at speed k bananas/hour
+    Koko eats from one pile per hour (taking ceil(pile/k) hours per pile). Write
+    `min_eating_speed(piles: &[i32], h: i32) -> i32`: the smallest k that finishes
+    within h hours.
+    Example: piles [3, 6, 7, 11], h 8 -> 4.
+  starter: |
+    fn min_eating_speed(piles: &[i32], h: i32) -> i32 {
+
+    }
+  solution: |
+    fn min_eating_speed(piles: &[i32], h: i32) -> i32 {
+        let hours_at = |k: i64| -> i64 {
+            piles.iter().map(|&p| (p as i64 + k - 1) / k).sum()
+        };
+        let mut lo: i64 = 1;
+        let mut hi: i64 = *piles.iter().max().unwrap() as i64;
+        while lo < hi {
+            let mid = lo + (hi - lo) / 2;
+            if hours_at(mid) <= h as i64 {
+                hi = mid;
+            } else {
+                lo = mid + 1;
+            }
+        }
+        lo as i32
+    }
+  notes: |
+    Binary-search the answer over speeds 1..=max(pile). Hours needed is monotonic
+    in k, so find the smallest k whose total hours fit. `(p + k - 1) / k` is the
+    ceiling division. O(n log(max pile)).
+  source: "NeetCode 150 · Binary Search"
+  tags: [rust, neetcode, binary-search]
+  tests: |
+    assert_eq!(min_eating_speed(&[3, 6, 7, 11], 8), 4);
+    assert_eq!(min_eating_speed(&[30, 11, 23, 4, 20], 5), 30);
+    assert_eq!(min_eating_speed(&[30, 11, 23, 4, 20], 6), 23);
+
+- instruction: |
+    Find Minimum in Rotated Sorted Array. An ascending array of distinct values was
+    rotated some amount. Write `find_min(nums: &[i32]) -> i32`: the minimum, in
+    O(log n).
+    Example: [3, 4, 5, 1, 2] -> 1; [4, 5, 6, 7, 0, 1, 2] -> 0.
+  starter: |
+    fn find_min(nums: &[i32]) -> i32 {
+
+    }
+  solution: |
+    fn find_min(nums: &[i32]) -> i32 {
+        let mut lo = 0;
+        let mut hi = nums.len() - 1;
+        while lo < hi {
+            let mid = lo + (hi - lo) / 2;
+            if nums[mid] > nums[hi] {
+                lo = mid + 1;
+            } else {
+                hi = mid;
+            }
+        }
+        nums[lo]
+    }
+  notes: |
+    If the midpoint exceeds the right end, the minimum lies strictly to its right;
+    otherwise it's at mid or left. The range collapses onto the pivot. O(log n).
+  source: "NeetCode 150 · Binary Search"
+  tags: [rust, neetcode, binary-search]
+  tests: |
+    assert_eq!(find_min(&[3, 4, 5, 1, 2]), 1);
+    assert_eq!(find_min(&[4, 5, 6, 7, 0, 1, 2]), 0);
+    assert_eq!(find_min(&[11, 13, 15, 17]), 11);
+    assert_eq!(find_min(&[1]), 1);
+
+- instruction: |
+    Search in Rotated Sorted Array. An ascending array of distinct values was
+    rotated. Write `search_rotated(nums: &[i32], target: i32) -> Option<usize>`:
+    the index of `target`, or None, in O(log n).
+    Example: ([4, 5, 6, 7, 0, 1, 2], 0) -> Some(4); ([..], 3) -> None.
+  starter: |
+    fn search_rotated(nums: &[i32], target: i32) -> Option<usize> {
+
+    }
+  solution: |
+    fn search_rotated(nums: &[i32], target: i32) -> Option<usize> {
+        let mut lo = 0;
+        let mut hi = nums.len();
+        while lo < hi {
+            let mid = lo + (hi - lo) / 2;
+            if nums[mid] == target {
+                return Some(mid);
+            }
+            if nums[lo] <= nums[mid] {
+                if nums[lo] <= target && target < nums[mid] {
+                    hi = mid;
+                } else {
+                    lo = mid + 1;
+                }
+            } else if nums[mid] < target && target <= nums[hi - 1] {
+                lo = mid + 1;
+            } else {
+                hi = mid;
+            }
+        }
+        None
+    }
+  notes: |
+    One half of [lo, hi) is always sorted. Decide which by comparing nums[lo] to
+    nums[mid], then check whether the target falls inside that sorted half to pick
+    a side. O(log n).
+  source: "NeetCode 150 · Binary Search"
+  tags: [rust, neetcode, binary-search]
+  tests: |
+    assert_eq!(search_rotated(&[4, 5, 6, 7, 0, 1, 2], 0), Some(4));
+    assert_eq!(search_rotated(&[4, 5, 6, 7, 0, 1, 2], 3), None);
+    assert_eq!(search_rotated(&[1], 1), Some(0));
+    assert_eq!(search_rotated(&[5, 1, 3], 5), Some(0));
+    assert_eq!(search_rotated(&[], 1), None);
+
+- instruction: |
+    Time Based Key-Value Store. Design `TimeMap` with `new`,
+    `set(key: String, value: String, timestamp: i32)` (timestamps for a key arrive
+    strictly increasing), and `get(key: &str, timestamp: i32) -> Option<String>`
+    returning the value stored at the greatest timestamp <= the query, or None.
+  starter: |
+    use std::collections::HashMap;
+
+    struct TimeMap {
+
+    }
+
+    impl TimeMap {
+        fn new() -> Self {
+
+        }
+
+        fn set(&mut self, key: String, value: String, timestamp: i32) {
+
+        }
+
+        fn get(&self, key: &str, timestamp: i32) -> Option<String> {
+
+        }
+    }
+  solution: |
+    use std::collections::HashMap;
+
+    struct TimeMap {
+        store: HashMap<String, Vec<(i32, String)>>,
+    }
+
+    impl TimeMap {
+        fn new() -> Self {
+            TimeMap {
+                store: HashMap::new(),
+            }
+        }
+
+        fn set(&mut self, key: String, value: String, timestamp: i32) {
+            self.store.entry(key).or_default().push((timestamp, value));
+        }
+
+        fn get(&self, key: &str, timestamp: i32) -> Option<String> {
+            let entries = self.store.get(key)?;
+            let idx = entries.partition_point(|(t, _)| *t <= timestamp);
+            if idx == 0 {
+                None
+            } else {
+                Some(entries[idx - 1].1.clone())
+            }
+        }
+    }
+  notes: |
+    Each key maps to a list of (timestamp, value) kept sorted by insertion order.
+    `partition_point` finds where timestamps stop being <= the query; the entry
+    just before it is the answer. get is O(log n).
+  source: "NeetCode 150 · Binary Search"
+  tags: [rust, neetcode, binary-search]
+  tests: |
+    let mut tm = TimeMap::new();
+    tm.set("foo".to_string(), "bar".to_string(), 1);
+    assert_eq!(tm.get("foo", 1), Some("bar".to_string()));
+    assert_eq!(tm.get("foo", 3), Some("bar".to_string()));
+    tm.set("foo".to_string(), "bar2".to_string(), 4);
+    assert_eq!(tm.get("foo", 4), Some("bar2".to_string()));
+    assert_eq!(tm.get("foo", 5), Some("bar2".to_string()));
+    assert_eq!(tm.get("foo", 0), None);
+    assert_eq!(tm.get("missing", 1), None);
+
+- instruction: |
+    Median of Two Sorted Arrays. Given two ascending slices, write
+    `find_median_sorted_arrays(a: &[i32], b: &[i32]) -> f64`: the median of all
+    values combined.
+    Example: ([1, 3], [2]) -> 2.0; ([1, 2], [3, 4]) -> 2.5.
+  starter: |
+    fn find_median_sorted_arrays(a: &[i32], b: &[i32]) -> f64 {
+
+    }
+  solution: |
+    fn find_median_sorted_arrays(a: &[i32], b: &[i32]) -> f64 {
+        let total = a.len() + b.len();
+        let mut merged = Vec::with_capacity(total);
+        let mut i = 0;
+        let mut j = 0;
+        while i < a.len() && j < b.len() {
+            if a[i] <= b[j] {
+                merged.push(a[i]);
+                i += 1;
+            } else {
+                merged.push(b[j]);
+                j += 1;
+            }
+        }
+        merged.extend_from_slice(&a[i..]);
+        merged.extend_from_slice(&b[j..]);
+        let mid = total / 2;
+        if total % 2 == 1 {
+            merged[mid] as f64
+        } else {
+            (merged[mid - 1] + merged[mid]) as f64 / 2.0
+        }
+    }
+  notes: |
+    Merge both sorted slices like merge-sort, then read the middle (or average the
+    two middles for an even total). This is O(m + n); the textbook O(log(m + n))
+    partition search is faster but far more error-prone.
+  source: "NeetCode 150 · Binary Search"
+  tags: [rust, neetcode, binary-search]
+  tests: |
+    assert_eq!(find_median_sorted_arrays(&[1, 3], &[2]), 2.0);
+    assert_eq!(find_median_sorted_arrays(&[1, 2], &[3, 4]), 2.5);
+    assert_eq!(find_median_sorted_arrays(&[], &[1]), 1.0);
+    assert_eq!(find_median_sorted_arrays(&[2], &[]), 2.0);
+    assert_eq!(find_median_sorted_arrays(&[1, 2, 3], &[4, 5, 6]), 3.5);

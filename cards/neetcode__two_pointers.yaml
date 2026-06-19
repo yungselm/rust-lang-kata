@@ -1,0 +1,216 @@
+# NeetCode 150 — Two Pointers. Original prompts; idiomatic, clippy-clean
+# Rust; example tests run by `python check_cards.py`.
+- instruction: |
+    Valid Palindrome. Write `is_palindrome(s: &str) -> bool`: true if `s` reads the
+    same forwards and backwards, considering only alphanumeric characters and
+    ignoring case.
+    Example: "A man, a plan, a canal: Panama" -> true; "race a car" -> false.
+  starter: |
+    fn is_palindrome(s: &str) -> bool {
+
+    }
+  solution: |
+    fn is_palindrome(s: &str) -> bool {
+        let chars: Vec<char> = s
+            .chars()
+            .filter(|c| c.is_alphanumeric())
+            .map(|c| c.to_ascii_lowercase())
+            .collect();
+        let mut i = 0;
+        let mut j = chars.len();
+        while i < j {
+            j -= 1;
+            if chars[i] != chars[j] {
+                return false;
+            }
+            i += 1;
+        }
+        true
+    }
+  notes: |
+    Filter to alphanumerics and lowercase once, then walk a pointer in from each
+    end. Decrementing `j` first keeps the indices valid without underflow on usize.
+  source: "NeetCode 150 · Two Pointers"
+  tags: [rust, neetcode, two-pointers]
+  tests: |
+    assert!(is_palindrome("A man, a plan, a canal: Panama"));
+    assert!(!is_palindrome("race a car"));
+    assert!(is_palindrome(" "));
+    assert!(!is_palindrome("0P"));
+
+- instruction: |
+    Two Sum II (sorted input). Write
+    `two_sum_sorted(nums: &[i32], target: i32) -> Option<(usize, usize)>`.
+    The slice is sorted ascending; return the 0-based indices of the two values
+    that add up to `target` (smaller index first), or None.
+    Example: ([2, 7, 11, 15], 9) -> Some((0, 1)).
+  starter: |
+    fn two_sum_sorted(nums: &[i32], target: i32) -> Option<(usize, usize)> {
+
+    }
+  solution: |
+    fn two_sum_sorted(nums: &[i32], target: i32) -> Option<(usize, usize)> {
+        if nums.is_empty() {
+            return None;
+        }
+        let mut lo = 0;
+        let mut hi = nums.len() - 1;
+        while lo < hi {
+            let sum = nums[lo] + nums[hi];
+            match sum.cmp(&target) {
+                std::cmp::Ordering::Equal => return Some((lo, hi)),
+                std::cmp::Ordering::Less => lo += 1,
+                std::cmp::Ordering::Greater => hi -= 1,
+            }
+        }
+        None
+    }
+  notes: |
+    Because the array is sorted, a sum too small means we need a bigger value
+    (advance `lo`); too large means a smaller one (retreat `hi`). O(n), O(1) space.
+  source: "NeetCode 150 · Two Pointers"
+  tags: [rust, neetcode, two-pointers]
+  tests: |
+    assert_eq!(two_sum_sorted(&[2, 7, 11, 15], 9), Some((0, 1)));
+    assert_eq!(two_sum_sorted(&[2, 3, 4], 6), Some((0, 2)));
+    assert_eq!(two_sum_sorted(&[-1, 0], -1), Some((0, 1)));
+    assert_eq!(two_sum_sorted(&[1, 2, 3], 100), None);
+
+- instruction: |
+    3Sum. Write `three_sum(nums: &[i32]) -> Vec<[i32; 3]>` returning all unique
+    triplets that sum to zero. Each triplet is sorted ascending; the result
+    contains no duplicate triplets. Order of triplets doesn't matter.
+    Example: [-1, 0, 1, 2, -1, -4] -> [[-1, -1, 2], [-1, 0, 1]].
+  starter: |
+    fn three_sum(nums: &[i32]) -> Vec<[i32; 3]> {
+
+    }
+  solution: |
+    fn three_sum(nums: &[i32]) -> Vec<[i32; 3]> {
+        let mut nums = nums.to_vec();
+        nums.sort_unstable();
+        let n = nums.len();
+        let mut res = Vec::new();
+        for i in 0..n {
+            if i > 0 && nums[i] == nums[i - 1] {
+                continue;
+            }
+            let mut lo = i + 1;
+            let mut hi = n.saturating_sub(1);
+            while lo < hi {
+                let sum = nums[i] + nums[lo] + nums[hi];
+                match sum.cmp(&0) {
+                    std::cmp::Ordering::Less => lo += 1,
+                    std::cmp::Ordering::Greater => hi -= 1,
+                    std::cmp::Ordering::Equal => {
+                        res.push([nums[i], nums[lo], nums[hi]]);
+                        lo += 1;
+                        hi -= 1;
+                        while lo < hi && nums[lo] == nums[lo - 1] {
+                            lo += 1;
+                        }
+                        while lo < hi && nums[hi] == nums[hi + 1] {
+                            hi -= 1;
+                        }
+                    }
+                }
+            }
+        }
+        res
+    }
+  notes: |
+    Sort, then fix the first element and two-pointer the rest. Skipping equal
+    neighbours (for `i`, and after each hit for `lo`/`hi`) suppresses duplicates.
+    O(n^2) time, O(1) extra beyond the sort.
+  source: "NeetCode 150 · Two Pointers"
+  tags: [rust, neetcode, two-pointers]
+  tests: |
+    let mut got = three_sum(&[-1, 0, 1, 2, -1, -4]);
+    got.sort();
+    assert_eq!(got, vec![[-1, -1, 2], [-1, 0, 1]]);
+    assert_eq!(three_sum(&[0, 1, 1]), Vec::<[i32; 3]>::new());
+    assert_eq!(three_sum(&[0, 0, 0]), vec![[0, 0, 0]]);
+
+- instruction: |
+    Container With Most Water. Write `max_area(heights: &[i32]) -> i32`: each value
+    is a vertical line at that index; find the two lines that, with the x-axis,
+    hold the most water. Area = distance between lines * the shorter height.
+    Example: [1, 8, 6, 2, 5, 4, 8, 3, 7] -> 49.
+  starter: |
+    fn max_area(heights: &[i32]) -> i32 {
+
+    }
+  solution: |
+    fn max_area(heights: &[i32]) -> i32 {
+        if heights.len() < 2 {
+            return 0;
+        }
+        let mut lo = 0;
+        let mut hi = heights.len() - 1;
+        let mut best = 0;
+        while lo < hi {
+            let h = heights[lo].min(heights[hi]);
+            best = best.max(h * (hi - lo) as i32);
+            if heights[lo] < heights[hi] {
+                lo += 1;
+            } else {
+                hi -= 1;
+            }
+        }
+        best
+    }
+  notes: |
+    Start at the widest pair and move whichever pointer has the shorter line: the
+    width only shrinks, so the only way to beat the current area is a taller line.
+    O(n).
+  source: "NeetCode 150 · Two Pointers"
+  tags: [rust, neetcode, two-pointers]
+  tests: |
+    assert_eq!(max_area(&[1, 8, 6, 2, 5, 4, 8, 3, 7]), 49);
+    assert_eq!(max_area(&[1, 1]), 1);
+    assert_eq!(max_area(&[4, 3, 2, 1, 4]), 16);
+    assert_eq!(max_area(&[1]), 0);
+
+- instruction: |
+    Trapping Rain Water. Write `trap(heights: &[i32]) -> i32`: given an elevation
+    map where each value is a bar width 1, return how many units of water are
+    trapped after rain. Solve in O(n) time, O(1) space.
+    Example: [0,1,0,2,1,0,1,3,2,1,2,1] -> 6.
+  starter: |
+    fn trap(heights: &[i32]) -> i32 {
+
+    }
+  solution: |
+    fn trap(heights: &[i32]) -> i32 {
+        if heights.len() < 3 {
+            return 0;
+        }
+        let mut lo = 0;
+        let mut hi = heights.len() - 1;
+        let mut left_max = heights[lo];
+        let mut right_max = heights[hi];
+        let mut total = 0;
+        while lo < hi {
+            if left_max <= right_max {
+                lo += 1;
+                left_max = left_max.max(heights[lo]);
+                total += left_max - heights[lo];
+            } else {
+                hi -= 1;
+                right_max = right_max.max(heights[hi]);
+                total += right_max - heights[hi];
+            }
+        }
+        total
+    }
+  notes: |
+    Water over a bar is min(maxLeft, maxRight) - height. Advance from the side
+    with the smaller running max: that side's max is then guaranteed to be the
+    limiting wall, so the trapped amount there is known. O(n), O(1).
+  source: "NeetCode 150 · Two Pointers"
+  tags: [rust, neetcode, two-pointers]
+  tests: |
+    assert_eq!(trap(&[0, 1, 0, 2, 1, 0, 1, 3, 2, 1, 2, 1]), 6);
+    assert_eq!(trap(&[4, 2, 0, 3, 2, 5]), 9);
+    assert_eq!(trap(&[1, 2, 3]), 0);
+    assert_eq!(trap(&[]), 0);

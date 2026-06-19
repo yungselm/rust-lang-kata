@@ -6,7 +6,7 @@
   </blockquote>
 </figure>
 
-Anki decks for learning **Rust**, built from plain YAML. The idea is to create a set of cards containing the most important Rust concepts, that should be drilled over and over. The maximum number of cards should not exceed 2000 cards, this number is based on the idea of a basic vocabulary for languages typically containing 2000 words. Additionaly, a maximum of 500 algorithm cards should be included (based on Leetcode), since this still represents a large part of job interviews.
+Anki decks for learning **Rust**, built from plain YAML. The idea is to create a set of cards containing the most important Rust concepts, that should be drilled over and over. The maximum number of cards should not exceed 2000 cards, this number is based on the idea of a basic vocabulary for languages typically containing 2000 words. Additionaly, the 150 Neetcode quesions are included, since this still represents a large part of job interviews. And who doesn't dream of writing Rust for a living😉...
 
 ## Contributing
 
@@ -50,7 +50,9 @@ python build.py                 # writes output/CodeCards.apkg
 Import `output/CodeCards.apkg` into Anki (keep "Update notetypes" checked).
 Preview the look without Anki by opening `preview.html` in a browser.
 
-## Current decks (157 cards)
+## Current decks (307 cards)
+
+**Core Rust (157)** — idiomatic patterns to drill to fluency:
 
 | File | Cards | Focus |
 |------|-------|-------|
@@ -61,6 +63,36 @@ Preview the look without Anki by opening `preview.html` in a browser.
 | `hashmaps.yaml` | 25 | insert/get, entry API (or_insert/_with/_default/and_modify), iteration, HashSet & set ops |
 | `datastructures.yaml` | 24 | Big-O of Vec/VecDeque/HashMap/BTreeMap, search/sort complexity, when-to-use, amortization |
 
+**NeetCode 150 (150)** — interview problems grouped by pattern, nested under `Rust::Neetcode::…`:
+
+| File | Cards | Pattern |
+|------|-------|---------|
+| `neetcode__arrays_hashing.yaml` | 9 | hashing, prefix products, dedup |
+| `neetcode__two_pointers.yaml` | 5 | opposite-end / fast-slow pointers |
+| `neetcode__sliding_window.yaml` | 6 | fixed & variable windows |
+| `neetcode__stack.yaml` | 7 | monotonic stacks, parsing |
+| `neetcode__binary_search.yaml` | 7 | search-on-answer, rotated arrays |
+| `neetcode__linked_list.yaml` | 11 | pointer rewiring, Floyd's cycle |
+| `neetcode__trees.yaml` | 15 | DFS/BFS, BST, recursion |
+| `neetcode__tries.yaml` | 3 | prefix trees |
+| `neetcode__heap.yaml` | 7 | top-k, two-heap median |
+| `neetcode__backtracking.yaml` | 9 | subsets, permutations, combinations |
+| `neetcode__graphs.yaml` | 13 | grid BFS/DFS, topological sort, union-find |
+| `neetcode__advanced_graphs.yaml` | 6 | Dijkstra, MST, Bellman-Ford, Euler |
+| `neetcode__dp_1d.yaml` | 12 | 1-D dynamic programming |
+| `neetcode__dp_2d.yaml` | 11 | grid & interval DP |
+| `neetcode__greedy.yaml` | 8 | greedy strategies |
+| `neetcode__intervals.yaml` | 6 | sort + sweep |
+| `neetcode__math_geometry.yaml` | 8 | matrix ops, number theory |
+| `neetcode__bit_manipulation.yaml` | 7 | XOR tricks, bit DP |
+
+## Sources & attribution
+
+Every card records where its content comes from in a `source:` field (shown small on the back).
+
+- **Core Rust decks** are grounded in primary, openly-licensed material: the [Rust standard library docs](https://doc.rust-lang.org/std/), [*The Rust Programming Language* ("the book")](https://doc.rust-lang.org/book/), [Rustlings](https://github.com/rust-lang/rustlings), and [Rust by Example](https://doc.rust-lang.org/rust-by-example/). Solutions are checked against `clippy` so they reflect current idiomatic style rather than any one author's habits.
+- **NeetCode 150 decks** follow the **[NeetCode 150](https://neetcode.io/practice)** list — a widely-used, pattern-organized index of common interview problems. We use that list **only as the index of which problems to cover and how to group them**. Every problem statement here is an **original paraphrase** written for this repo; LeetCode's problem text is copyrighted and is **not** reproduced, and nothing was scraped from LeetCode. Every solution is **original idiomatic Rust written and verified for this repo** (compiled, `clippy`-clean, and unit-tested via `check_cards.py`), implementing the standard well-known algorithm for each problem — not copied from LeetCode or NeetCode editorial solutions. A few problems are modeled to be testable in safe Rust (e.g. linked-list cycle and copy-with-random-pointer use index-based representations, binary trees use `Option<Box<TreeNode>>`, Clone Graph uses an adjacency list); each such card explains the modeling in its prompt.
+
 ## Adding / editing cards
 
 ```yaml
@@ -68,16 +100,19 @@ Preview the look without Anki by opening `preview.html` in a browser.
 - instruction: |
     What to write. Use `backticks` for inline code; generics like Vec<T> are fine.
   starter: |          # optional pre-filled scaffold (signature, `use` lines)
-    fn foo() {
+    fn add_one(n: i32) -> i32 {
 
     }
   solution: |
-    fn foo() {
-        println!("hi");
+    fn add_one(n: i32) -> i32 {
+        n + 1
     }
   notes: |            # optional, shown on the back
     Why it works.
+  source: "std Iterator::map"   # optional provenance, shown on the back
   tags: [rust, iterators]
+  tests: |            # optional asserts run by `cargo test` (see check_cards.py)
+    assert_eq!(add_one(1), 2);
 
 # concept card — recall
 - type: concept
@@ -87,6 +122,7 @@ Preview the look without Anki by opening `preview.html` in a browser.
     The answer.
   code: |             # optional snippet shown highlighted on the back
     let x = 1;
+  source: "book §8.3"  # optional
   tags: [rust, concept]
 ```
 
@@ -96,13 +132,18 @@ question); changing that text creates a new card.
 
 ## Compile-checking the Rust
 
-`check_cards.py` extracts every code-card `solution` and concept `code` snippet,
-wraps each in its own module/function in a generated crate, and builds it with
-warnings denied, so it fails on compile errors **and** warnings (unused vars,
-needless `mut`, unused imports, ...). Dead-code from the wrapping is suppressed.
+`check_cards.py` extracts every code-card `solution` (plus concept `code`
+snippets), wraps each in its own module in a generated crate, and runs two gates:
+
+1. **`cargo clippy -- -D warnings`** — compile errors, ordinary warnings (unused
+   vars, needless `mut`, unused imports, ...), and clippy's idiomatic lints
+   (needless borrows, redundant clones, manual loops, ...), keeping solutions idiomatic.
+2. **`cargo test`** — runs each card's `tests:` asserts, so a solution must be
+   *correct*, not just compile. Dead-code from the wrapping is suppressed.
 
 ```bash
-python check_cards.py            # needs a local Rust toolchain (cargo)
+python check_cards.py                              # all cards (needs cargo; clippy via `rustup component add clippy`)
+python check_cards.py cards/neetcode__trees.yaml   # just one file
 ```
 
 On failure, each block is in a module named `sol_<topic>_<n>` / `ex_<topic>_<n>`

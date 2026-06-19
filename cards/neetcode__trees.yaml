@@ -1,0 +1,968 @@
+# NeetCode 150 — Trees. Original prompts; idiomatic, clippy-clean Rust;
+# example tests run by `python check_cards.py`. Each solution is self-contained
+# (defines `TreeNode` with Option<Box<TreeNode>> children).
+- instruction: |
+    Invert Binary Tree. Write `invert_tree(root: Option<Box<TreeNode>>) ->
+    Option<Box<TreeNode>>`: swap the left and right child of every node.
+    Example: 4(2(1,3),7) -> 4(7,2(3,1)).
+  starter: |
+    #[derive(PartialEq, Eq, Clone, Debug)]
+    struct TreeNode {
+        val: i32,
+        left: Option<Box<TreeNode>>,
+        right: Option<Box<TreeNode>>,
+    }
+
+    fn invert_tree(root: Option<Box<TreeNode>>) -> Option<Box<TreeNode>> {
+
+    }
+  solution: |
+    #[derive(PartialEq, Eq, Clone, Debug)]
+    struct TreeNode {
+        val: i32,
+        left: Option<Box<TreeNode>>,
+        right: Option<Box<TreeNode>>,
+    }
+
+    fn invert_tree(root: Option<Box<TreeNode>>) -> Option<Box<TreeNode>> {
+        root.map(|mut node| {
+            let left = invert_tree(node.left.take());
+            let right = invert_tree(node.right.take());
+            node.left = right;
+            node.right = left;
+            node
+        })
+    }
+  notes: |
+    Take ownership, recurse on each subtree, then store them back swapped. Working
+    by value lets us move boxes around without clones. O(n) time, O(h) stack.
+  source: "NeetCode 150 · Trees"
+  tags: [rust, neetcode, trees]
+  tests: |
+    fn leaf(val: i32) -> Option<Box<TreeNode>> {
+        Some(Box::new(TreeNode { val, left: None, right: None }))
+    }
+    fn node(
+        val: i32,
+        left: Option<Box<TreeNode>>,
+        right: Option<Box<TreeNode>>,
+    ) -> Option<Box<TreeNode>> {
+        Some(Box::new(TreeNode { val, left, right }))
+    }
+    let tree = node(4, node(2, leaf(1), leaf(3)), leaf(7));
+    let want = node(4, leaf(7), node(2, leaf(3), leaf(1)));
+    assert_eq!(invert_tree(tree), want);
+    assert_eq!(invert_tree(None), None);
+
+- instruction: |
+    Maximum Depth of Binary Tree. Write `max_depth(root: &Option<Box<TreeNode>>)
+    -> i32`: the number of nodes on the longest root-to-leaf path.
+    Example: 3(9,20(15,7)) -> 3; empty -> 0.
+  starter: |
+    #[derive(PartialEq, Eq, Clone, Debug)]
+    struct TreeNode {
+        val: i32,
+        left: Option<Box<TreeNode>>,
+        right: Option<Box<TreeNode>>,
+    }
+
+    fn max_depth(root: &Option<Box<TreeNode>>) -> i32 {
+
+    }
+  solution: |
+    #[derive(PartialEq, Eq, Clone, Debug)]
+    struct TreeNode {
+        val: i32,
+        left: Option<Box<TreeNode>>,
+        right: Option<Box<TreeNode>>,
+    }
+
+    fn max_depth(root: &Option<Box<TreeNode>>) -> i32 {
+        match root {
+            None => 0,
+            Some(node) => 1 + max_depth(&node.left).max(max_depth(&node.right)),
+        }
+    }
+  notes: |
+    Depth of a node is one plus the deeper of its two children; an empty tree has
+    depth 0. Borrowing with `&Option<Box<...>>` avoids any cloning. O(n).
+  source: "NeetCode 150 · Trees"
+  tags: [rust, neetcode, trees]
+  tests: |
+    fn leaf(val: i32) -> Option<Box<TreeNode>> {
+        Some(Box::new(TreeNode { val, left: None, right: None }))
+    }
+    fn node(
+        val: i32,
+        left: Option<Box<TreeNode>>,
+        right: Option<Box<TreeNode>>,
+    ) -> Option<Box<TreeNode>> {
+        Some(Box::new(TreeNode { val, left, right }))
+    }
+    let tree = node(3, leaf(9), node(20, leaf(15), leaf(7)));
+    assert_eq!(max_depth(&tree), 3);
+    assert_eq!(max_depth(&None), 0);
+    assert_eq!(max_depth(&leaf(1)), 1);
+
+- instruction: |
+    Diameter of Binary Tree. Write `diameter_of_binary_tree(root:
+    &Option<Box<TreeNode>>) -> i32`: the number of edges on the longest path
+    between any two nodes (need not pass through the root).
+    Example: 1(2(4,5),3) -> 3.
+  starter: |
+    #[derive(PartialEq, Eq, Clone, Debug)]
+    struct TreeNode {
+        val: i32,
+        left: Option<Box<TreeNode>>,
+        right: Option<Box<TreeNode>>,
+    }
+
+    fn diameter_of_binary_tree(root: &Option<Box<TreeNode>>) -> i32 {
+
+    }
+  solution: |
+    #[derive(PartialEq, Eq, Clone, Debug)]
+    struct TreeNode {
+        val: i32,
+        left: Option<Box<TreeNode>>,
+        right: Option<Box<TreeNode>>,
+    }
+
+    fn diameter_of_binary_tree(root: &Option<Box<TreeNode>>) -> i32 {
+        // Returns (height_in_edges, best_diameter) for the subtree.
+        fn dfs(node: &Option<Box<TreeNode>>) -> (i32, i32) {
+            match node {
+                None => (0, 0),
+                Some(n) => {
+                    let (lh, ld) = dfs(&n.left);
+                    let (rh, rd) = dfs(&n.right);
+                    let height = 1 + lh.max(rh);
+                    let diameter = (lh + rh).max(ld).max(rd);
+                    (height, diameter)
+                }
+            }
+        }
+        dfs(root).1
+    }
+  notes: |
+    For each node the longest path bending at it is left height + right height
+    (in edges); the answer is the max over all nodes. One post-order pass returns
+    both height and best-so-far, giving O(n).
+  source: "NeetCode 150 · Trees"
+  tags: [rust, neetcode, trees]
+  tests: |
+    fn leaf(val: i32) -> Option<Box<TreeNode>> {
+        Some(Box::new(TreeNode { val, left: None, right: None }))
+    }
+    fn node(
+        val: i32,
+        left: Option<Box<TreeNode>>,
+        right: Option<Box<TreeNode>>,
+    ) -> Option<Box<TreeNode>> {
+        Some(Box::new(TreeNode { val, left, right }))
+    }
+    let tree = node(1, node(2, leaf(4), leaf(5)), leaf(3));
+    assert_eq!(diameter_of_binary_tree(&tree), 3);
+    assert_eq!(diameter_of_binary_tree(&None), 0);
+    assert_eq!(diameter_of_binary_tree(&leaf(1)), 0);
+
+- instruction: |
+    Balanced Binary Tree. Write `is_balanced(root: &Option<Box<TreeNode>>) ->
+    bool`: true if for every node the heights of its two subtrees differ by at
+    most 1.
+    Example: 3(9,20(15,7)) -> true.
+  starter: |
+    #[derive(PartialEq, Eq, Clone, Debug)]
+    struct TreeNode {
+        val: i32,
+        left: Option<Box<TreeNode>>,
+        right: Option<Box<TreeNode>>,
+    }
+
+    fn is_balanced(root: &Option<Box<TreeNode>>) -> bool {
+
+    }
+  solution: |
+    #[derive(PartialEq, Eq, Clone, Debug)]
+    struct TreeNode {
+        val: i32,
+        left: Option<Box<TreeNode>>,
+        right: Option<Box<TreeNode>>,
+    }
+
+    fn is_balanced(root: &Option<Box<TreeNode>>) -> bool {
+        // Returns the height, or -1 if any subtree is unbalanced.
+        fn height(node: &Option<Box<TreeNode>>) -> i32 {
+            match node {
+                None => 0,
+                Some(n) => {
+                    let lh = height(&n.left);
+                    let rh = height(&n.right);
+                    if lh == -1 || rh == -1 || (lh - rh).abs() > 1 {
+                        -1
+                    } else {
+                        1 + lh.max(rh)
+                    }
+                }
+            }
+        }
+        height(root) != -1
+    }
+  notes: |
+    A bottom-up height function that returns the sentinel -1 the moment it sees an
+    imbalance lets us short-circuit and stay O(n), versus recomputing heights.
+  source: "NeetCode 150 · Trees"
+  tags: [rust, neetcode, trees]
+  tests: |
+    fn leaf(val: i32) -> Option<Box<TreeNode>> {
+        Some(Box::new(TreeNode { val, left: None, right: None }))
+    }
+    fn node(
+        val: i32,
+        left: Option<Box<TreeNode>>,
+        right: Option<Box<TreeNode>>,
+    ) -> Option<Box<TreeNode>> {
+        Some(Box::new(TreeNode { val, left, right }))
+    }
+    let balanced = node(3, leaf(9), node(20, leaf(15), leaf(7)));
+    assert!(is_balanced(&balanced));
+    let skewed = node(1, node(2, node(3, leaf(4), None), None), None);
+    assert!(!is_balanced(&skewed));
+    assert!(is_balanced(&None));
+
+- instruction: |
+    Same Tree. Write `is_same_tree(p: &Option<Box<TreeNode>>, q:
+    &Option<Box<TreeNode>>) -> bool`: true if both trees have identical structure
+    and node values.
+    Example: 1(2,3) vs 1(2,3) -> true; 1(2,_) vs 1(_,2) -> false.
+  starter: |
+    #[derive(PartialEq, Eq, Clone, Debug)]
+    struct TreeNode {
+        val: i32,
+        left: Option<Box<TreeNode>>,
+        right: Option<Box<TreeNode>>,
+    }
+
+    fn is_same_tree(
+        p: &Option<Box<TreeNode>>,
+        q: &Option<Box<TreeNode>>,
+    ) -> bool {
+
+    }
+  solution: |
+    #[derive(PartialEq, Eq, Clone, Debug)]
+    struct TreeNode {
+        val: i32,
+        left: Option<Box<TreeNode>>,
+        right: Option<Box<TreeNode>>,
+    }
+
+    fn is_same_tree(
+        p: &Option<Box<TreeNode>>,
+        q: &Option<Box<TreeNode>>,
+    ) -> bool {
+        match (p, q) {
+            (None, None) => true,
+            (Some(a), Some(b)) => {
+                a.val == b.val
+                    && is_same_tree(&a.left, &b.left)
+                    && is_same_tree(&a.right, &b.right)
+            }
+            _ => false,
+        }
+    }
+  notes: |
+    Match the pair of nodes simultaneously: both empty is equal, both present
+    requires equal values and equal subtrees, and a mismatch in presence is not.
+    O(n). (`#[derive(PartialEq)]` would also work via `p == q`.)
+  source: "NeetCode 150 · Trees"
+  tags: [rust, neetcode, trees]
+  tests: |
+    fn leaf(val: i32) -> Option<Box<TreeNode>> {
+        Some(Box::new(TreeNode { val, left: None, right: None }))
+    }
+    fn node(
+        val: i32,
+        left: Option<Box<TreeNode>>,
+        right: Option<Box<TreeNode>>,
+    ) -> Option<Box<TreeNode>> {
+        Some(Box::new(TreeNode { val, left, right }))
+    }
+    let a = node(1, leaf(2), leaf(3));
+    let b = node(1, leaf(2), leaf(3));
+    assert!(is_same_tree(&a, &b));
+    let c = node(1, leaf(2), None);
+    let d = node(1, None, leaf(2));
+    assert!(!is_same_tree(&c, &d));
+    assert!(is_same_tree(&None, &None));
+
+- instruction: |
+    Subtree of Another Tree. Write `is_subtree(root: &Option<Box<TreeNode>>, sub:
+    &Option<Box<TreeNode>>) -> bool`: true if `sub` equals some subtree of `root`
+    (same structure and values).
+    Example: root 3(4(1,2),5), sub 4(1,2) -> true.
+  starter: |
+    #[derive(PartialEq, Eq, Clone, Debug)]
+    struct TreeNode {
+        val: i32,
+        left: Option<Box<TreeNode>>,
+        right: Option<Box<TreeNode>>,
+    }
+
+    fn is_subtree(
+        root: &Option<Box<TreeNode>>,
+        sub: &Option<Box<TreeNode>>,
+    ) -> bool {
+
+    }
+  solution: |
+    #[derive(PartialEq, Eq, Clone, Debug)]
+    struct TreeNode {
+        val: i32,
+        left: Option<Box<TreeNode>>,
+        right: Option<Box<TreeNode>>,
+    }
+
+    fn is_subtree(
+        root: &Option<Box<TreeNode>>,
+        sub: &Option<Box<TreeNode>>,
+    ) -> bool {
+        match root {
+            None => sub.is_none(),
+            Some(node) => {
+                root == sub
+                    || is_subtree(&node.left, sub)
+                    || is_subtree(&node.right, sub)
+            }
+        }
+    }
+  notes: |
+    At each node, either the subtree rooted here equals `sub` (the derived
+    `PartialEq` compares whole trees) or `sub` lives in a child. An empty `root`
+    only matches an empty `sub`. O(n*m) worst case.
+  source: "NeetCode 150 · Trees"
+  tags: [rust, neetcode, trees]
+  tests: |
+    fn leaf(val: i32) -> Option<Box<TreeNode>> {
+        Some(Box::new(TreeNode { val, left: None, right: None }))
+    }
+    fn node(
+        val: i32,
+        left: Option<Box<TreeNode>>,
+        right: Option<Box<TreeNode>>,
+    ) -> Option<Box<TreeNode>> {
+        Some(Box::new(TreeNode { val, left, right }))
+    }
+    let root = node(3, node(4, leaf(1), leaf(2)), leaf(5));
+    let sub = node(4, leaf(1), leaf(2));
+    assert!(is_subtree(&root, &sub));
+    let missing = node(4, leaf(1), node(2, leaf(0), None));
+    assert!(!is_subtree(&root, &missing));
+
+- instruction: |
+    Lowest Common Ancestor of a BST. Write `lowest_common_ancestor(root:
+    &Option<Box<TreeNode>>, p: i32, q: i32) -> i32`: return the value of the
+    lowest node that is an ancestor of both `p` and `q`. Use the BST ordering.
+    Example: BST 6(2(0,4),8(7,9)), p=2, q=8 -> 6.
+  starter: |
+    #[derive(PartialEq, Eq, Clone, Debug)]
+    struct TreeNode {
+        val: i32,
+        left: Option<Box<TreeNode>>,
+        right: Option<Box<TreeNode>>,
+    }
+
+    fn lowest_common_ancestor(
+        root: &Option<Box<TreeNode>>,
+        p: i32,
+        q: i32,
+    ) -> i32 {
+
+    }
+  solution: |
+    #[derive(PartialEq, Eq, Clone, Debug)]
+    struct TreeNode {
+        val: i32,
+        left: Option<Box<TreeNode>>,
+        right: Option<Box<TreeNode>>,
+    }
+
+    fn lowest_common_ancestor(
+        root: &Option<Box<TreeNode>>,
+        p: i32,
+        q: i32,
+    ) -> i32 {
+        let mut cur = root;
+        while let Some(node) = cur {
+            if p < node.val && q < node.val {
+                cur = &node.left;
+            } else if p > node.val && q > node.val {
+                cur = &node.right;
+            } else {
+                return node.val;
+            }
+        }
+        unreachable!("p and q are guaranteed to be present in the BST")
+    }
+  notes: |
+    Walk down: if both targets are smaller go left, if both are larger go right;
+    the first node where they diverge (or one equals it) is the split point and
+    thus the LCA. O(h), no recursion needed.
+  source: "NeetCode 150 · Trees"
+  tags: [rust, neetcode, trees]
+  tests: |
+    fn leaf(val: i32) -> Option<Box<TreeNode>> {
+        Some(Box::new(TreeNode { val, left: None, right: None }))
+    }
+    fn node(
+        val: i32,
+        left: Option<Box<TreeNode>>,
+        right: Option<Box<TreeNode>>,
+    ) -> Option<Box<TreeNode>> {
+        Some(Box::new(TreeNode { val, left, right }))
+    }
+    let bst = node(
+        6,
+        node(2, leaf(0), leaf(4)),
+        node(8, leaf(7), leaf(9)),
+    );
+    assert_eq!(lowest_common_ancestor(&bst, 2, 8), 6);
+    assert_eq!(lowest_common_ancestor(&bst, 0, 4), 2);
+    assert_eq!(lowest_common_ancestor(&bst, 7, 7), 7);
+
+- instruction: |
+    Binary Tree Level Order Traversal. Write `level_order(root:
+    &Option<Box<TreeNode>>) -> Vec<Vec<i32>>`: the node values grouped by depth,
+    top to bottom, left to right.
+    Example: 3(9,20(15,7)) -> [[3], [9, 20], [15, 7]].
+  starter: |
+    use std::collections::VecDeque;
+
+    #[derive(PartialEq, Eq, Clone, Debug)]
+    struct TreeNode {
+        val: i32,
+        left: Option<Box<TreeNode>>,
+        right: Option<Box<TreeNode>>,
+    }
+
+    fn level_order(root: &Option<Box<TreeNode>>) -> Vec<Vec<i32>> {
+
+    }
+  solution: |
+    use std::collections::VecDeque;
+
+    #[derive(PartialEq, Eq, Clone, Debug)]
+    struct TreeNode {
+        val: i32,
+        left: Option<Box<TreeNode>>,
+        right: Option<Box<TreeNode>>,
+    }
+
+    fn level_order(root: &Option<Box<TreeNode>>) -> Vec<Vec<i32>> {
+        let mut levels = Vec::new();
+        let mut queue: VecDeque<&TreeNode> = VecDeque::new();
+        if let Some(node) = root {
+            queue.push_back(node.as_ref());
+        }
+        while !queue.is_empty() {
+            let mut level = Vec::with_capacity(queue.len());
+            for _ in 0..queue.len() {
+                let node = queue.pop_front().unwrap();
+                level.push(node.val);
+                if let Some(left) = &node.left {
+                    queue.push_back(left.as_ref());
+                }
+                if let Some(right) = &node.right {
+                    queue.push_back(right.as_ref());
+                }
+            }
+            levels.push(level);
+        }
+        levels
+    }
+  notes: |
+    Classic BFS: snapshot the queue length to know how many nodes are on the
+    current level, then drain exactly that many before moving down. O(n).
+  source: "NeetCode 150 · Trees"
+  tags: [rust, neetcode, trees]
+  tests: |
+    fn leaf(val: i32) -> Option<Box<TreeNode>> {
+        Some(Box::new(TreeNode { val, left: None, right: None }))
+    }
+    fn node(
+        val: i32,
+        left: Option<Box<TreeNode>>,
+        right: Option<Box<TreeNode>>,
+    ) -> Option<Box<TreeNode>> {
+        Some(Box::new(TreeNode { val, left, right }))
+    }
+    let tree = node(3, leaf(9), node(20, leaf(15), leaf(7)));
+    assert_eq!(level_order(&tree), vec![vec![3], vec![9, 20], vec![15, 7]]);
+    assert_eq!(level_order(&None), Vec::<Vec<i32>>::new());
+
+- instruction: |
+    Binary Tree Right Side View. Write `right_side_view(root:
+    &Option<Box<TreeNode>>) -> Vec<i32>`: the values visible from the right, i.e.
+    the last node at each depth.
+    Example: 1(2(_,5),3(_,4)) -> [1, 3, 4].
+  starter: |
+    use std::collections::VecDeque;
+
+    #[derive(PartialEq, Eq, Clone, Debug)]
+    struct TreeNode {
+        val: i32,
+        left: Option<Box<TreeNode>>,
+        right: Option<Box<TreeNode>>,
+    }
+
+    fn right_side_view(root: &Option<Box<TreeNode>>) -> Vec<i32> {
+
+    }
+  solution: |
+    use std::collections::VecDeque;
+
+    #[derive(PartialEq, Eq, Clone, Debug)]
+    struct TreeNode {
+        val: i32,
+        left: Option<Box<TreeNode>>,
+        right: Option<Box<TreeNode>>,
+    }
+
+    fn right_side_view(root: &Option<Box<TreeNode>>) -> Vec<i32> {
+        let mut view = Vec::new();
+        let mut queue: VecDeque<&TreeNode> = VecDeque::new();
+        if let Some(node) = root {
+            queue.push_back(node.as_ref());
+        }
+        while !queue.is_empty() {
+            let count = queue.len();
+            for i in 0..count {
+                let node = queue.pop_front().unwrap();
+                if i == count - 1 {
+                    view.push(node.val);
+                }
+                if let Some(left) = &node.left {
+                    queue.push_back(left.as_ref());
+                }
+                if let Some(right) = &node.right {
+                    queue.push_back(right.as_ref());
+                }
+            }
+        }
+        view
+    }
+  notes: |
+    BFS level by level; the last node dequeued on each level is the one seen from
+    the right. Enqueueing left-then-right keeps that ordering. O(n).
+  source: "NeetCode 150 · Trees"
+  tags: [rust, neetcode, trees]
+  tests: |
+    fn node(
+        val: i32,
+        left: Option<Box<TreeNode>>,
+        right: Option<Box<TreeNode>>,
+    ) -> Option<Box<TreeNode>> {
+        Some(Box::new(TreeNode { val, left, right }))
+    }
+    fn leaf(val: i32) -> Option<Box<TreeNode>> {
+        node(val, None, None)
+    }
+    let tree = node(
+        1,
+        node(2, None, leaf(5)),
+        node(3, None, leaf(4)),
+    );
+    assert_eq!(right_side_view(&tree), vec![1, 3, 4]);
+    assert_eq!(right_side_view(&None), Vec::<i32>::new());
+
+- instruction: |
+    Count Good Nodes in Binary Tree. Write `good_nodes(root:
+    &Option<Box<TreeNode>>) -> i32`: count nodes X such that no node on the path
+    from the root to X has a value greater than X.
+    Example: 3(1(3,_),4(1,5)) -> 4.
+  starter: |
+    #[derive(PartialEq, Eq, Clone, Debug)]
+    struct TreeNode {
+        val: i32,
+        left: Option<Box<TreeNode>>,
+        right: Option<Box<TreeNode>>,
+    }
+
+    fn good_nodes(root: &Option<Box<TreeNode>>) -> i32 {
+
+    }
+  solution: |
+    #[derive(PartialEq, Eq, Clone, Debug)]
+    struct TreeNode {
+        val: i32,
+        left: Option<Box<TreeNode>>,
+        right: Option<Box<TreeNode>>,
+    }
+
+    fn good_nodes(root: &Option<Box<TreeNode>>) -> i32 {
+        fn dfs(node: &Option<Box<TreeNode>>, max_so_far: i32) -> i32 {
+            match node {
+                None => 0,
+                Some(n) => {
+                    let here = i32::from(n.val >= max_so_far);
+                    let best = max_so_far.max(n.val);
+                    here + dfs(&n.left, best) + dfs(&n.right, best)
+                }
+            }
+        }
+        match root {
+            None => 0,
+            Some(n) => dfs(root, n.val),
+        }
+    }
+  notes: |
+    Carry the maximum value seen on the path down the recursion; a node is "good"
+    when it is at least that running max. Start the threshold at the root's own
+    value so the root always counts. O(n).
+  source: "NeetCode 150 · Trees"
+  tags: [rust, neetcode, trees]
+  tests: |
+    fn leaf(val: i32) -> Option<Box<TreeNode>> {
+        Some(Box::new(TreeNode { val, left: None, right: None }))
+    }
+    fn node(
+        val: i32,
+        left: Option<Box<TreeNode>>,
+        right: Option<Box<TreeNode>>,
+    ) -> Option<Box<TreeNode>> {
+        Some(Box::new(TreeNode { val, left, right }))
+    }
+    let tree = node(
+        3,
+        node(1, leaf(3), None),
+        node(4, leaf(1), leaf(5)),
+    );
+    assert_eq!(good_nodes(&tree), 4);
+    assert_eq!(good_nodes(&leaf(1)), 1);
+    assert_eq!(good_nodes(&None), 0);
+
+- instruction: |
+    Validate Binary Search Tree. Write `is_valid_bst(root:
+    &Option<Box<TreeNode>>) -> bool`: true if every node's value is strictly
+    greater than all values in its left subtree and strictly less than all in its
+    right subtree.
+    Example: 2(1,3) -> true; 5(1,4(3,6)) -> false.
+  starter: |
+    #[derive(PartialEq, Eq, Clone, Debug)]
+    struct TreeNode {
+        val: i32,
+        left: Option<Box<TreeNode>>,
+        right: Option<Box<TreeNode>>,
+    }
+
+    fn is_valid_bst(root: &Option<Box<TreeNode>>) -> bool {
+
+    }
+  solution: |
+    #[derive(PartialEq, Eq, Clone, Debug)]
+    struct TreeNode {
+        val: i32,
+        left: Option<Box<TreeNode>>,
+        right: Option<Box<TreeNode>>,
+    }
+
+    fn is_valid_bst(root: &Option<Box<TreeNode>>) -> bool {
+        fn check(node: &Option<Box<TreeNode>>, lo: Option<i32>, hi: Option<i32>) -> bool {
+            match node {
+                None => true,
+                Some(n) => {
+                    if lo.is_some_and(|l| n.val <= l) || hi.is_some_and(|h| n.val >= h) {
+                        return false;
+                    }
+                    check(&n.left, lo, Some(n.val)) && check(&n.right, Some(n.val), hi)
+                }
+            }
+        }
+        check(root, None, None)
+    }
+  notes: |
+    Each node must lie within an open (lo, hi) range; descending left tightens the
+    upper bound to the node's value, descending right tightens the lower bound.
+    `Option<i32>` bounds avoid overflow at i32::MIN/MAX. O(n).
+  source: "NeetCode 150 · Trees"
+  tags: [rust, neetcode, trees]
+  tests: |
+    fn leaf(val: i32) -> Option<Box<TreeNode>> {
+        Some(Box::new(TreeNode { val, left: None, right: None }))
+    }
+    fn node(
+        val: i32,
+        left: Option<Box<TreeNode>>,
+        right: Option<Box<TreeNode>>,
+    ) -> Option<Box<TreeNode>> {
+        Some(Box::new(TreeNode { val, left, right }))
+    }
+    let valid = node(2, leaf(1), leaf(3));
+    assert!(is_valid_bst(&valid));
+    let invalid = node(5, leaf(1), node(4, leaf(3), leaf(6)));
+    assert!(!is_valid_bst(&invalid));
+    assert!(is_valid_bst(&None));
+
+- instruction: |
+    Kth Smallest Element in a BST. Write `kth_smallest(root:
+    &Option<Box<TreeNode>>, k: i32) -> i32`: the k-th smallest value (1-indexed).
+    Example: BST 3(1(_,2),4), k=1 -> 1.
+  starter: |
+    #[derive(PartialEq, Eq, Clone, Debug)]
+    struct TreeNode {
+        val: i32,
+        left: Option<Box<TreeNode>>,
+        right: Option<Box<TreeNode>>,
+    }
+
+    fn kth_smallest(root: &Option<Box<TreeNode>>, k: i32) -> i32 {
+
+    }
+  solution: |
+    #[derive(PartialEq, Eq, Clone, Debug)]
+    struct TreeNode {
+        val: i32,
+        left: Option<Box<TreeNode>>,
+        right: Option<Box<TreeNode>>,
+    }
+
+    fn kth_smallest(root: &Option<Box<TreeNode>>, k: i32) -> i32 {
+        // In-order walk; decrement `remaining`, stop when it hits zero.
+        fn walk(node: &Option<Box<TreeNode>>, remaining: &mut i32) -> Option<i32> {
+            let n = node.as_ref()?;
+            if let Some(found) = walk(&n.left, remaining) {
+                return Some(found);
+            }
+            *remaining -= 1;
+            if *remaining == 0 {
+                return Some(n.val);
+            }
+            walk(&n.right, remaining)
+        }
+        let mut remaining = k;
+        walk(root, &mut remaining).expect("k is within the tree size")
+    }
+  notes: |
+    An in-order traversal of a BST yields values in sorted order, so the k-th
+    visited node is the answer. A mutable counter lets us short-circuit as soon as
+    it reaches zero. O(h + k).
+  source: "NeetCode 150 · Trees"
+  tags: [rust, neetcode, trees]
+  tests: |
+    fn leaf(val: i32) -> Option<Box<TreeNode>> {
+        Some(Box::new(TreeNode { val, left: None, right: None }))
+    }
+    fn node(
+        val: i32,
+        left: Option<Box<TreeNode>>,
+        right: Option<Box<TreeNode>>,
+    ) -> Option<Box<TreeNode>> {
+        Some(Box::new(TreeNode { val, left, right }))
+    }
+    let bst = node(3, node(1, None, leaf(2)), leaf(4));
+    assert_eq!(kth_smallest(&bst, 1), 1);
+    assert_eq!(kth_smallest(&bst, 2), 2);
+    assert_eq!(kth_smallest(&bst, 4), 4);
+
+- instruction: |
+    Construct Binary Tree from Preorder and Inorder. Write `build_tree(preorder:
+    &[i32], inorder: &[i32]) -> Option<Box<TreeNode>>`: rebuild the tree from its
+    preorder and inorder traversals (all values distinct).
+    Example: preorder [3,9,20,15,7], inorder [9,3,15,20,7] -> 3(9,20(15,7)).
+  starter: |
+    #[derive(PartialEq, Eq, Clone, Debug)]
+    struct TreeNode {
+        val: i32,
+        left: Option<Box<TreeNode>>,
+        right: Option<Box<TreeNode>>,
+    }
+
+    fn build_tree(preorder: &[i32], inorder: &[i32]) -> Option<Box<TreeNode>> {
+
+    }
+  solution: |
+    #[derive(PartialEq, Eq, Clone, Debug)]
+    struct TreeNode {
+        val: i32,
+        left: Option<Box<TreeNode>>,
+        right: Option<Box<TreeNode>>,
+    }
+
+    fn build_tree(preorder: &[i32], inorder: &[i32]) -> Option<Box<TreeNode>> {
+        if preorder.is_empty() {
+            return None;
+        }
+        let root_val = preorder[0];
+        let mid = inorder.iter().position(|&v| v == root_val).unwrap();
+        Some(Box::new(TreeNode {
+            val: root_val,
+            left: build_tree(&preorder[1..=mid], &inorder[..mid]),
+            right: build_tree(&preorder[mid + 1..], &inorder[mid + 1..]),
+        }))
+    }
+  notes: |
+    The first preorder element is the root; its position in the inorder array
+    splits the remaining nodes into the left and right subtrees, whose sizes then
+    slice the preorder array. Recursion rebuilds each side.
+  source: "NeetCode 150 · Trees"
+  tags: [rust, neetcode, trees]
+  tests: |
+    fn leaf(val: i32) -> Option<Box<TreeNode>> {
+        Some(Box::new(TreeNode { val, left: None, right: None }))
+    }
+    fn node(
+        val: i32,
+        left: Option<Box<TreeNode>>,
+        right: Option<Box<TreeNode>>,
+    ) -> Option<Box<TreeNode>> {
+        Some(Box::new(TreeNode { val, left, right }))
+    }
+    let want = node(3, leaf(9), node(20, leaf(15), leaf(7)));
+    assert_eq!(build_tree(&[3, 9, 20, 15, 7], &[9, 3, 15, 20, 7]), want);
+    assert_eq!(build_tree(&[], &[]), None);
+    assert_eq!(build_tree(&[1], &[1]), leaf(1));
+
+- instruction: |
+    Binary Tree Maximum Path Sum. Write `max_path_sum(root:
+    &Option<Box<TreeNode>>) -> i32`: the largest sum along any path (a sequence of
+    connected nodes); a path need not pass through the root.
+    Example: -10(9,20(15,7)) -> 42 (15+20+7).
+  starter: |
+    #[derive(PartialEq, Eq, Clone, Debug)]
+    struct TreeNode {
+        val: i32,
+        left: Option<Box<TreeNode>>,
+        right: Option<Box<TreeNode>>,
+    }
+
+    fn max_path_sum(root: &Option<Box<TreeNode>>) -> i32 {
+
+    }
+  solution: |
+    #[derive(PartialEq, Eq, Clone, Debug)]
+    struct TreeNode {
+        val: i32,
+        left: Option<Box<TreeNode>>,
+        right: Option<Box<TreeNode>>,
+    }
+
+    fn max_path_sum(root: &Option<Box<TreeNode>>) -> i32 {
+        // Returns the best downward path from `node`; updates `best` with the
+        // best path that bends at `node`.
+        fn dfs(node: &Option<Box<TreeNode>>, best: &mut i32) -> i32 {
+            match node {
+                None => 0,
+                Some(n) => {
+                    let left = dfs(&n.left, best).max(0);
+                    let right = dfs(&n.right, best).max(0);
+                    *best = (*best).max(n.val + left + right);
+                    n.val + left.max(right)
+                }
+            }
+        }
+        let mut best = i32::MIN;
+        dfs(root, &mut best);
+        best
+    }
+  notes: |
+    Each node returns the best straight-line path going down (clamping negative
+    contributions to 0), while we separately track the best "bent" path that uses
+    both children. The global best is the answer. O(n).
+  source: "NeetCode 150 · Trees"
+  tags: [rust, neetcode, trees]
+  tests: |
+    fn leaf(val: i32) -> Option<Box<TreeNode>> {
+        Some(Box::new(TreeNode { val, left: None, right: None }))
+    }
+    fn node(
+        val: i32,
+        left: Option<Box<TreeNode>>,
+        right: Option<Box<TreeNode>>,
+    ) -> Option<Box<TreeNode>> {
+        Some(Box::new(TreeNode { val, left, right }))
+    }
+    let tree = node(-10, leaf(9), node(20, leaf(15), leaf(7)));
+    assert_eq!(max_path_sum(&tree), 42);
+    assert_eq!(max_path_sum(&node(1, leaf(2), leaf(3))), 6);
+    assert_eq!(max_path_sum(&leaf(-3)), -3);
+
+- instruction: |
+    Serialize and Deserialize Binary Tree. Write `serialize(root:
+    &Option<Box<TreeNode>>) -> String` and `deserialize(s: &str) ->
+    Option<Box<TreeNode>>` so that deserialize(serialize(t)) reproduces `t`.
+    Example: round-trip on 1(2,3(4,5)).
+  starter: |
+    #[derive(PartialEq, Eq, Clone, Debug)]
+    struct TreeNode {
+        val: i32,
+        left: Option<Box<TreeNode>>,
+        right: Option<Box<TreeNode>>,
+    }
+
+    fn serialize(root: &Option<Box<TreeNode>>) -> String {
+
+    }
+
+    fn deserialize(s: &str) -> Option<Box<TreeNode>> {
+
+    }
+  solution: |
+    #[derive(PartialEq, Eq, Clone, Debug)]
+    struct TreeNode {
+        val: i32,
+        left: Option<Box<TreeNode>>,
+        right: Option<Box<TreeNode>>,
+    }
+
+    fn serialize(root: &Option<Box<TreeNode>>) -> String {
+        fn go(node: &Option<Box<TreeNode>>, out: &mut Vec<String>) {
+            match node {
+                None => out.push("#".to_string()),
+                Some(n) => {
+                    out.push(n.val.to_string());
+                    go(&n.left, out);
+                    go(&n.right, out);
+                }
+            }
+        }
+        let mut out = Vec::new();
+        go(root, &mut out);
+        out.join(",")
+    }
+
+    fn deserialize(s: &str) -> Option<Box<TreeNode>> {
+        fn go<'a>(it: &mut impl Iterator<Item = &'a str>) -> Option<Box<TreeNode>> {
+            let token = it.next()?;
+            if token == "#" {
+                return None;
+            }
+            Some(Box::new(TreeNode {
+                val: token.parse().unwrap(),
+                left: go(it),
+                right: go(it),
+            }))
+        }
+        go(&mut s.split(','))
+    }
+  notes: |
+    Preorder with explicit "#" markers for null children uniquely encodes the
+    tree. Deserializing consumes the comma-split tokens in the same preorder, so
+    each call reconstructs a node then its left and right subtrees. O(n) both ways.
+  source: "NeetCode 150 · Trees"
+  tags: [rust, neetcode, trees]
+  tests: |
+    fn leaf(val: i32) -> Option<Box<TreeNode>> {
+        Some(Box::new(TreeNode { val, left: None, right: None }))
+    }
+    fn node(
+        val: i32,
+        left: Option<Box<TreeNode>>,
+        right: Option<Box<TreeNode>>,
+    ) -> Option<Box<TreeNode>> {
+        Some(Box::new(TreeNode { val, left, right }))
+    }
+    let tree = node(1, leaf(2), node(3, leaf(4), leaf(5)));
+    assert_eq!(deserialize(&serialize(&tree)), tree);
+    assert_eq!(deserialize(&serialize(&None)), None);
+    let single = leaf(-7);
+    assert_eq!(deserialize(&serialize(&single)), single);

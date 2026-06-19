@@ -1,0 +1,439 @@
+# NeetCode 150 — 2-D Dynamic Programming. Original prompts; idiomatic, clippy-clean
+# Rust; example tests run by `python check_cards.py`.
+- instruction: |
+    Unique Paths. Write `unique_paths(m: usize, n: usize) -> u64`: the number of
+    distinct paths from the top-left to the bottom-right of an m x n grid, moving
+    only right or down.
+    Example: (3, 7) -> 28.
+  starter: |
+    fn unique_paths(m: usize, n: usize) -> u64 {
+
+    }
+  solution: |
+    fn unique_paths(m: usize, n: usize) -> u64 {
+        if m == 0 || n == 0 {
+            return 0;
+        }
+        let mut row = vec![1u64; n];
+        for _ in 1..m {
+            for c in 1..n {
+                row[c] += row[c - 1];
+            }
+        }
+        row[n - 1]
+    }
+  notes: |
+    Paths to a cell = paths from above + paths from the left. Collapse the 2-D table
+    to one row: `row[c] += row[c - 1]` folds the cell above into the cell at left.
+  source: "NeetCode 150 · 2-D DP"
+  tags: [rust, neetcode, dp]
+  tests: |
+    assert_eq!(unique_paths(3, 7), 28);
+    assert_eq!(unique_paths(3, 2), 3);
+    assert_eq!(unique_paths(1, 1), 1);
+
+- instruction: |
+    Longest Common Subsequence. Write
+    `longest_common_subsequence(a: &str, b: &str) -> i32`: the length of the longest
+    subsequence common to both strings (assume ASCII).
+    Example: ("abcde", "ace") -> 3 ("ace").
+  starter: |
+    fn longest_common_subsequence(a: &str, b: &str) -> i32 {
+
+    }
+  solution: |
+    fn longest_common_subsequence(a: &str, b: &str) -> i32 {
+        let (a, b) = (a.as_bytes(), b.as_bytes());
+        let n = b.len();
+        let mut prev = vec![0i32; n + 1];
+        for &ca in a {
+            let mut cur = vec![0i32; n + 1];
+            for j in 0..n {
+                cur[j + 1] = if ca == b[j] {
+                    prev[j] + 1
+                } else {
+                    prev[j + 1].max(cur[j])
+                };
+            }
+            prev = cur;
+        }
+        prev[n]
+    }
+  notes: |
+    dp[i][j] is the LCS of the first i and first j chars. On a match it extends the
+    diagonal; otherwise it inherits the better of dropping one char from either
+    string. Keep only the previous row for O(n) space.
+  source: "NeetCode 150 · 2-D DP"
+  tags: [rust, neetcode, dp]
+  tests: |
+    assert_eq!(longest_common_subsequence("abcde", "ace"), 3);
+    assert_eq!(longest_common_subsequence("abc", "abc"), 3);
+    assert_eq!(longest_common_subsequence("abc", "def"), 0);
+
+- instruction: |
+    Best Time to Buy and Sell Stock with Cooldown. Write
+    `max_profit(prices: &[i32]) -> i32`: max profit from unlimited transactions, but
+    after selling you must wait one day before buying again.
+    Example: [1, 2, 3, 0, 2] -> 3 (buy 1, sell 3, cooldown, buy 0, sell 2).
+  starter: |
+    fn max_profit(prices: &[i32]) -> i32 {
+
+    }
+  solution: |
+    fn max_profit(prices: &[i32]) -> i32 {
+        // hold: best with a share held; sold: just sold today; rest: free to buy.
+        let mut hold = i32::MIN;
+        let mut sold = 0;
+        let mut rest = 0;
+        for &p in prices {
+            let prev_sold = sold;
+            sold = hold + p;
+            hold = hold.max(rest - p);
+            rest = rest.max(prev_sold);
+        }
+        sold.max(rest)
+    }
+  notes: |
+    Three states each day: holding, just-sold (forces a cooldown next), and resting.
+    You may only buy from `rest`, which enforces the one-day wait after selling.
+  source: "NeetCode 150 · 2-D DP"
+  tags: [rust, neetcode, dp]
+  tests: |
+    assert_eq!(max_profit(&[1, 2, 3, 0, 2]), 3);
+    assert_eq!(max_profit(&[1]), 0);
+    assert_eq!(max_profit(&[]), 0);
+
+- instruction: |
+    Coin Change II. Write `change(amount: i32, coins: &[i32]) -> i32`: the number of
+    distinct combinations of coins (unlimited supply) that sum to `amount`. Order
+    does not matter.
+    Example: (5, [1, 2, 5]) -> 4.
+  starter: |
+    fn change(amount: i32, coins: &[i32]) -> i32 {
+
+    }
+  solution: |
+    fn change(amount: i32, coins: &[i32]) -> i32 {
+        let amount = amount as usize;
+        let mut dp = vec![0i32; amount + 1];
+        dp[0] = 1;
+        for &c in coins {
+            let c = c as usize;
+            for a in c..=amount {
+                dp[a] += dp[a - c];
+            }
+        }
+        dp[amount]
+    }
+  notes: |
+    Process coins in the outer loop so each combination is counted once (a fixed
+    coin order avoids permutations). dp[a] accumulates ways to make amount a.
+  source: "NeetCode 150 · 2-D DP"
+  tags: [rust, neetcode, dp]
+  tests: |
+    assert_eq!(change(5, &[1, 2, 5]), 4);
+    assert_eq!(change(3, &[2]), 0);
+    assert_eq!(change(0, &[7]), 1);
+
+- instruction: |
+    Target Sum. Write `find_target_sum_ways(nums: &[i32], target: i32) -> i32`: the
+    number of ways to assign '+' or '-' to each number so the signed sum equals
+    `target`.
+    Example: ([1, 1, 1, 1, 1], 3) -> 5.
+  starter: |
+    use std::collections::HashMap;
+
+    fn find_target_sum_ways(nums: &[i32], target: i32) -> i32 {
+
+    }
+  solution: |
+    use std::collections::HashMap;
+
+    fn find_target_sum_ways(nums: &[i32], target: i32) -> i32 {
+        let mut ways: HashMap<i32, i32> = HashMap::new();
+        ways.insert(0, 1);
+        for &n in nums {
+            let mut next: HashMap<i32, i32> = HashMap::new();
+            for (sum, count) in ways {
+                *next.entry(sum + n).or_default() += count;
+                *next.entry(sum - n).or_default() += count;
+            }
+            ways = next;
+        }
+        ways.get(&target).copied().unwrap_or(0)
+    }
+  notes: |
+    Roll a map from running-sum to the number of sign assignments that reach it. Each
+    number branches every sum into +n and -n; the answer is the count at `target`.
+  source: "NeetCode 150 · 2-D DP"
+  tags: [rust, neetcode, dp]
+  tests: |
+    assert_eq!(find_target_sum_ways(&[1, 1, 1, 1, 1], 3), 5);
+    assert_eq!(find_target_sum_ways(&[1], 1), 1);
+    assert_eq!(find_target_sum_ways(&[1], 2), 0);
+
+- instruction: |
+    Interleaving String. Write `is_interleave(s1: &str, s2: &str, s3: &str) -> bool`:
+    true if `s3` is formed by interleaving `s1` and `s2`, preserving each one's order
+    (assume ASCII).
+    Example: ("aabcc", "dbbca", "aadbbcbcac") -> true.
+  starter: |
+    fn is_interleave(s1: &str, s2: &str, s3: &str) -> bool {
+
+    }
+  solution: |
+    fn is_interleave(s1: &str, s2: &str, s3: &str) -> bool {
+        let (a, b, c) = (s1.as_bytes(), s2.as_bytes(), s3.as_bytes());
+        let (m, n) = (a.len(), b.len());
+        if m + n != c.len() {
+            return false;
+        }
+        // dp[j] = can interleave a[..i] and b[..j] into c[..i+j].
+        let mut dp = vec![false; n + 1];
+        dp[0] = true;
+        for j in 1..=n {
+            dp[j] = dp[j - 1] && b[j - 1] == c[j - 1];
+        }
+        for i in 1..=m {
+            dp[0] = dp[0] && a[i - 1] == c[i - 1];
+            for j in 1..=n {
+                let from_a = dp[j] && a[i - 1] == c[i + j - 1];
+                let from_b = dp[j - 1] && b[j - 1] == c[i + j - 1];
+                dp[j] = from_a || from_b;
+            }
+        }
+        dp[n]
+    }
+  notes: |
+    dp[i][j] asks whether the first i of s1 and first j of s2 form the first i+j of
+    s3. Each cell consumes the matching next char from s1 (above) or s2 (left).
+    Collapse to one row: `dp[j]` pre-update is the "from above" value.
+  source: "NeetCode 150 · 2-D DP"
+  tags: [rust, neetcode, dp]
+  tests: |
+    assert!(is_interleave("aabcc", "dbbca", "aadbbcbcac"));
+    assert!(!is_interleave("aabcc", "dbbca", "aadbbbaccc"));
+    assert!(is_interleave("", "", ""));
+
+- instruction: |
+    Longest Increasing Path in a Matrix. Write
+    `longest_increasing_path(matrix: &[Vec<i32>]) -> i32`: the length of the longest
+    strictly increasing path, moving up/down/left/right.
+    Example: [[9,9,4],[6,6,8],[2,1,1]] -> 4 (1,2,6,9).
+  starter: |
+    fn longest_increasing_path(matrix: &[Vec<i32>]) -> i32 {
+
+    }
+  solution: |
+    fn longest_increasing_path(matrix: &[Vec<i32>]) -> i32 {
+        let rows = matrix.len();
+        if rows == 0 {
+            return 0;
+        }
+        let cols = matrix[0].len();
+        let mut memo = vec![vec![0i32; cols]; rows];
+
+        fn dfs(
+            matrix: &[Vec<i32>],
+            memo: &mut [Vec<i32>],
+            r: usize,
+            c: usize,
+        ) -> i32 {
+            if memo[r][c] != 0 {
+                return memo[r][c];
+            }
+            let (rows, cols) = (matrix.len(), matrix[0].len());
+            let mut best = 1;
+            let cur = matrix[r][c];
+            let mut neighbor = |nr: usize, nc: usize, best: &mut i32| {
+                if matrix[nr][nc] > cur {
+                    *best = (*best).max(1 + dfs(matrix, memo, nr, nc));
+                }
+            };
+            if r > 0 {
+                neighbor(r - 1, c, &mut best);
+            }
+            if r + 1 < rows {
+                neighbor(r + 1, c, &mut best);
+            }
+            if c > 0 {
+                neighbor(r, c - 1, &mut best);
+            }
+            if c + 1 < cols {
+                neighbor(r, c + 1, &mut best);
+            }
+            memo[r][c] = best;
+            best
+        }
+
+        let mut ans = 0;
+        for r in 0..rows {
+            for c in 0..cols {
+                ans = ans.max(dfs(matrix, &mut memo, r, c));
+            }
+        }
+        ans
+    }
+  notes: |
+    The longest path from a cell only depends on strictly larger neighbors, so the
+    graph is acyclic — DFS with memoization caches each cell's answer for O(rows*cols).
+  source: "NeetCode 150 · 2-D DP"
+  tags: [rust, neetcode, dp]
+  tests: |
+    assert_eq!(longest_increasing_path(&[vec![9, 9, 4], vec![6, 6, 8], vec![2, 1, 1]]), 4);
+    assert_eq!(longest_increasing_path(&[vec![3, 4, 5], vec![3, 2, 6], vec![2, 2, 1]]), 4);
+    assert_eq!(longest_increasing_path(&[vec![1]]), 1);
+
+- instruction: |
+    Distinct Subsequences. Write `num_distinct(s: &str, t: &str) -> u64`: the number
+    of distinct subsequences of `s` that equal `t` (assume ASCII).
+    Example: ("rabbbit", "rabbit") -> 3.
+  starter: |
+    fn num_distinct(s: &str, t: &str) -> u64 {
+
+    }
+  solution: |
+    fn num_distinct(s: &str, t: &str) -> u64 {
+        let (s, t) = (s.as_bytes(), t.as_bytes());
+        let n = t.len();
+        // dp[j] = ways to form t[..j] from the prefix of s seen so far.
+        let mut dp = vec![0u64; n + 1];
+        dp[0] = 1;
+        for &cs in s {
+            for j in (1..=n).rev() {
+                if cs == t[j - 1] {
+                    dp[j] += dp[j - 1];
+                }
+            }
+        }
+        dp[n]
+    }
+  notes: |
+    dp[i][j] counts subsequences of s[..i] equal to t[..j]. Matching the new char
+    adds dp[i-1][j-1] ways. Iterate j downward to reuse one row as the prior row.
+  source: "NeetCode 150 · 2-D DP"
+  tags: [rust, neetcode, dp]
+  tests: |
+    assert_eq!(num_distinct("rabbbit", "rabbit"), 3);
+    assert_eq!(num_distinct("babgbag", "bag"), 5);
+    assert_eq!(num_distinct("abc", ""), 1);
+
+- instruction: |
+    Edit Distance. Write `min_distance(word1: &str, word2: &str) -> i32`: the minimum
+    number of insertions, deletions, or substitutions to turn `word1` into `word2`
+    (assume ASCII).
+    Example: ("horse", "ros") -> 3.
+  starter: |
+    fn min_distance(word1: &str, word2: &str) -> i32 {
+
+    }
+  solution: |
+    fn min_distance(word1: &str, word2: &str) -> i32 {
+        let (a, b) = (word1.as_bytes(), word2.as_bytes());
+        let n = b.len();
+        let mut prev: Vec<i32> = (0..=n as i32).collect();
+        for (i, &ca) in a.iter().enumerate() {
+            let mut cur = vec![0i32; n + 1];
+            cur[0] = i as i32 + 1;
+            for j in 0..n {
+                cur[j + 1] = if ca == b[j] {
+                    prev[j]
+                } else {
+                    1 + prev[j].min(prev[j + 1]).min(cur[j])
+                };
+            }
+            prev = cur;
+        }
+        prev[n]
+    }
+  notes: |
+    dp[i][j] is the edit distance between the prefixes. On a match, carry the diagonal;
+    otherwise pay one for the cheapest of substitute (diagonal), delete (above), or
+    insert (left). Row i=0/col j=0 are pure insert/delete counts.
+  source: "NeetCode 150 · 2-D DP"
+  tags: [rust, neetcode, dp]
+  tests: |
+    assert_eq!(min_distance("horse", "ros"), 3);
+    assert_eq!(min_distance("intention", "execution"), 5);
+    assert_eq!(min_distance("", "abc"), 3);
+
+- instruction: |
+    Burst Balloons. Write `max_coins(nums: &[i32]) -> i32`: bursting balloon i yields
+    left * i * right coins (neighbors, treating out-of-range as 1). Maximize total
+    coins over all burst orders.
+    Example: [3, 1, 5, 8] -> 167.
+  starter: |
+    fn max_coins(nums: &[i32]) -> i32 {
+
+    }
+  solution: |
+    fn max_coins(nums: &[i32]) -> i32 {
+        let mut vals = vec![1];
+        vals.extend_from_slice(nums);
+        vals.push(1);
+        let m = vals.len();
+        // dp[l][r] = max coins from bursting all balloons strictly between l and r.
+        let mut dp = vec![vec![0i32; m]; m];
+        for len in 2..m {
+            for l in 0..m - len {
+                let r = l + len;
+                let mut best = 0;
+                for k in (l + 1)..r {
+                    let coins = vals[l] * vals[k] * vals[r] + dp[l][k] + dp[k][r];
+                    best = best.max(coins);
+                }
+                dp[l][r] = best;
+            }
+        }
+        dp[0][m - 1]
+    }
+  notes: |
+    Pick k as the LAST balloon burst in the open interval (l, r): then l and r are
+    still present, giving vals[l]*vals[k]*vals[r], plus the two subintervals. Pad
+    with sentinel 1s and fill by increasing interval length (interval DP).
+  source: "NeetCode 150 · 2-D DP"
+  tags: [rust, neetcode, dp]
+  tests: |
+    assert_eq!(max_coins(&[3, 1, 5, 8]), 167);
+    assert_eq!(max_coins(&[1, 5]), 10);
+    assert_eq!(max_coins(&[7]), 7);
+
+- instruction: |
+    Regular Expression Matching. Write `is_match(s: &str, p: &str) -> bool` for
+    patterns with '.' (any single char) and '*' (zero or more of the preceding
+    element), matching the ENTIRE string (assume ASCII).
+    Example: ("aab", "c*a*b") -> true.
+  starter: |
+    fn is_match(s: &str, p: &str) -> bool {
+
+    }
+  solution: |
+    fn is_match(s: &str, p: &str) -> bool {
+        let (s, p) = (s.as_bytes(), p.as_bytes());
+        let (m, n) = (s.len(), p.len());
+        // dp[i][j] = s[i..] matches p[j..].
+        let mut dp = vec![vec![false; n + 1]; m + 1];
+        dp[m][n] = true;
+        for i in (0..=m).rev() {
+            for j in (0..n).rev() {
+                let first = i < m && (p[j] == s[i] || p[j] == b'.');
+                if j + 1 < n && p[j + 1] == b'*' {
+                    dp[i][j] = dp[i][j + 2] || (first && dp[i + 1][j]);
+                } else {
+                    dp[i][j] = first && dp[i + 1][j + 1];
+                }
+            }
+        }
+        dp[0][0]
+    }
+  notes: |
+    dp[i][j] asks if the suffixes match. A '*' either skips the pair (zero copies,
+    dp[i][j+2]) or consumes one matching char and stays on the pattern (dp[i+1][j]).
+    Fill from the bottom-right so dependencies are already computed.
+  source: "NeetCode 150 · 2-D DP"
+  tags: [rust, neetcode, dp]
+  tests: |
+    assert!(is_match("aa", "a*"));
+    assert!(is_match("aab", "c*a*b"));
+    assert!(!is_match("mississippi", "mis*is*p*."));
+    assert!(is_match("ab", ".*"));

@@ -1,0 +1,373 @@
+# NeetCode 150 — Math & Geometry. Original prompts; idiomatic, clippy-clean
+# Rust; example tests run by `python check_cards.py`.
+- instruction: |
+    Rotate Image. Write `rotate(matrix: &mut [Vec<i32>])` rotating an n x n
+    matrix 90 degrees clockwise, in place.
+    Example: [[1,2],[3,4]] -> [[3,1],[4,2]].
+  starter: |
+    fn rotate(matrix: &mut [Vec<i32>]) {
+
+    }
+  solution: |
+    fn rotate(matrix: &mut [Vec<i32>]) {
+        let n = matrix.len();
+        // Transpose across the main diagonal. Rows i and j are distinct here, so
+        // split the slice to borrow both mutably and swap within them.
+        for i in 0..n {
+            let (head, tail) = matrix.split_at_mut(i + 1);
+            for (k, tail_row) in tail.iter_mut().enumerate() {
+                std::mem::swap(&mut head[i][i + 1 + k], &mut tail_row[i]);
+            }
+        }
+        // Reverse each row.
+        for row in matrix.iter_mut() {
+            row.reverse();
+        }
+    }
+  notes: |
+    A clockwise rotation equals transpose then reverse-each-row. In-place swaps
+    over the upper triangle (j > i) avoid double-swapping; indices are needed
+    here because we touch symmetric pairs [i][j]/[j][i].
+  source: "NeetCode 150 · Math & Geometry"
+  tags: [rust, neetcode, math-geometry]
+  tests: |
+    let mut m = vec![vec![1, 2, 3], vec![4, 5, 6], vec![7, 8, 9]];
+    rotate(&mut m);
+    assert_eq!(m, vec![vec![7, 4, 1], vec![8, 5, 2], vec![9, 6, 3]]);
+    let mut m2 = vec![vec![1, 2], vec![3, 4]];
+    rotate(&mut m2);
+    assert_eq!(m2, vec![vec![3, 1], vec![4, 2]]);
+
+- instruction: |
+    Spiral Matrix. Write `spiral_order(matrix: &[Vec<i32>]) -> Vec<i32>` returning
+    all elements visited in clockwise spiral order, starting top-left.
+    Example: [[1,2,3],[4,5,6],[7,8,9]] -> [1,2,3,6,9,8,7,4,5].
+  starter: |
+    fn spiral_order(matrix: &[Vec<i32>]) -> Vec<i32> {
+
+    }
+  solution: |
+    fn spiral_order(matrix: &[Vec<i32>]) -> Vec<i32> {
+        let mut res = Vec::new();
+        if matrix.is_empty() {
+            return res;
+        }
+        let mut top = 0i32;
+        let mut bottom = matrix.len() as i32 - 1;
+        let mut left = 0i32;
+        let mut right = matrix[0].len() as i32 - 1;
+        while top <= bottom && left <= right {
+            for c in left..=right {
+                res.push(matrix[top as usize][c as usize]);
+            }
+            top += 1;
+            for r in top..=bottom {
+                res.push(matrix[r as usize][right as usize]);
+            }
+            right -= 1;
+            if top <= bottom {
+                for c in (left..=right).rev() {
+                    res.push(matrix[bottom as usize][c as usize]);
+                }
+                bottom -= 1;
+            }
+            if left <= right {
+                for r in (top..=bottom).rev() {
+                    res.push(matrix[r as usize][left as usize]);
+                }
+                left += 1;
+            }
+        }
+        res
+    }
+  notes: |
+    Walk four shrinking boundaries (top, bottom, left, right). The two guard
+    checks before the bottom row and left column prevent re-reading a line when
+    the remaining region collapses to a single row or column.
+  source: "NeetCode 150 · Math & Geometry"
+  tags: [rust, neetcode, math-geometry]
+  tests: |
+    let m = vec![vec![1, 2, 3], vec![4, 5, 6], vec![7, 8, 9]];
+    assert_eq!(spiral_order(&m), vec![1, 2, 3, 6, 9, 8, 7, 4, 5]);
+    let m2 = vec![vec![1, 2, 3, 4], vec![5, 6, 7, 8], vec![9, 10, 11, 12]];
+    assert_eq!(spiral_order(&m2), vec![1, 2, 3, 4, 8, 12, 11, 10, 9, 5, 6, 7]);
+
+- instruction: |
+    Set Matrix Zeroes. Write `set_zeroes(matrix: &mut [Vec<i32>])`: if a cell is
+    0, set its entire row and column to 0, in place.
+    Example: [[1,1,1],[1,0,1],[1,1,1]] -> [[1,0,1],[0,0,0],[1,0,1]].
+  starter: |
+    use std::collections::HashSet;
+
+    fn set_zeroes(matrix: &mut [Vec<i32>]) {
+
+    }
+  solution: |
+    use std::collections::HashSet;
+
+    fn set_zeroes(matrix: &mut [Vec<i32>]) {
+        let mut zero_rows = HashSet::new();
+        let mut zero_cols = HashSet::new();
+        for (r, row) in matrix.iter().enumerate() {
+            for (c, &v) in row.iter().enumerate() {
+                if v == 0 {
+                    zero_rows.insert(r);
+                    zero_cols.insert(c);
+                }
+            }
+        }
+        for (r, row) in matrix.iter_mut().enumerate() {
+            for (c, v) in row.iter_mut().enumerate() {
+                if zero_rows.contains(&r) || zero_cols.contains(&c) {
+                    *v = 0;
+                }
+            }
+        }
+    }
+  notes: |
+    First pass records which rows and columns contain a zero; the second pass
+    blanks them. Recording first avoids a freshly written 0 triggering more
+    rows/columns. (The O(1)-space trick reuses row 0 / column 0 as the markers.)
+  source: "NeetCode 150 · Math & Geometry"
+  tags: [rust, neetcode, math-geometry]
+  tests: |
+    let mut m = vec![vec![1, 1, 1], vec![1, 0, 1], vec![1, 1, 1]];
+    set_zeroes(&mut m);
+    assert_eq!(m, vec![vec![1, 0, 1], vec![0, 0, 0], vec![1, 0, 1]]);
+    let mut m2 = vec![vec![0, 1, 2, 0], vec![3, 4, 5, 2], vec![1, 3, 1, 5]];
+    set_zeroes(&mut m2);
+    assert_eq!(
+        m2,
+        vec![vec![0, 0, 0, 0], vec![0, 4, 5, 0], vec![0, 3, 1, 0]]
+    );
+
+- instruction: |
+    Happy Number. Write `is_happy(n: i32) -> bool`: repeatedly replace n with the
+    sum of the squares of its digits; it is happy if this reaches 1 (otherwise it
+    loops forever).
+    Example: 19 -> true (1+81=82 -> 68 -> 100 -> 1).
+  starter: |
+    use std::collections::HashSet;
+
+    fn is_happy(n: i32) -> bool {
+
+    }
+  solution: |
+    use std::collections::HashSet;
+
+    fn is_happy(n: i32) -> bool {
+        fn next(mut n: i32) -> i32 {
+            let mut sum = 0;
+            while n > 0 {
+                let d = n % 10;
+                sum += d * d;
+                n /= 10;
+            }
+            sum
+        }
+        let mut seen = HashSet::new();
+        let mut cur = n;
+        while cur != 1 && seen.insert(cur) {
+            cur = next(cur);
+        }
+        cur == 1
+    }
+  notes: |
+    The sequence either hits 1 or enters a cycle. A `HashSet` detects the cycle:
+    `insert` returns false once a value repeats, ending the loop without reaching
+    1. Digit-square sums stay small, so i32 never overflows.
+  source: "NeetCode 150 · Math & Geometry"
+  tags: [rust, neetcode, math-geometry]
+  tests: |
+    assert!(is_happy(19));
+    assert!(is_happy(1));
+    assert!(!is_happy(2));
+    assert!(!is_happy(4));
+
+- instruction: |
+    Plus One. Write `plus_one(digits: &[i32]) -> Vec<i32>`: the digits are a big
+    non-negative integer, most-significant first; return that integer plus one.
+    Example: [1, 2, 3] -> [1, 2, 4]; [9, 9] -> [1, 0, 0].
+  starter: |
+    fn plus_one(digits: &[i32]) -> Vec<i32> {
+
+    }
+  solution: |
+    fn plus_one(digits: &[i32]) -> Vec<i32> {
+        let mut res = digits.to_vec();
+        for d in res.iter_mut().rev() {
+            if *d < 9 {
+                *d += 1;
+                return res;
+            }
+            *d = 0;
+        }
+        // Every digit was 9: prepend a leading 1.
+        res.insert(0, 1);
+        res
+    }
+  notes: |
+    Add from the least-significant end, carrying by turning trailing 9s into 0s.
+    The first digit below 9 absorbs the carry and we stop; if none does, the
+    number was all 9s and grows one digit longer.
+  source: "NeetCode 150 · Math & Geometry"
+  tags: [rust, neetcode, math-geometry]
+  tests: |
+    assert_eq!(plus_one(&[1, 2, 3]), vec![1, 2, 4]);
+    assert_eq!(plus_one(&[1, 2, 9]), vec![1, 3, 0]);
+    assert_eq!(plus_one(&[9, 9]), vec![1, 0, 0]);
+    assert_eq!(plus_one(&[0]), vec![1]);
+
+- instruction: |
+    Pow(x, n). Write `my_pow(x: f64, n: i32) -> f64` computing x raised to the
+    integer power n (handle negative n) using fast exponentiation.
+    Example: (2.0, 10) -> 1024.0; (2.0, -2) -> 0.25.
+  starter: |
+    fn my_pow(x: f64, n: i32) -> f64 {
+
+    }
+  solution: |
+    fn my_pow(x: f64, n: i32) -> f64 {
+        // Use i64 so negating i32::MIN does not overflow.
+        let mut exp = (n as i64).unsigned_abs();
+        let mut base = x;
+        let mut result = 1.0;
+        while exp > 0 {
+            if exp & 1 == 1 {
+                result *= base;
+            }
+            base *= base;
+            exp >>= 1;
+        }
+        if n < 0 {
+            1.0 / result
+        } else {
+            result
+        }
+    }
+  notes: |
+    Square-and-multiply runs in O(log n): square the base each step and fold it
+    into the result when the current exponent bit is set. Widening to i64 before
+    taking the magnitude avoids overflow on i32::MIN.
+  source: "NeetCode 150 · Math & Geometry"
+  tags: [rust, neetcode, math-geometry]
+  tests: |
+    assert!((my_pow(2.0, 10) - 1024.0).abs() < 1e-9);
+    assert!((my_pow(2.0, -2) - 0.25).abs() < 1e-9);
+    assert!((my_pow(2.0, 0) - 1.0).abs() < 1e-9);
+    assert!((my_pow(2.1, 3) - 9.261).abs() < 1e-9);
+
+- instruction: |
+    Multiply Strings. Write `multiply(num1: &str, num2: &str) -> String` returning
+    the product of two non-negative integers given as strings, without any built-in
+    big-integer type.
+    Example: ("123", "456") -> "56088"; ("2", "0") -> "0".
+  starter: |
+    fn multiply(num1: &str, num2: &str) -> String {
+
+    }
+  solution: |
+    fn multiply(num1: &str, num2: &str) -> String {
+        if num1 == "0" || num2 == "0" {
+            return "0".to_string();
+        }
+        let a: Vec<u32> = num1.bytes().rev().map(|b| (b - b'0') as u32).collect();
+        let b: Vec<u32> = num2.bytes().rev().map(|b| (b - b'0') as u32).collect();
+        let mut prod = vec![0u32; a.len() + b.len()];
+        for (i, &da) in a.iter().enumerate() {
+            for (j, &db) in b.iter().enumerate() {
+                prod[i + j] += da * db;
+                prod[i + j + 1] += prod[i + j] / 10;
+                prod[i + j] %= 10;
+            }
+        }
+        while prod.len() > 1 && *prod.last().unwrap() == 0 {
+            prod.pop();
+        }
+        prod.iter().rev().map(|d| (b'0' + *d as u8) as char).collect()
+    }
+  notes: |
+    Schoolbook multiplication on reversed digit vectors: digit i of one number
+    times digit j of the other lands at position i+j, with the carry pushed to
+    i+j+1. Strip leading zeros, then read the digits back high-to-low.
+  source: "NeetCode 150 · Math & Geometry"
+  tags: [rust, neetcode, math-geometry]
+  tests: |
+    assert_eq!(multiply("123", "456"), "56088");
+    assert_eq!(multiply("2", "3"), "6");
+    assert_eq!(multiply("2", "0"), "0");
+    assert_eq!(multiply("999", "999"), "998001");
+
+- instruction: |
+    Detect Squares. Build `DetectSquares` with `new()`, `add(&mut self, point: [i32; 2])`
+    to record a point (duplicates allowed), and `count(&self, point: [i32; 2]) -> i32`
+    returning how many axis-aligned squares can be formed using the given point as
+    one corner together with three previously added points.
+  starter: |
+    use std::collections::HashMap;
+
+    struct DetectSquares {
+        counts: HashMap<(i32, i32), i32>,
+    }
+
+    impl DetectSquares {
+        fn new() -> Self {
+
+        }
+
+        fn add(&mut self, point: [i32; 2]) {
+
+        }
+
+        fn count(&self, point: [i32; 2]) -> i32 {
+
+        }
+    }
+  solution: |
+    use std::collections::HashMap;
+
+    struct DetectSquares {
+        counts: HashMap<(i32, i32), i32>,
+    }
+
+    impl DetectSquares {
+        fn new() -> Self {
+            DetectSquares {
+                counts: HashMap::new(),
+            }
+        }
+
+        fn add(&mut self, point: [i32; 2]) {
+            *self.counts.entry((point[0], point[1])).or_default() += 1;
+        }
+
+        fn count(&self, point: [i32; 2]) -> i32 {
+            let [px, py] = point;
+            let mut total = 0;
+            for (&(x, y), &c) in &self.counts {
+                // Pick a diagonal corner: must differ in x and y by the same amount.
+                if x == px || (x - px).abs() != (y - py).abs() {
+                    continue;
+                }
+                let n1 = self.counts.get(&(px, y)).copied().unwrap_or(0);
+                let n2 = self.counts.get(&(x, py)).copied().unwrap_or(0);
+                total += c * n1 * n2;
+            }
+            total
+        }
+    }
+  notes: |
+    Store a multiset of points as a coordinate->frequency map. For a query corner,
+    any stored point on a true diagonal (equal |dx| and |dy|, dx != 0) fixes the
+    square; multiply the frequencies of the two remaining corners and sum.
+  source: "NeetCode 150 · Math & Geometry"
+  tags: [rust, neetcode, math-geometry]
+  tests: |
+    let mut ds = DetectSquares::new();
+    ds.add([3, 10]);
+    ds.add([11, 2]);
+    ds.add([3, 2]);
+    assert_eq!(ds.count([11, 10]), 1);
+    assert_eq!(ds.count([14, 8]), 0);
+    ds.add([11, 2]);
+    assert_eq!(ds.count([11, 10]), 2);

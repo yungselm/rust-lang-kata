@@ -1,0 +1,210 @@
+# NeetCode 150 — Bit Manipulation. Original prompts; idiomatic, clippy-clean
+# Rust; example tests run by `python check_cards.py`.
+- instruction: |
+    Single Number. Write `single_number(nums: &[i32]) -> i32`: every value appears
+    exactly twice except one, which appears once; return that one. O(1) space.
+    Example: [4, 1, 2, 1, 2] -> 4.
+  starter: |
+    fn single_number(nums: &[i32]) -> i32 {
+
+    }
+  solution: |
+    fn single_number(nums: &[i32]) -> i32 {
+        nums.iter().fold(0, |acc, &n| acc ^ n)
+    }
+  notes: |
+    XOR is its own inverse and commutative, so every paired value cancels to 0,
+    leaving the lone element. Starting from 0 (the XOR identity) folds the slice
+    in one pass with no extra storage.
+  source: "NeetCode 150 · Bit Manipulation"
+  tags: [rust, neetcode, bit-manipulation]
+  tests: |
+    assert_eq!(single_number(&[2, 2, 1]), 1);
+    assert_eq!(single_number(&[4, 1, 2, 1, 2]), 4);
+    assert_eq!(single_number(&[7]), 7);
+
+- instruction: |
+    Number of 1 Bits. Write `hamming_weight(n: u32) -> u32` returning the count of
+    set bits, implemented by hand (no `count_ones`).
+    Example: 11 (0b1011) -> 3.
+  starter: |
+    fn hamming_weight(n: u32) -> u32 {
+
+    }
+  solution: |
+    fn hamming_weight(mut n: u32) -> u32 {
+        let mut count = 0;
+        while n != 0 {
+            // n & (n - 1) clears the lowest set bit.
+            n &= n - 1;
+            count += 1;
+        }
+        count
+    }
+  notes: |
+    `n & (n - 1)` clears the lowest set bit, so the loop runs once per set bit
+    rather than 32 times. The standard library exposes this directly as
+    `n.count_ones()`; here we build it by hand.
+  source: "NeetCode 150 · Bit Manipulation"
+  tags: [rust, neetcode, bit-manipulation]
+  tests: |
+    assert_eq!(hamming_weight(11), 3);
+    assert_eq!(hamming_weight(0), 0);
+    assert_eq!(hamming_weight(0xFFFF_FFFF), 32);
+
+- instruction: |
+    Counting Bits. Write `count_bits(n: u32) -> Vec<u32>` where result[i] is the
+    number of set bits in i, for i in 0..=n, using dynamic programming.
+    Example: 5 -> [0, 1, 1, 2, 1, 2].
+  starter: |
+    fn count_bits(n: u32) -> Vec<u32> {
+
+    }
+  solution: |
+    fn count_bits(n: u32) -> Vec<u32> {
+        let n = n as usize;
+        let mut dp = vec![0u32; n + 1];
+        for i in 1..=n {
+            // i has the same set bits as i >> 1, plus its lowest bit.
+            dp[i] = dp[i >> 1] + (i as u32 & 1);
+        }
+        dp
+    }
+  notes: |
+    Dropping the lowest bit (i >> 1) gives a smaller, already-solved subproblem;
+    add back whatever the lowest bit contributes (i & 1). Each entry is O(1), so
+    the whole table is O(n).
+  source: "NeetCode 150 · Bit Manipulation"
+  tags: [rust, neetcode, bit-manipulation]
+  tests: |
+    assert_eq!(count_bits(2), vec![0, 1, 1]);
+    assert_eq!(count_bits(5), vec![0, 1, 1, 2, 1, 2]);
+    assert_eq!(count_bits(0), vec![0]);
+
+- instruction: |
+    Reverse Bits. Write `reverse_bits(n: u32) -> u32` returning the 32-bit integer
+    with its bit order reversed (MSB becomes LSB).
+    Example: 1 (0b...0001) -> 0x80000000.
+  starter: |
+    fn reverse_bits(n: u32) -> u32 {
+
+    }
+  solution: |
+    fn reverse_bits(mut n: u32) -> u32 {
+        let mut result = 0u32;
+        for _ in 0..32 {
+            result = (result << 1) | (n & 1);
+            n >>= 1;
+        }
+        result
+    }
+  notes: |
+    Pull bits off the bottom of `n` and push them onto the bottom of `result`,
+    which shifts left each step — so the first bit out lands in the top position.
+    Exactly 32 iterations cover every bit.
+  source: "NeetCode 150 · Bit Manipulation"
+  tags: [rust, neetcode, bit-manipulation]
+  tests: |
+    assert_eq!(reverse_bits(1), 0x8000_0000);
+    assert_eq!(reverse_bits(0), 0);
+    assert_eq!(reverse_bits(0xFFFF_FFFF), 0xFFFF_FFFF);
+    assert_eq!(reverse_bits(0b0000_0010_1001_0100_0001_1110_1001_1100), 964176192);
+
+- instruction: |
+    Missing Number. Write `missing_number(nums: &[i32]) -> i32`: the slice holds n
+    distinct values from 0..=n with exactly one missing; return it.
+    Example: [3, 0, 1] -> 2.
+  starter: |
+    fn missing_number(nums: &[i32]) -> i32 {
+
+    }
+  solution: |
+    fn missing_number(nums: &[i32]) -> i32 {
+        let n = nums.len() as i32;
+        let mut acc = n;
+        for (i, &v) in nums.iter().enumerate() {
+            acc ^= i as i32 ^ v;
+        }
+        acc
+    }
+  notes: |
+    XOR each index together with each value, plus the final index n. Every present
+    number cancels with its index, leaving only the missing one. No sum means no
+    overflow worries.
+  source: "NeetCode 150 · Bit Manipulation"
+  tags: [rust, neetcode, bit-manipulation]
+  tests: |
+    assert_eq!(missing_number(&[3, 0, 1]), 2);
+    assert_eq!(missing_number(&[0, 1]), 2);
+    assert_eq!(missing_number(&[9, 6, 4, 2, 3, 5, 7, 0, 1]), 8);
+    assert_eq!(missing_number(&[0]), 1);
+
+- instruction: |
+    Sum of Two Integers. Write `get_sum(a: i32, b: i32) -> i32` returning a + b
+    without using the `+` or `-` operators (use bitwise operations).
+    Example: (2, 3) -> 5; (-2, 3) -> 1.
+  starter: |
+    fn get_sum(a: i32, b: i32) -> i32 {
+
+    }
+  solution: |
+    fn get_sum(a: i32, b: i32) -> i32 {
+        let mut a = a;
+        let mut b = b;
+        while b != 0 {
+            // Sum without carry, then the carry shifted into place.
+            let carry = (a & b) << 1;
+            a ^= b;
+            b = carry;
+        }
+        a
+    }
+  notes: |
+    XOR adds bit-by-bit ignoring carries; AND-then-shift produces the carries.
+    Repeat until no carry remains. Rust would panic on overflowing shifts/adds in
+    debug, but XOR/AND/`<<` here stay in range, so plain operators suffice.
+  source: "NeetCode 150 · Bit Manipulation"
+  tags: [rust, neetcode, bit-manipulation]
+  tests: |
+    assert_eq!(get_sum(2, 3), 5);
+    assert_eq!(get_sum(-2, 3), 1);
+    assert_eq!(get_sum(0, 0), 0);
+    assert_eq!(get_sum(-5, -7), -12);
+
+- instruction: |
+    Reverse Integer. Write `reverse(x: i32) -> i32` returning x with its decimal
+    digits reversed; return 0 if the result overflows a signed 32-bit integer.
+    Example: 123 -> 321; -123 -> -321; 1534236469 -> 0.
+  starter: |
+    fn reverse(x: i32) -> i32 {
+
+    }
+  solution: |
+    fn reverse(x: i32) -> i32 {
+        let mut x = x;
+        let mut result: i32 = 0;
+        while x != 0 {
+            let digit = x % 10;
+            x /= 10;
+            match result
+                .checked_mul(10)
+                .and_then(|r| r.checked_add(digit))
+            {
+                Some(r) => result = r,
+                None => return 0,
+            }
+        }
+        result
+    }
+  notes: |
+    Peel digits with `% 10` / `/= 10` — this works for negatives too, since Rust
+    truncates toward zero. `checked_mul`/`checked_add` return None on overflow, so
+    a result outside i32's range short-circuits to 0 instead of panicking.
+  source: "NeetCode 150 · Bit Manipulation"
+  tags: [rust, neetcode, bit-manipulation]
+  tests: |
+    assert_eq!(reverse(123), 321);
+    assert_eq!(reverse(-123), -321);
+    assert_eq!(reverse(120), 21);
+    assert_eq!(reverse(0), 0);
+    assert_eq!(reverse(1_534_236_469), 0);

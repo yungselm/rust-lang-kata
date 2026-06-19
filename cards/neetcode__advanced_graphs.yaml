@@ -1,0 +1,380 @@
+# NeetCode 150 — Advanced Graphs. Original prompts; idiomatic, clippy-clean
+# Rust; example tests run by `python check_cards.py`.
+- instruction: |
+    Reconstruct Itinerary. Write `find_itinerary(tickets: &[[&str; 2]]) -> Vec<String>`:
+    each ticket is [from, to]. Using every ticket exactly once and starting at
+    "JFK", return the itinerary that is smallest in lexical order.
+    Example: [["JFK","SFO"],["JFK","ATL"],["SFO","ATL"],["ATL","JFK"],["ATL","SFO"]]
+    -> ["JFK","ATL","JFK","SFO","ATL","SFO"].
+  starter: |
+    use std::collections::HashMap;
+
+    fn find_itinerary(tickets: &[[&str; 2]]) -> Vec<String> {
+
+    }
+  solution: |
+    use std::collections::HashMap;
+
+    fn find_itinerary(tickets: &[[&str; 2]]) -> Vec<String> {
+        let mut graph: HashMap<&str, Vec<&str>> = HashMap::new();
+        for &[from, to] in tickets {
+            graph.entry(from).or_default().push(to);
+        }
+        for dests in graph.values_mut() {
+            // Sort descending so popping from the back yields lexical order.
+            dests.sort_unstable_by(|a, b| b.cmp(a));
+        }
+        let mut route: Vec<String> = Vec::with_capacity(tickets.len() + 1);
+        let mut stack: Vec<&str> = vec!["JFK"];
+        while let Some(&node) = stack.last() {
+            if let Some(next) = graph.get_mut(node).and_then(|d| d.pop()) {
+                stack.push(next);
+            } else {
+                route.push(stack.pop().unwrap().to_string());
+            }
+        }
+        route.reverse();
+        route
+    }
+  notes: |
+    Hierholzer's algorithm for an Eulerian path. Keep each airport's destinations
+    sorted descending and always take the smallest available next hop; when an
+    airport is stuck, pop it onto the route. Reversing the popped order gives the
+    valid path that is lexically smallest. O(E log E).
+  source: "NeetCode 150 · Advanced Graphs"
+  tags: [rust, neetcode, advanced-graphs]
+  tests: |
+    let tickets = [
+        ["JFK", "SFO"],
+        ["JFK", "ATL"],
+        ["SFO", "ATL"],
+        ["ATL", "JFK"],
+        ["ATL", "SFO"],
+    ];
+    assert_eq!(
+        find_itinerary(&tickets),
+        vec!["JFK", "ATL", "JFK", "SFO", "ATL", "SFO"]
+    );
+    let simple = [["MUC", "LHR"], ["JFK", "MUC"], ["SFO", "SJC"], ["LHR", "SFO"]];
+    assert_eq!(
+        find_itinerary(&simple),
+        vec!["JFK", "MUC", "LHR", "SFO", "SJC"]
+    );
+
+- instruction: |
+    Min Cost to Connect Points. Write `min_cost_connect_points(points: &[[i32; 2]]) -> i32`:
+    connect all points so every pair is reachable, minimizing total cost where the
+    cost between two points is their Manhattan distance.
+    Example: [[0,0],[2,2],[3,10],[5,2],[7,0]] -> 20.
+  starter: |
+    use std::cmp::Reverse;
+    use std::collections::BinaryHeap;
+
+    fn min_cost_connect_points(points: &[[i32; 2]]) -> i32 {
+
+    }
+  solution: |
+    use std::cmp::Reverse;
+    use std::collections::BinaryHeap;
+
+    fn min_cost_connect_points(points: &[[i32; 2]]) -> i32 {
+        let n = points.len();
+        if n <= 1 {
+            return 0;
+        }
+        let mut in_tree = vec![false; n];
+        let mut heap: BinaryHeap<Reverse<(i32, usize)>> = BinaryHeap::new();
+        heap.push(Reverse((0, 0)));
+        let mut total = 0;
+        let mut connected = 0;
+        while connected < n {
+            let Reverse((cost, u)) = heap.pop().unwrap();
+            if in_tree[u] {
+                continue;
+            }
+            in_tree[u] = true;
+            total += cost;
+            connected += 1;
+            for (v, p) in points.iter().enumerate() {
+                if !in_tree[v] {
+                    let d = (points[u][0] - p[0]).abs() + (points[u][1] - p[1]).abs();
+                    heap.push(Reverse((d, v)));
+                }
+            }
+        }
+        total
+    }
+  notes: |
+    Prim's MST: grow a tree from one point, each step pulling the cheapest edge to
+    a point not yet in the tree via a min-heap (Reverse on a max-heap). The complete
+    graph has n^2 edges, so this is O(n^2 log n).
+  source: "NeetCode 150 · Advanced Graphs"
+  tags: [rust, neetcode, advanced-graphs]
+  tests: |
+    assert_eq!(
+        min_cost_connect_points(&[[0, 0], [2, 2], [3, 10], [5, 2], [7, 0]]),
+        20
+    );
+    assert_eq!(min_cost_connect_points(&[[3, 12], [-2, 5], [-4, 1]]), 18);
+    assert_eq!(min_cost_connect_points(&[[0, 0]]), 0);
+
+- instruction: |
+    Network Delay Time. Write `network_delay_time(times: &[[i32; 3]], n: usize, k: usize) -> i32`:
+    each [u, v, w] is a directed edge with travel time w over nodes 1..=n. A signal
+    starts at node k; return the time for all nodes to receive it, or -1 if some
+    cannot.
+    Example: ([[2,1,1],[2,3,1],[3,4,1]], 4, 2) -> 2.
+  starter: |
+    use std::cmp::Reverse;
+    use std::collections::BinaryHeap;
+
+    fn network_delay_time(times: &[[i32; 3]], n: usize, k: usize) -> i32 {
+
+    }
+  solution: |
+    use std::cmp::Reverse;
+    use std::collections::BinaryHeap;
+
+    fn network_delay_time(times: &[[i32; 3]], n: usize, k: usize) -> i32 {
+        let mut adj: Vec<Vec<(usize, i32)>> = vec![Vec::new(); n + 1];
+        for &[u, v, w] in times {
+            adj[u as usize].push((v as usize, w));
+        }
+        let mut dist = vec![i32::MAX; n + 1];
+        dist[k] = 0;
+        let mut heap: BinaryHeap<Reverse<(i32, usize)>> = BinaryHeap::new();
+        heap.push(Reverse((0, k)));
+        while let Some(Reverse((d, u))) = heap.pop() {
+            if d > dist[u] {
+                continue;
+            }
+            for &(v, w) in &adj[u] {
+                if d + w < dist[v] {
+                    dist[v] = d + w;
+                    heap.push(Reverse((d + w, v)));
+                }
+            }
+        }
+        let answer = dist[1..=n].iter().copied().max().unwrap();
+        if answer == i32::MAX {
+            -1
+        } else {
+            answer
+        }
+    }
+  notes: |
+    Dijkstra from k: a min-heap keyed by distance pops the closest unsettled node
+    each time, relaxing its outgoing edges. The whole network is informed when the
+    farthest node is, so the answer is the maximum shortest-distance (or -1 if any
+    is unreachable). O(E log V).
+  source: "NeetCode 150 · Advanced Graphs"
+  tags: [rust, neetcode, advanced-graphs]
+  tests: |
+    assert_eq!(
+        network_delay_time(&[[2, 1, 1], [2, 3, 1], [3, 4, 1]], 4, 2),
+        2
+    );
+    assert_eq!(network_delay_time(&[[1, 2, 1]], 2, 1), 1);
+    assert_eq!(network_delay_time(&[[1, 2, 1]], 2, 2), -1);
+
+- instruction: |
+    Swim in Rising Water. Write `swim_in_water(grid: &[Vec<i32>]) -> i32`: on an
+    n*n grid where grid[r][c] is an elevation, at time t you may move between
+    4-adjacent cells whose elevations are both <= t. Return the least time to reach
+    the bottom-right from the top-left.
+    Example: [[0,2],[1,3]] -> 3.
+  starter: |
+    use std::cmp::Reverse;
+    use std::collections::BinaryHeap;
+
+    fn swim_in_water(grid: &[Vec<i32>]) -> i32 {
+
+    }
+  solution: |
+    use std::cmp::Reverse;
+    use std::collections::BinaryHeap;
+
+    fn swim_in_water(grid: &[Vec<i32>]) -> i32 {
+        let n = grid.len();
+        let mut visited = vec![vec![false; n]; n];
+        let mut heap: BinaryHeap<Reverse<(i32, usize, usize)>> = BinaryHeap::new();
+        heap.push(Reverse((grid[0][0], 0, 0)));
+        visited[0][0] = true;
+        while let Some(Reverse((t, r, c))) = heap.pop() {
+            if r == n - 1 && c == n - 1 {
+                return t;
+            }
+            let step = |nr: usize, nc: usize, h: &mut BinaryHeap<Reverse<(i32, usize, usize)>>, vis: &mut Vec<Vec<bool>>| {
+                if !vis[nr][nc] {
+                    vis[nr][nc] = true;
+                    h.push(Reverse((t.max(grid[nr][nc]), nr, nc)));
+                }
+            };
+            if r > 0 {
+                step(r - 1, c, &mut heap, &mut visited);
+            }
+            if r + 1 < n {
+                step(r + 1, c, &mut heap, &mut visited);
+            }
+            if c > 0 {
+                step(r, c - 1, &mut heap, &mut visited);
+            }
+            if c + 1 < n {
+                step(r, c + 1, &mut heap, &mut visited);
+            }
+        }
+        -1
+    }
+  notes: |
+    Dijkstra-flavoured search where a path's "cost" is the MAXIMUM elevation along
+    it. The min-heap always expands the cell reachable with the lowest water level
+    so far, so the first time the goal pops, that level is the answer. O(n^2 log n).
+  source: "NeetCode 150 · Advanced Graphs"
+  tags: [rust, neetcode, advanced-graphs]
+  tests: |
+    assert_eq!(swim_in_water(&[vec![0, 2], vec![1, 3]]), 3);
+    assert_eq!(
+        swim_in_water(&[
+            vec![0, 1, 2, 3, 4],
+            vec![24, 23, 22, 21, 5],
+            vec![12, 13, 14, 15, 16],
+            vec![11, 17, 18, 19, 20],
+            vec![10, 9, 8, 7, 6],
+        ]),
+        16
+    );
+    assert_eq!(swim_in_water(&[vec![0]]), 0);
+
+- instruction: |
+    Alien Dictionary. Words from an alien language are sorted lexically. Write
+    `alien_order(words: &[String]) -> String` deducing a possible ordering of its
+    letters (return "" if the ordering is invalid/contradictory).
+    Example: ["wrt","wrf","er","ett","rftt"] -> "wertf".
+  starter: |
+    use std::collections::{HashMap, HashSet, VecDeque};
+
+    fn alien_order(words: &[String]) -> String {
+
+    }
+  solution: |
+    use std::collections::{HashMap, HashSet, VecDeque};
+
+    fn alien_order(words: &[String]) -> String {
+        let mut adj: HashMap<char, HashSet<char>> = HashMap::new();
+        let mut indegree: HashMap<char, usize> = HashMap::new();
+        for word in words {
+            for ch in word.chars() {
+                adj.entry(ch).or_default();
+                indegree.entry(ch).or_insert(0);
+            }
+        }
+        for pair in words.windows(2) {
+            let first = pair[0].as_bytes();
+            let second = pair[1].as_bytes();
+            let min_len = first.len().min(second.len());
+            let mut differed = false;
+            for i in 0..min_len {
+                if first[i] != second[i] {
+                    let a = first[i] as char;
+                    let b = second[i] as char;
+                    if adj.get_mut(&a).unwrap().insert(b) {
+                        *indegree.get_mut(&b).unwrap() += 1;
+                    }
+                    differed = true;
+                    break;
+                }
+            }
+            // A longer word cannot precede its own prefix.
+            if !differed && first.len() > second.len() {
+                return String::new();
+            }
+        }
+        let mut queue: VecDeque<char> = indegree
+            .iter()
+            .filter(|&(_, &d)| d == 0)
+            .map(|(&c, _)| c)
+            .collect();
+        let mut order = String::new();
+        while let Some(c) = queue.pop_front() {
+            order.push(c);
+            for &next in &adj[&c] {
+                let d = indegree.get_mut(&next).unwrap();
+                *d -= 1;
+                if *d == 0 {
+                    queue.push_back(next);
+                }
+            }
+        }
+        if order.len() == indegree.len() {
+            order
+        } else {
+            String::new()
+        }
+    }
+  notes: |
+    Build a letter graph: each adjacent word pair contributes one ordering edge
+    from their first differing character. A prefix appearing after its longer word
+    is invalid. Then topologically sort (Kahn); a leftover cycle means no valid
+    order. Note: with multiple roots the order isn't unique, so the test uses input
+    with a forced chain.
+  source: "NeetCode 150 · Advanced Graphs"
+  tags: [rust, neetcode, advanced-graphs]
+  tests: |
+    let words: Vec<String> = ["wrt", "wrf", "er", "ett", "rftt"]
+        .iter()
+        .map(|s| s.to_string())
+        .collect();
+    assert_eq!(alien_order(&words), "wertf");
+    let bad: Vec<String> = ["abc", "ab"].iter().map(|s| s.to_string()).collect();
+    assert_eq!(alien_order(&bad), "");
+    // Forced total chain b -> a (single root each step), so the order is unique.
+    let chain: Vec<String> = ["ba", "ab"].iter().map(|s| s.to_string()).collect();
+    assert_eq!(alien_order(&chain), "ba");
+
+- instruction: |
+    Cheapest Flights Within K Stops. Write
+    `find_cheapest_price(n: usize, flights: &[[i32; 3]], src: usize, dst: usize, k: i32) -> i32`:
+    each [from, to, price] is a flight over cities 0..n. Return the cheapest price
+    from src to dst using at most k stops (k+1 edges), or -1 if none.
+    Example: (4, [[0,1,100],[1,2,100],[2,0,100],[1,3,600],[2,3,200]], 0, 3, 1) -> 700.
+  starter: |
+    fn find_cheapest_price(n: usize, flights: &[[i32; 3]], src: usize, dst: usize, k: i32) -> i32 {
+
+    }
+  solution: |
+    fn find_cheapest_price(n: usize, flights: &[[i32; 3]], src: usize, dst: usize, k: i32) -> i32 {
+        let mut dist = vec![i32::MAX; n];
+        dist[src] = 0;
+        for _ in 0..=k {
+            let snapshot = dist.clone();
+            for &[from, to, price] in flights {
+                let (from, to) = (from as usize, to as usize);
+                if snapshot[from] != i32::MAX && snapshot[from] + price < dist[to] {
+                    dist[to] = snapshot[from] + price;
+                }
+            }
+        }
+        if dist[dst] == i32::MAX {
+            -1
+        } else {
+            dist[dst]
+        }
+    }
+  notes: |
+    Bellman-Ford bounded to k+1 rounds (at most k stops = k+1 edges). Relaxing
+    against a SNAPSHOT of distances from the previous round prevents using two edges
+    within the same round, correctly capping the hop count. O(k * E).
+  source: "NeetCode 150 · Advanced Graphs"
+  tags: [rust, neetcode, advanced-graphs]
+  tests: |
+    let flights = [
+        [0, 1, 100],
+        [1, 2, 100],
+        [2, 0, 100],
+        [1, 3, 600],
+        [2, 3, 200],
+    ];
+    assert_eq!(find_cheapest_price(4, &flights, 0, 3, 1), 700);
+    let f2 = [[0, 1, 100], [1, 2, 100], [0, 2, 500]];
+    assert_eq!(find_cheapest_price(3, &f2, 0, 2, 1), 200);
+    assert_eq!(find_cheapest_price(3, &f2, 0, 2, 0), 500);

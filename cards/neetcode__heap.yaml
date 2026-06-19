@@ -1,0 +1,411 @@
+# NeetCode 150 — Heap / Priority Queue. Original prompts; idiomatic, clippy-clean
+# Rust; example tests run by `python check_cards.py`. Uses std BinaryHeap
+# (max-heap; wrap in std::cmp::Reverse for a min-heap).
+- instruction: |
+    Kth Largest Element in a Stream. Build a `KthLargest` struct with
+    `new(k: usize, nums: &[i32]) -> Self` and `add(&mut self, val: i32) -> i32`
+    returning the k-th largest value seen so far after inserting `val`.
+    Example: k=3, [4,5,8,2]; add(3)->4, add(5)->5, add(10)->5.
+  starter: |
+    use std::cmp::Reverse;
+    use std::collections::BinaryHeap;
+
+    struct KthLargest {
+        k: usize,
+        heap: BinaryHeap<Reverse<i32>>,
+    }
+
+    impl KthLargest {
+        fn new(k: usize, nums: &[i32]) -> Self {
+
+        }
+
+        fn add(&mut self, val: i32) -> i32 {
+
+        }
+    }
+  solution: |
+    use std::cmp::Reverse;
+    use std::collections::BinaryHeap;
+
+    struct KthLargest {
+        k: usize,
+        heap: BinaryHeap<Reverse<i32>>,
+    }
+
+    impl KthLargest {
+        fn new(k: usize, nums: &[i32]) -> Self {
+            let mut this = KthLargest { k, heap: BinaryHeap::new() };
+            for &n in nums {
+                this.add(n);
+            }
+            this
+        }
+
+        fn add(&mut self, val: i32) -> i32 {
+            self.heap.push(Reverse(val));
+            while self.heap.len() > self.k {
+                self.heap.pop();
+            }
+            self.heap.peek().expect("at least k elements have been added").0
+        }
+    }
+  notes: |
+    Keep a min-heap (via `Reverse`) of only the k largest values: push, then drop
+    the smallest while the size exceeds k. The heap's minimum is then the k-th
+    largest. Each add is O(log k).
+  source: "NeetCode 150 · Heap / Priority Queue"
+  tags: [rust, neetcode, heap]
+  tests: |
+    let mut kth = KthLargest::new(3, &[4, 5, 8, 2]);
+    assert_eq!(kth.add(3), 4);
+    assert_eq!(kth.add(5), 5);
+    assert_eq!(kth.add(10), 5);
+    assert_eq!(kth.add(9), 8);
+    assert_eq!(kth.add(4), 8);
+
+- instruction: |
+    Last Stone Weight. Write `last_stone_weight(stones: &[i32]) -> i32`: repeatedly
+    smash the two heaviest stones; if unequal, the difference returns to the pile.
+    Return the weight of the last remaining stone, or 0 if none remain.
+    Example: [2,7,4,1,8,1] -> 1.
+  starter: |
+    use std::collections::BinaryHeap;
+
+    fn last_stone_weight(stones: &[i32]) -> i32 {
+
+    }
+  solution: |
+    use std::collections::BinaryHeap;
+
+    fn last_stone_weight(stones: &[i32]) -> i32 {
+        let mut heap: BinaryHeap<i32> = stones.iter().copied().collect();
+        while heap.len() > 1 {
+            let a = heap.pop().unwrap();
+            let b = heap.pop().unwrap();
+            if a != b {
+                heap.push(a - b);
+            }
+        }
+        heap.pop().unwrap_or(0)
+    }
+  notes: |
+    A max-heap gives the two heaviest stones in O(log n) each. `BinaryHeap` is a
+    max-heap by default, so popping twice yields the pair to smash; push back the
+    difference when they differ.
+  source: "NeetCode 150 · Heap / Priority Queue"
+  tags: [rust, neetcode, heap]
+  tests: |
+    assert_eq!(last_stone_weight(&[2, 7, 4, 1, 8, 1]), 1);
+    assert_eq!(last_stone_weight(&[1]), 1);
+    assert_eq!(last_stone_weight(&[2, 2]), 0);
+    assert_eq!(last_stone_weight(&[]), 0);
+
+- instruction: |
+    K Closest Points to Origin. Write `k_closest(points: &[[i32; 2]], k: usize) ->
+    Vec<[i32; 2]>` returning the `k` points nearest to (0, 0) by Euclidean
+    distance (any order).
+    Example: ([[1,3],[-2,2]], 1) -> [[-2, 2]].
+  starter: |
+    use std::collections::BinaryHeap;
+
+    fn k_closest(points: &[[i32; 2]], k: usize) -> Vec<[i32; 2]> {
+
+    }
+  solution: |
+    use std::collections::BinaryHeap;
+
+    fn k_closest(points: &[[i32; 2]], k: usize) -> Vec<[i32; 2]> {
+        // Max-heap of the k smallest squared distances seen so far.
+        let mut heap: BinaryHeap<(i64, [i32; 2])> = BinaryHeap::new();
+        for &p in points {
+            let dist = i64::from(p[0]).pow(2) + i64::from(p[1]).pow(2);
+            heap.push((dist, p));
+            if heap.len() > k {
+                heap.pop();
+            }
+        }
+        heap.into_iter().map(|(_, p)| p).collect()
+    }
+  notes: |
+    Compare by squared distance (no need for the costly sqrt). A max-heap capped at
+    size k evicts the farthest point as we go, leaving the k closest in O(n log k).
+    `Reverse` would instead give a sort-and-take; either is fine.
+  source: "NeetCode 150 · Heap / Priority Queue"
+  tags: [rust, neetcode, heap]
+  tests: |
+    let mut got = k_closest(&[[1, 3], [-2, 2]], 1);
+    got.sort();
+    assert_eq!(got, vec![[-2, 2]]);
+    let mut got2 = k_closest(&[[3, 3], [5, -1], [-2, 4]], 2);
+    got2.sort();
+    assert_eq!(got2, vec![[-2, 4], [3, 3]]);
+
+- instruction: |
+    Kth Largest Element in an Array. Write `find_kth_largest(nums: &[i32], k:
+    usize) -> i32`: the k-th largest value (k=1 is the maximum).
+    Example: ([3,2,1,5,6,4], 2) -> 5.
+  starter: |
+    use std::cmp::Reverse;
+    use std::collections::BinaryHeap;
+
+    fn find_kth_largest(nums: &[i32], k: usize) -> i32 {
+
+    }
+  solution: |
+    use std::cmp::Reverse;
+    use std::collections::BinaryHeap;
+
+    fn find_kth_largest(nums: &[i32], k: usize) -> i32 {
+        // Min-heap holding the k largest values; its root is the answer.
+        let mut heap: BinaryHeap<Reverse<i32>> = BinaryHeap::new();
+        for &n in nums {
+            heap.push(Reverse(n));
+            if heap.len() > k {
+                heap.pop();
+            }
+        }
+        heap.peek().expect("k <= nums.len()").0
+    }
+  notes: |
+    Maintaining a size-k min-heap keeps memory at O(k) and runs in O(n log k); the
+    smallest of the k largest is exactly the k-th largest. (Quickselect gives
+    average O(n).)
+  source: "NeetCode 150 · Heap / Priority Queue"
+  tags: [rust, neetcode, heap]
+  tests: |
+    assert_eq!(find_kth_largest(&[3, 2, 1, 5, 6, 4], 2), 5);
+    assert_eq!(find_kth_largest(&[3, 2, 3, 1, 2, 4, 5, 5, 6], 4), 4);
+    assert_eq!(find_kth_largest(&[1], 1), 1);
+
+- instruction: |
+    Task Scheduler. Write `least_interval(tasks: &[char], n: i32) -> i32`: each
+    task takes one unit, and identical tasks must be at least `n` units apart
+    (idle slots allowed). Return the minimum total time to finish all tasks.
+    Example: (['A','A','A','B','B','B'], 2) -> 8.
+  starter: |
+    use std::collections::HashMap;
+
+    fn least_interval(tasks: &[char], n: i32) -> i32 {
+
+    }
+  solution: |
+    use std::collections::HashMap;
+
+    fn least_interval(tasks: &[char], n: i32) -> i32 {
+        let mut counts: HashMap<char, i32> = HashMap::new();
+        for &t in tasks {
+            *counts.entry(t).or_default() += 1;
+        }
+        let max_count = counts.values().copied().max().unwrap_or(0);
+        let max_freq = counts.values().filter(|&&c| c == max_count).count() as i32;
+        // Frame: (max_count - 1) full gaps of size (n + 1), plus the final batch.
+        let framed = (max_count - 1) * (n + 1) + max_freq;
+        framed.max(tasks.len() as i32)
+    }
+  notes: |
+    The most frequent task forces a skeleton of (max_count - 1) gaps of width
+    n+1, finished by the tasks tied for that maximum. If there are enough distinct
+    tasks to fill every idle slot, no idling is needed, hence the max with the
+    total count. O(t).
+  source: "NeetCode 150 · Heap / Priority Queue"
+  tags: [rust, neetcode, heap]
+  tests: |
+    assert_eq!(least_interval(&['A', 'A', 'A', 'B', 'B', 'B'], 2), 8);
+    assert_eq!(least_interval(&['A', 'A', 'A', 'B', 'B', 'B'], 0), 6);
+    assert_eq!(
+        least_interval(&['A', 'A', 'A', 'A', 'A', 'A', 'B', 'C', 'D', 'E', 'F', 'G'], 2),
+        16
+    );
+
+- instruction: |
+    Design Twitter. Build a `Twitter` struct with `new()`, `post_tweet(&mut self,
+    user: i32, tweet: i32)`, `get_news_feed(&self, user: i32) -> Vec<i32>` (the 10
+    most recent tweet ids from the user and those they follow, newest first),
+    `follow(&mut self, u: i32, v: i32)`, and `unfollow(&mut self, u: i32, v: i32)`.
+  starter: |
+    use std::collections::{HashMap, HashSet};
+
+    struct Twitter {
+        time: u64,
+        tweets: HashMap<i32, Vec<(u64, i32)>>,
+        following: HashMap<i32, HashSet<i32>>,
+    }
+
+    impl Twitter {
+        fn new() -> Self {
+
+        }
+
+        fn post_tweet(&mut self, user: i32, tweet: i32) {
+
+        }
+
+        fn get_news_feed(&self, user: i32) -> Vec<i32> {
+
+        }
+
+        fn follow(&mut self, u: i32, v: i32) {
+
+        }
+
+        fn unfollow(&mut self, u: i32, v: i32) {
+
+        }
+    }
+  solution: |
+    use std::collections::{BinaryHeap, HashMap, HashSet};
+
+    struct Twitter {
+        time: u64,
+        tweets: HashMap<i32, Vec<(u64, i32)>>,
+        following: HashMap<i32, HashSet<i32>>,
+    }
+
+    impl Twitter {
+        fn new() -> Self {
+            Twitter {
+                time: 0,
+                tweets: HashMap::new(),
+                following: HashMap::new(),
+            }
+        }
+
+        fn post_tweet(&mut self, user: i32, tweet: i32) {
+            self.time += 1;
+            self.tweets.entry(user).or_default().push((self.time, tweet));
+        }
+
+        fn get_news_feed(&self, user: i32) -> Vec<i32> {
+            // Max-heap over (timestamp, tweet_id) across self + followees.
+            let mut heap: BinaryHeap<(u64, i32)> = BinaryHeap::new();
+            let mut sources: HashSet<i32> = HashSet::new();
+            sources.insert(user);
+            if let Some(followees) = self.following.get(&user) {
+                sources.extend(followees.iter().copied());
+            }
+            for source in sources {
+                if let Some(posts) = self.tweets.get(&source) {
+                    for &(ts, id) in posts {
+                        heap.push((ts, id));
+                    }
+                }
+            }
+            let mut feed = Vec::with_capacity(10);
+            while feed.len() < 10 {
+                let Some((_, id)) = heap.pop() else { break };
+                feed.push(id);
+            }
+            feed
+        }
+
+        fn follow(&mut self, u: i32, v: i32) {
+            self.following.entry(u).or_default().insert(v);
+        }
+
+        fn unfollow(&mut self, u: i32, v: i32) {
+            if let Some(set) = self.following.get_mut(&u) {
+                set.remove(&v);
+            }
+        }
+    }
+  notes: |
+    Stamp every tweet with a global monotonic counter so recency is a total order.
+    The feed merges the relevant authors' tweets through a max-heap keyed on that
+    timestamp and pops the 10 newest. Follow/unfollow just edit a set per user.
+  source: "NeetCode 150 · Heap / Priority Queue"
+  tags: [rust, neetcode, heap]
+  tests: |
+    let mut tw = Twitter::new();
+    tw.post_tweet(1, 5);
+    assert_eq!(tw.get_news_feed(1), vec![5]);
+    tw.follow(1, 2);
+    tw.post_tweet(2, 6);
+    assert_eq!(tw.get_news_feed(1), vec![6, 5]);
+    tw.unfollow(1, 2);
+    assert_eq!(tw.get_news_feed(1), vec![5]);
+    assert_eq!(tw.get_news_feed(3), Vec::<i32>::new());
+
+- instruction: |
+    Find Median from Data Stream. Build a `MedianFinder` struct with `new()`,
+    `add_num(&mut self, num: i32)`, and `find_median(&self) -> f64` returning the
+    median of all numbers added so far.
+    Example: add 1, add 2 -> 1.5; add 3 -> 2.0.
+  starter: |
+    use std::cmp::Reverse;
+    use std::collections::BinaryHeap;
+
+    struct MedianFinder {
+        // Max-heap of the smaller half, min-heap of the larger half.
+        lo: BinaryHeap<i32>,
+        hi: BinaryHeap<Reverse<i32>>,
+    }
+
+    impl MedianFinder {
+        fn new() -> Self {
+
+        }
+
+        fn add_num(&mut self, num: i32) {
+
+        }
+
+        fn find_median(&self) -> f64 {
+
+        }
+    }
+  solution: |
+    use std::cmp::Reverse;
+    use std::collections::BinaryHeap;
+
+    struct MedianFinder {
+        // `lo` (max-heap) holds the smaller half; `hi` (min-heap) the larger.
+        // Invariant: lo.len() == hi.len() or lo.len() == hi.len() + 1.
+        lo: BinaryHeap<i32>,
+        hi: BinaryHeap<Reverse<i32>>,
+    }
+
+    impl MedianFinder {
+        fn new() -> Self {
+            MedianFinder { lo: BinaryHeap::new(), hi: BinaryHeap::new() }
+        }
+
+        fn add_num(&mut self, num: i32) {
+            self.lo.push(num);
+            // Move the largest of `lo` over to keep ordering between halves.
+            let top = self.lo.pop().unwrap();
+            self.hi.push(Reverse(top));
+            // Rebalance so `lo` is never smaller than `hi`.
+            if self.hi.len() > self.lo.len() {
+                let Reverse(v) = self.hi.pop().unwrap();
+                self.lo.push(v);
+            }
+        }
+
+        fn find_median(&self) -> f64 {
+            if self.lo.len() > self.hi.len() {
+                f64::from(*self.lo.peek().unwrap())
+            } else {
+                let lo = f64::from(*self.lo.peek().unwrap());
+                let hi = f64::from(self.hi.peek().unwrap().0);
+                (lo + hi) / 2.0
+            }
+        }
+    }
+  notes: |
+    Two heaps split the data at the median: a max-heap for the lower half and a
+    min-heap for the upper. Funneling each insert through `lo` then rebalancing
+    keeps the sizes within one, so the median is a heap top (or the average of
+    both). O(log n) per add, O(1) per query.
+  source: "NeetCode 150 · Heap / Priority Queue"
+  tags: [rust, neetcode, heap]
+  tests: |
+    let mut mf = MedianFinder::new();
+    mf.add_num(1);
+    mf.add_num(2);
+    assert!((mf.find_median() - 1.5).abs() < 1e-9);
+    mf.add_num(3);
+    assert!((mf.find_median() - 2.0).abs() < 1e-9);
+    let mut mf2 = MedianFinder::new();
+    mf2.add_num(5);
+    assert!((mf2.find_median() - 5.0).abs() < 1e-9);

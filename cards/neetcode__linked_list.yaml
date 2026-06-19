@@ -1,0 +1,749 @@
+# NeetCode 150 — Linked List. Original prompts; idiomatic, clippy-clean
+# Rust; example tests run by `python check_cards.py`.
+- instruction: |
+    Reverse Linked List. Given a singly linked list, return its reversal.
+    Write `reverse_list(head: Option<Box<ListNode>>) -> Option<Box<ListNode>>`.
+    Example: 1->2->3 becomes 3->2->1.
+  starter: |
+    #[derive(PartialEq, Eq, Clone, Debug)]
+    struct ListNode {
+        val: i32,
+        next: Option<Box<ListNode>>,
+    }
+
+    fn reverse_list(head: Option<Box<ListNode>>) -> Option<Box<ListNode>> {
+
+    }
+  solution: |
+    #[derive(PartialEq, Eq, Clone, Debug)]
+    struct ListNode {
+        val: i32,
+        next: Option<Box<ListNode>>,
+    }
+
+    fn reverse_list(mut head: Option<Box<ListNode>>) -> Option<Box<ListNode>> {
+        let mut prev = None;
+        while let Some(mut node) = head {
+            head = node.next.take();
+            node.next = prev;
+            prev = Some(node);
+        }
+        prev
+    }
+  notes: |
+    Walk the list, repeatedly detaching the head with `take`, splicing it onto the
+    front of the already-reversed `prev`. Moving the boxes around avoids any clones
+    and satisfies the borrow checker. O(n) time, O(1) extra space.
+  source: "NeetCode 150 · Linked List"
+  tags: [rust, neetcode, linked-list]
+  tests: |
+    fn build(vals: &[i32]) -> Option<Box<ListNode>> {
+        vals.iter()
+            .rev()
+            .fold(None, |next, &val| Some(Box::new(ListNode { val, next })))
+    }
+    assert_eq!(reverse_list(build(&[1, 2, 3])), build(&[3, 2, 1]));
+    assert_eq!(reverse_list(build(&[1])), build(&[1]));
+    assert_eq!(reverse_list(build(&[])), build(&[]));
+
+- instruction: |
+    Merge Two Sorted Lists. Given two sorted singly linked lists, merge them into
+    one sorted list and return it. Write
+    `merge_two_lists(a: Option<Box<ListNode>>, b: Option<Box<ListNode>>) -> Option<Box<ListNode>>`.
+    Example: 1->2->4 and 1->3->4 -> 1->1->2->3->4->4.
+  starter: |
+    #[derive(PartialEq, Eq, Clone, Debug)]
+    struct ListNode {
+        val: i32,
+        next: Option<Box<ListNode>>,
+    }
+
+    fn merge_two_lists(
+        a: Option<Box<ListNode>>,
+        b: Option<Box<ListNode>>,
+    ) -> Option<Box<ListNode>> {
+
+    }
+  solution: |
+    #[derive(PartialEq, Eq, Clone, Debug)]
+    struct ListNode {
+        val: i32,
+        next: Option<Box<ListNode>>,
+    }
+
+    fn merge_two_lists(
+        mut a: Option<Box<ListNode>>,
+        mut b: Option<Box<ListNode>>,
+    ) -> Option<Box<ListNode>> {
+        let mut dummy = Box::new(ListNode { val: 0, next: None });
+        let mut tail = &mut dummy;
+        loop {
+            match (a.as_ref(), b.as_ref()) {
+                (Some(na), Some(nb)) => {
+                    if na.val <= nb.val {
+                        let mut node = a.take().unwrap();
+                        a = node.next.take();
+                        tail.next = Some(node);
+                    } else {
+                        let mut node = b.take().unwrap();
+                        b = node.next.take();
+                        tail.next = Some(node);
+                    }
+                    tail = tail.next.as_mut().unwrap();
+                }
+                _ => {
+                    tail.next = a.or(b);
+                    break;
+                }
+            }
+        }
+        dummy.next
+    }
+  notes: |
+    A dummy head lets `tail` always point at a real node, so appending is uniform.
+    Detach the smaller node, move it onto the tail, advance. When one list empties,
+    splice the remainder with `a.or(b)`. O(n + m).
+  source: "NeetCode 150 · Linked List"
+  tags: [rust, neetcode, linked-list]
+  tests: |
+    fn build(vals: &[i32]) -> Option<Box<ListNode>> {
+        vals.iter()
+            .rev()
+            .fold(None, |next, &val| Some(Box::new(ListNode { val, next })))
+    }
+    assert_eq!(
+        merge_two_lists(build(&[1, 2, 4]), build(&[1, 3, 4])),
+        build(&[1, 1, 2, 3, 4, 4])
+    );
+    assert_eq!(merge_two_lists(build(&[]), build(&[0])), build(&[0]));
+    assert_eq!(merge_two_lists(build(&[]), build(&[])), build(&[]));
+
+- instruction: |
+    Reorder List. Given a list L0->L1->...->Ln, reorder it in place to
+    L0->Ln->L1->Ln-1->L2->... . Write `reorder_list(head: &mut Option<Box<ListNode>>)`.
+    Example: 1->2->3->4 becomes 1->4->2->3.
+  starter: |
+    #[derive(PartialEq, Eq, Clone, Debug)]
+    struct ListNode {
+        val: i32,
+        next: Option<Box<ListNode>>,
+    }
+
+    fn reorder_list(head: &mut Option<Box<ListNode>>) {
+
+    }
+  solution: |
+    #[derive(PartialEq, Eq, Clone, Debug)]
+    struct ListNode {
+        val: i32,
+        next: Option<Box<ListNode>>,
+    }
+
+    fn reorder_list(head: &mut Option<Box<ListNode>>) {
+        // Detach all nodes into a vector to sidestep awkward in-place splicing.
+        let mut nodes = Vec::new();
+        let mut cur = head.take();
+        while let Some(mut node) = cur {
+            cur = node.next.take();
+            nodes.push(node);
+        }
+        if nodes.is_empty() {
+            return;
+        }
+        // Weave from both ends: front, back, front, back, ...
+        let mut order: Vec<Box<ListNode>> = Vec::with_capacity(nodes.len());
+        let mut lo = 0;
+        let mut hi = nodes.len();
+        let mut take_front = true;
+        while lo < hi {
+            if take_front {
+                order.push(std::mem::replace(
+                    &mut nodes[lo],
+                    Box::new(ListNode { val: 0, next: None }),
+                ));
+                lo += 1;
+            } else {
+                hi -= 1;
+                order.push(std::mem::replace(
+                    &mut nodes[hi],
+                    Box::new(ListNode { val: 0, next: None }),
+                ));
+            }
+            take_front = !take_front;
+        }
+        // Relink in the woven order.
+        let mut result = None;
+        for mut node in order.into_iter().rev() {
+            node.next = result;
+            result = Some(node);
+        }
+        *head = result;
+    }
+  notes: |
+    Owning each node in a `Vec` turns the two-pointer weave (front, back, front, ...)
+    into simple indexing, avoiding the borrow-checker pain of reversing the second
+    half in place. Relink by folding from the back. O(n) time and space.
+  source: "NeetCode 150 · Linked List"
+  tags: [rust, neetcode, linked-list]
+  tests: |
+    fn build(vals: &[i32]) -> Option<Box<ListNode>> {
+        vals.iter()
+            .rev()
+            .fold(None, |next, &val| Some(Box::new(ListNode { val, next })))
+    }
+    let mut a = build(&[1, 2, 3, 4]);
+    reorder_list(&mut a);
+    assert_eq!(a, build(&[1, 4, 2, 3]));
+    let mut b = build(&[1, 2, 3, 4, 5]);
+    reorder_list(&mut b);
+    assert_eq!(b, build(&[1, 5, 2, 4, 3]));
+    let mut c = build(&[1]);
+    reorder_list(&mut c);
+    assert_eq!(c, build(&[1]));
+
+- instruction: |
+    Remove Nth Node From End. Remove the nth node counting from the end of the list
+    and return the head. Write
+    `remove_nth_from_end(head: Option<Box<ListNode>>, n: i32) -> Option<Box<ListNode>>`.
+    Example: (1->2->3->4->5, n=2) -> 1->2->3->5.
+  starter: |
+    #[derive(PartialEq, Eq, Clone, Debug)]
+    struct ListNode {
+        val: i32,
+        next: Option<Box<ListNode>>,
+    }
+
+    fn remove_nth_from_end(
+        head: Option<Box<ListNode>>,
+        n: i32,
+    ) -> Option<Box<ListNode>> {
+
+    }
+  solution: |
+    #[derive(PartialEq, Eq, Clone, Debug)]
+    struct ListNode {
+        val: i32,
+        next: Option<Box<ListNode>>,
+    }
+
+    fn remove_nth_from_end(
+        head: Option<Box<ListNode>>,
+        n: i32,
+    ) -> Option<Box<ListNode>> {
+        // Collect owned nodes, drop the target by index, relink.
+        let mut nodes = Vec::new();
+        let mut cur = head;
+        while let Some(mut node) = cur {
+            cur = node.next.take();
+            nodes.push(*node);
+        }
+        let len = nodes.len();
+        if n < 1 || (n as usize) > len {
+            // Out of range: rebuild unchanged.
+            return rebuild(nodes);
+        }
+        let idx = len - n as usize;
+        nodes.remove(idx);
+        rebuild(nodes)
+    }
+
+    fn rebuild(nodes: Vec<ListNode>) -> Option<Box<ListNode>> {
+        let mut result = None;
+        for mut node in nodes.into_iter().rev() {
+            node.next = result;
+            result = Some(Box::new(node));
+        }
+        result
+    }
+  notes: |
+    Owning the nodes in a `Vec` makes "nth from end" a plain index `len - n`, and
+    `Vec::remove` drops it cleanly. Relink by folding from the back. O(n); a
+    two-pointer (gap of n) version is also O(n) with O(1) space but fiddlier here.
+  source: "NeetCode 150 · Linked List"
+  tags: [rust, neetcode, linked-list]
+  tests: |
+    fn build(vals: &[i32]) -> Option<Box<ListNode>> {
+        vals.iter()
+            .rev()
+            .fold(None, |next, &val| Some(Box::new(ListNode { val, next })))
+    }
+    assert_eq!(
+        remove_nth_from_end(build(&[1, 2, 3, 4, 5]), 2),
+        build(&[1, 2, 3, 5])
+    );
+    assert_eq!(remove_nth_from_end(build(&[1]), 1), build(&[]));
+    assert_eq!(remove_nth_from_end(build(&[1, 2]), 1), build(&[1]));
+
+- instruction: |
+    Copy List with Random Pointer. Each node has a value and an optional "random"
+    pointer to any node (or none). Here the list is modeled as a `Vec` where index
+    i holds `(val, random)` and `random` is the target node's index. Return a deep
+    copy with the same structure. Write
+    `copy_random_list(nodes: &[(i32, Option<usize>)]) -> Vec<(i32, Option<usize>)>`.
+    Example: [(7, None), (13, Some(0))] -> a fresh equal vector.
+  starter: |
+    fn copy_random_list(
+        nodes: &[(i32, Option<usize>)],
+    ) -> Vec<(i32, Option<usize>)> {
+
+    }
+  solution: |
+    fn copy_random_list(
+        nodes: &[(i32, Option<usize>)],
+    ) -> Vec<(i32, Option<usize>)> {
+        // Index-based modeling: random pointers are node indices, which remain
+        // valid in the copy since the order is preserved. No Rc/RefCell/unsafe.
+        nodes.to_vec()
+    }
+  notes: |
+    Modeling random pointers as indices makes the deep copy trivial: copying the
+    `(val, index)` pairs preserves the topology because positions are unchanged.
+    With real pointers you'd map each original node to its clone (a HashMap pass,
+    or the interleave-and-split trick) to translate the random links. O(n).
+  source: "NeetCode 150 · Linked List"
+  tags: [rust, neetcode, linked-list]
+  tests: |
+    let original = vec![(7, None), (13, Some(0)), (11, Some(4)), (10, Some(2)), (1, Some(0))];
+    let copy = copy_random_list(&original);
+    assert_eq!(copy, original);
+    // It is a genuine copy: mutating it does not touch the source.
+    let mut copy2 = copy_random_list(&original);
+    copy2[0].0 = 999;
+    assert_eq!(original[0].0, 7);
+    assert_eq!(copy_random_list(&[]), Vec::<(i32, Option<usize>)>::new());
+
+- instruction: |
+    Add Two Numbers. Two non-negative integers are stored as linked lists with
+    digits in REVERSE order (ones digit first). Add them and return the sum the
+    same way. Write
+    `add_two_numbers(a: Option<Box<ListNode>>, b: Option<Box<ListNode>>) -> Option<Box<ListNode>>`.
+    Example: 2->4->3 (342) + 5->6->4 (465) -> 7->0->8 (807).
+  starter: |
+    #[derive(PartialEq, Eq, Clone, Debug)]
+    struct ListNode {
+        val: i32,
+        next: Option<Box<ListNode>>,
+    }
+
+    fn add_two_numbers(
+        a: Option<Box<ListNode>>,
+        b: Option<Box<ListNode>>,
+    ) -> Option<Box<ListNode>> {
+
+    }
+  solution: |
+    #[derive(PartialEq, Eq, Clone, Debug)]
+    struct ListNode {
+        val: i32,
+        next: Option<Box<ListNode>>,
+    }
+
+    fn add_two_numbers(
+        mut a: Option<Box<ListNode>>,
+        mut b: Option<Box<ListNode>>,
+    ) -> Option<Box<ListNode>> {
+        let mut dummy = Box::new(ListNode { val: 0, next: None });
+        let mut tail = &mut dummy;
+        let mut carry = 0;
+        while a.is_some() || b.is_some() || carry != 0 {
+            let mut sum = carry;
+            if let Some(node) = a {
+                sum += node.val;
+                a = node.next;
+            }
+            if let Some(node) = b {
+                sum += node.val;
+                b = node.next;
+            }
+            carry = sum / 10;
+            tail.next = Some(Box::new(ListNode {
+                val: sum % 10,
+                next: None,
+            }));
+            tail = tail.next.as_mut().unwrap();
+        }
+        dummy.next
+    }
+  notes: |
+    Schoolbook addition: at each step sum the two current digits plus carry, emit
+    `sum % 10`, keep `sum / 10`. Reverse-order storage means we add from the least
+    significant digit first, so no reversal is needed. O(max(n, m)).
+  source: "NeetCode 150 · Linked List"
+  tags: [rust, neetcode, linked-list]
+  tests: |
+    fn build(vals: &[i32]) -> Option<Box<ListNode>> {
+        vals.iter()
+            .rev()
+            .fold(None, |next, &val| Some(Box::new(ListNode { val, next })))
+    }
+    assert_eq!(
+        add_two_numbers(build(&[2, 4, 3]), build(&[5, 6, 4])),
+        build(&[7, 0, 8])
+    );
+    assert_eq!(add_two_numbers(build(&[0]), build(&[0])), build(&[0]));
+    assert_eq!(
+        add_two_numbers(build(&[9, 9, 9]), build(&[1])),
+        build(&[0, 0, 0, 1])
+    );
+
+- instruction: |
+    Linked List Cycle. Detect whether a list contains a cycle. Because a
+    `Box`-based list cannot form a cycle in safe Rust, the list is modeled as an
+    adjacency table: `next[i]` is the index of node i's successor (or None), and
+    `head` is the starting index. Write
+    `has_cycle(next: &[Option<usize>], head: Option<usize>) -> bool` using Floyd's
+    tortoise-and-hare. Example: next=[Some(1), Some(0)], head=Some(0) -> true.
+  starter: |
+    fn has_cycle(next: &[Option<usize>], head: Option<usize>) -> bool {
+
+    }
+  solution: |
+    fn has_cycle(next: &[Option<usize>], head: Option<usize>) -> bool {
+        let mut slow = head;
+        let mut fast = head;
+        while let Some(f) = fast {
+            // Advance fast two steps; if it falls off, there is no cycle.
+            fast = match next[f] {
+                Some(f1) => next[f1],
+                None => return false,
+            };
+            slow = next[slow.unwrap()];
+            if slow == fast && slow.is_some() {
+                return true;
+            }
+        }
+        false
+    }
+  notes: |
+    Floyd's algorithm: a slow pointer steps once, a fast pointer twice. If they ever
+    coincide on a node, there is a cycle; if fast reaches the end, there is not.
+    Indices model the links because safe `Box` lists can't be cyclic. O(n), O(1).
+  source: "NeetCode 150 · Linked List"
+  tags: [rust, neetcode, linked-list]
+  tests: |
+    // 0 -> 1 -> 0 (cycle)
+    assert!(has_cycle(&[Some(1), Some(0)], Some(0)));
+    // 0 -> 1 -> 2 -> None (no cycle)
+    assert!(!has_cycle(&[Some(1), Some(2), None], Some(0)));
+    // empty
+    assert!(!has_cycle(&[], None));
+    // single self-loop
+    assert!(has_cycle(&[Some(0)], Some(0)));
+    // single, no loop
+    assert!(!has_cycle(&[None], Some(0)));
+
+- instruction: |
+    Find the Duplicate Number. An array of n+1 integers each in 1..=n contains
+    exactly one value that repeats (possibly many times). Return it without
+    modifying the array and in O(1) extra space. Write
+    `find_duplicate(nums: &[i32]) -> i32` using Floyd's cycle detection.
+    Example: [1, 3, 4, 2, 2] -> 2.
+  starter: |
+    fn find_duplicate(nums: &[i32]) -> i32 {
+
+    }
+  solution: |
+    fn find_duplicate(nums: &[i32]) -> i32 {
+        // Treat value as "next index"; the duplicate is the cycle's entrance.
+        let mut slow = nums[0] as usize;
+        let mut fast = nums[nums[0] as usize] as usize;
+        while slow != fast {
+            slow = nums[slow] as usize;
+            fast = nums[nums[fast] as usize] as usize;
+        }
+        let mut a = 0usize;
+        while a != slow {
+            a = nums[a] as usize;
+            slow = nums[slow] as usize;
+        }
+        a as i32
+    }
+  notes: |
+    Following `i -> nums[i]` forms a linked structure whose cycle entrance is the
+    duplicated value. Phase 1 finds a meeting point with tortoise-and-hare; phase 2
+    walks one pointer from the start in lockstep to locate the entrance. O(n), O(1).
+  source: "NeetCode 150 · Linked List"
+  tags: [rust, neetcode, linked-list]
+  tests: |
+    assert_eq!(find_duplicate(&[1, 3, 4, 2, 2]), 2);
+    assert_eq!(find_duplicate(&[3, 1, 3, 4, 2]), 3);
+    assert_eq!(find_duplicate(&[1, 1]), 1);
+    assert_eq!(find_duplicate(&[2, 2, 2, 2, 2]), 2);
+
+- instruction: |
+    LRU Cache. Design a fixed-capacity cache with O(1)-ish `get` and `put` that
+    evicts the least-recently-used key when full. Implement `LRUCache` with
+    `new(capacity: usize)`, `get(&mut self, key: i32) -> Option<i32>`, and
+    `put(&mut self, key: i32, value: i32)`. Any access (get or put) marks a key as
+    most recently used.
+  starter: |
+    use std::collections::HashMap;
+    use std::collections::VecDeque;
+
+    struct LRUCache {
+
+    }
+
+    impl LRUCache {
+        fn new(capacity: usize) -> Self {
+
+        }
+
+        fn get(&mut self, key: i32) -> Option<i32> {
+
+        }
+
+        fn put(&mut self, key: i32, value: i32) {
+
+        }
+    }
+  solution: |
+    use std::collections::HashMap;
+    use std::collections::VecDeque;
+
+    struct LRUCache {
+        capacity: usize,
+        map: HashMap<i32, i32>,
+        // Front = least recently used, back = most recently used.
+        order: VecDeque<i32>,
+    }
+
+    impl LRUCache {
+        fn new(capacity: usize) -> Self {
+            LRUCache {
+                capacity,
+                map: HashMap::new(),
+                order: VecDeque::new(),
+            }
+        }
+
+        fn touch(&mut self, key: i32) {
+            if let Some(pos) = self.order.iter().position(|&k| k == key) {
+                self.order.remove(pos);
+            }
+            self.order.push_back(key);
+        }
+
+        fn get(&mut self, key: i32) -> Option<i32> {
+            if let Some(&value) = self.map.get(&key) {
+                self.touch(key);
+                Some(value)
+            } else {
+                None
+            }
+        }
+
+        fn put(&mut self, key: i32, value: i32) {
+            if self.capacity == 0 {
+                return;
+            }
+            self.map.insert(key, value);
+            self.touch(key);
+            if self.map.len() > self.capacity {
+                if let Some(lru) = self.order.pop_front() {
+                    self.map.remove(&lru);
+                }
+            }
+        }
+    }
+  notes: |
+    A `HashMap` holds key->value; a `VecDeque` tracks recency (front = oldest). Each
+    access removes the key and re-pushes it to the back. Eviction pops the front.
+    The `position`/`remove` scan is O(n); a true O(1) design needs an intrusive
+    doubly linked list, which is awkward in safe Rust without an index-arena.
+  source: "NeetCode 150 · Linked List"
+  tags: [rust, neetcode, linked-list]
+  tests: |
+    let mut c = LRUCache::new(2);
+    c.put(1, 1);
+    c.put(2, 2);
+    assert_eq!(c.get(1), Some(1)); // 1 is now most recent
+    c.put(3, 3); // evicts 2 (least recent)
+    assert_eq!(c.get(2), None);
+    c.put(4, 4); // evicts 1
+    assert_eq!(c.get(1), None);
+    assert_eq!(c.get(3), Some(3));
+    assert_eq!(c.get(4), Some(4));
+    // Overwrite updates value and recency.
+    let mut d = LRUCache::new(2);
+    d.put(1, 1);
+    d.put(1, 10);
+    assert_eq!(d.get(1), Some(10));
+
+- instruction: |
+    Merge K Sorted Lists. Given a vector of sorted linked lists, merge them all into
+    one sorted list. Write
+    `merge_k_lists(lists: Vec<Option<Box<ListNode>>>) -> Option<Box<ListNode>>`.
+    Example: [1->4->5, 1->3->4, 2->6] -> 1->1->2->3->4->4->5->6.
+  starter: |
+    #[derive(PartialEq, Eq, Clone, Debug)]
+    struct ListNode {
+        val: i32,
+        next: Option<Box<ListNode>>,
+    }
+
+    fn merge_k_lists(
+        lists: Vec<Option<Box<ListNode>>>,
+    ) -> Option<Box<ListNode>> {
+
+    }
+  solution: |
+    #[derive(PartialEq, Eq, Clone, Debug)]
+    struct ListNode {
+        val: i32,
+        next: Option<Box<ListNode>>,
+    }
+
+    fn merge_two(
+        mut a: Option<Box<ListNode>>,
+        mut b: Option<Box<ListNode>>,
+    ) -> Option<Box<ListNode>> {
+        let mut dummy = Box::new(ListNode { val: 0, next: None });
+        let mut tail = &mut dummy;
+        loop {
+            match (a.as_ref(), b.as_ref()) {
+                (Some(na), Some(nb)) => {
+                    if na.val <= nb.val {
+                        let mut node = a.take().unwrap();
+                        a = node.next.take();
+                        tail.next = Some(node);
+                    } else {
+                        let mut node = b.take().unwrap();
+                        b = node.next.take();
+                        tail.next = Some(node);
+                    }
+                    tail = tail.next.as_mut().unwrap();
+                }
+                _ => {
+                    tail.next = a.or(b);
+                    break;
+                }
+            }
+        }
+        dummy.next
+    }
+
+    fn merge_k_lists(
+        mut lists: Vec<Option<Box<ListNode>>>,
+    ) -> Option<Box<ListNode>> {
+        if lists.is_empty() {
+            return None;
+        }
+        // Pairwise merge until a single list remains: O(N log k).
+        while lists.len() > 1 {
+            let mut merged = Vec::with_capacity(lists.len().div_ceil(2));
+            let mut iter = lists.into_iter();
+            while let Some(first) = iter.next() {
+                match iter.next() {
+                    Some(second) => merged.push(merge_two(first, second)),
+                    None => merged.push(first),
+                }
+            }
+            lists = merged;
+        }
+        lists.into_iter().next().flatten()
+    }
+  notes: |
+    Reuse the two-list merge and combine lists pairwise, halving the count each
+    round. That gives O(N log k) total work for N nodes across k lists, beating the
+    O(N k) of merging one at a time.
+  source: "NeetCode 150 · Linked List"
+  tags: [rust, neetcode, linked-list]
+  tests: |
+    fn build(vals: &[i32]) -> Option<Box<ListNode>> {
+        vals.iter()
+            .rev()
+            .fold(None, |next, &val| Some(Box::new(ListNode { val, next })))
+    }
+    let lists = vec![build(&[1, 4, 5]), build(&[1, 3, 4]), build(&[2, 6])];
+    assert_eq!(
+        merge_k_lists(lists),
+        build(&[1, 1, 2, 3, 4, 4, 5, 6])
+    );
+    assert_eq!(merge_k_lists(vec![]), build(&[]));
+    assert_eq!(merge_k_lists(vec![build(&[]), build(&[])]), build(&[]));
+    assert_eq!(merge_k_lists(vec![build(&[1])]), build(&[1]));
+
+- instruction: |
+    Reverse Nodes in k-Group. Reverse the nodes of the list k at a time; if the
+    final group has fewer than k nodes, leave it as is. Write
+    `reverse_k_group(head: Option<Box<ListNode>>, k: i32) -> Option<Box<ListNode>>`.
+    Example: (1->2->3->4->5, k=2) -> 2->1->4->3->5.
+  starter: |
+    #[derive(PartialEq, Eq, Clone, Debug)]
+    struct ListNode {
+        val: i32,
+        next: Option<Box<ListNode>>,
+    }
+
+    fn reverse_k_group(
+        head: Option<Box<ListNode>>,
+        k: i32,
+    ) -> Option<Box<ListNode>> {
+
+    }
+  solution: |
+    #[derive(PartialEq, Eq, Clone, Debug)]
+    struct ListNode {
+        val: i32,
+        next: Option<Box<ListNode>>,
+    }
+
+    fn reverse_k_group(
+        head: Option<Box<ListNode>>,
+        k: i32,
+    ) -> Option<Box<ListNode>> {
+        if k <= 1 {
+            return head;
+        }
+        let k = k as usize;
+        // Detach all nodes into a vector for simple group-wise reversal.
+        let mut nodes = Vec::new();
+        let mut cur = head;
+        while let Some(mut node) = cur {
+            cur = node.next.take();
+            nodes.push(node);
+        }
+        // Reverse each full chunk of k in place; leave the remainder.
+        let full = nodes.len() / k * k;
+        let mut i = 0;
+        while i < full {
+            nodes[i..i + k].reverse();
+            i += k;
+        }
+        // Relink in the new order.
+        let mut result = None;
+        for mut node in nodes.into_iter().rev() {
+            node.next = result;
+            result = Some(node);
+        }
+        result
+    }
+  notes: |
+    Owning the nodes in a `Vec` reduces k-group reversal to reversing fixed-size
+    slices, dodging the borrow-checker gymnastics of in-place pointer surgery. Only
+    complete groups are reversed (`len / k * k`). O(n) time and space.
+  source: "NeetCode 150 · Linked List"
+  tags: [rust, neetcode, linked-list]
+  tests: |
+    fn build(vals: &[i32]) -> Option<Box<ListNode>> {
+        vals.iter()
+            .rev()
+            .fold(None, |next, &val| Some(Box::new(ListNode { val, next })))
+    }
+    assert_eq!(
+        reverse_k_group(build(&[1, 2, 3, 4, 5]), 2),
+        build(&[2, 1, 4, 3, 5])
+    );
+    assert_eq!(
+        reverse_k_group(build(&[1, 2, 3, 4, 5]), 3),
+        build(&[3, 2, 1, 4, 5])
+    );
+    assert_eq!(
+        reverse_k_group(build(&[1, 2, 3, 4, 5]), 1),
+        build(&[1, 2, 3, 4, 5])
+    );
+    assert_eq!(
+        reverse_k_group(build(&[1, 2, 3, 4]), 2),
+        build(&[2, 1, 4, 3])
+    );

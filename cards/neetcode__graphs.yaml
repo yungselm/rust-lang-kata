@@ -1,0 +1,769 @@
+# NeetCode 150 — Graphs. Original prompts; idiomatic, clippy-clean
+# Rust; example tests run by `python check_cards.py`.
+- instruction: |
+    Number of Islands. Write `num_islands(grid: &mut Vec<Vec<char>>) -> i32`:
+    count groups of horizontally/vertically connected '1' (land) cells, with '0'
+    being water.
+    Example: [['1','1','0'],['0','1','0'],['0','0','1']] -> 2.
+  starter: |
+    fn num_islands(grid: &mut Vec<Vec<char>>) -> i32 {
+
+    }
+  solution: |
+    fn num_islands(grid: &mut Vec<Vec<char>>) -> i32 {
+        let rows = grid.len();
+        let cols = if rows == 0 { 0 } else { grid[0].len() };
+        let mut count = 0;
+        for r in 0..rows {
+            for c in 0..cols {
+                if grid[r][c] == '1' {
+                    count += 1;
+                    sink(grid, r, c);
+                }
+            }
+        }
+        count
+    }
+
+    fn sink(grid: &mut Vec<Vec<char>>, r: usize, c: usize) {
+        if grid[r][c] != '1' {
+            return;
+        }
+        grid[r][c] = '0';
+        if r > 0 {
+            sink(grid, r - 1, c);
+        }
+        if r + 1 < grid.len() {
+            sink(grid, r + 1, c);
+        }
+        if c > 0 {
+            sink(grid, r, c - 1);
+        }
+        if c + 1 < grid[0].len() {
+            sink(grid, r, c + 1);
+        }
+    }
+  notes: |
+    Scan for an unvisited land cell, then flood-fill (DFS) it to '0' so the whole
+    island is consumed once; each new flood marks one more island. O(rows*cols).
+  source: "NeetCode 150 · Graphs"
+  tags: [rust, neetcode, graphs]
+  tests: |
+    let mut g = vec![
+        vec!['1', '1', '0'],
+        vec!['0', '1', '0'],
+        vec!['0', '0', '1'],
+    ];
+    assert_eq!(num_islands(&mut g), 2);
+    let mut g2 = vec![
+        vec!['1', '1', '1', '1', '0'],
+        vec!['1', '1', '0', '1', '0'],
+        vec!['1', '1', '0', '0', '0'],
+        vec!['0', '0', '0', '0', '0'],
+    ];
+    assert_eq!(num_islands(&mut g2), 1);
+    let mut empty: Vec<Vec<char>> = vec![];
+    assert_eq!(num_islands(&mut empty), 0);
+
+- instruction: |
+    Max Area of Island. Write `max_area_of_island(grid: &mut Vec<Vec<i32>>) -> i32`:
+    the largest count of connected 1-cells (4-directionally), or 0 if there is no
+    land.
+    Example: [[0,1,0],[1,1,0],[0,0,1]] -> 3.
+  starter: |
+    fn max_area_of_island(grid: &mut Vec<Vec<i32>>) -> i32 {
+
+    }
+  solution: |
+    fn max_area_of_island(grid: &mut Vec<Vec<i32>>) -> i32 {
+        let rows = grid.len();
+        let cols = if rows == 0 { 0 } else { grid[0].len() };
+        let mut best = 0;
+        for r in 0..rows {
+            for c in 0..cols {
+                if grid[r][c] == 1 {
+                    best = best.max(area(grid, r, c));
+                }
+            }
+        }
+        best
+    }
+
+    fn area(grid: &mut Vec<Vec<i32>>, r: usize, c: usize) -> i32 {
+        if grid[r][c] != 1 {
+            return 0;
+        }
+        grid[r][c] = 0;
+        let mut a = 1;
+        if r > 0 {
+            a += area(grid, r - 1, c);
+        }
+        if r + 1 < grid.len() {
+            a += area(grid, r + 1, c);
+        }
+        if c > 0 {
+            a += area(grid, r, c - 1);
+        }
+        if c + 1 < grid[0].len() {
+            a += area(grid, r, c + 1);
+        }
+        a
+    }
+  notes: |
+    Same flood-fill as counting islands, but the DFS returns the size of the
+    component (1 plus its neighbours) and we keep the running maximum. O(rows*cols).
+  source: "NeetCode 150 · Graphs"
+  tags: [rust, neetcode, graphs]
+  tests: |
+    let mut g = vec![vec![0, 1, 0], vec![1, 1, 0], vec![0, 0, 1]];
+    assert_eq!(max_area_of_island(&mut g), 3);
+    let mut zero = vec![vec![0, 0], vec![0, 0]];
+    assert_eq!(max_area_of_island(&mut zero), 0);
+
+- instruction: |
+    Clone Graph. The graph is modelled as a 0-indexed adjacency list
+    `adj: &[Vec<usize>]` (this avoids Rc/RefCell node objects). Write
+    `clone_graph(adj: &[Vec<usize>]) -> Vec<Vec<usize>>` returning a deep copy that
+    is structurally equal to the input.
+    Example: [[1,2],[0,2],[0,1]] -> [[1,2],[0,2],[0,1]].
+  starter: |
+    fn clone_graph(adj: &[Vec<usize>]) -> Vec<Vec<usize>> {
+
+    }
+  solution: |
+    fn clone_graph(adj: &[Vec<usize>]) -> Vec<Vec<usize>> {
+        adj.to_vec()
+    }
+  notes: |
+    With the graph as an adjacency list, a deep copy is just a fresh owned copy of
+    every neighbour list — no shared references survive. The classic Rc/RefCell
+    version would BFS/DFS building old-node -> new-node mappings; here the indices
+    already give that mapping, so the structure is preserved by construction.
+  source: "NeetCode 150 · Graphs"
+  tags: [rust, neetcode, graphs]
+  tests: |
+    let adj = vec![vec![1, 2], vec![0, 2], vec![0, 1]];
+    let cloned = clone_graph(&adj);
+    assert_eq!(cloned, adj);
+    let empty: Vec<Vec<usize>> = vec![];
+    assert_eq!(clone_graph(&empty), empty);
+
+- instruction: |
+    Walls and Gates. Write `walls_and_gates(rooms: &mut [Vec<i32>])`: each cell
+    is -1 (wall), 0 (gate), or i32::MAX (empty). Fill every empty room with the
+    distance to its nearest gate (unreachable rooms stay i32::MAX).
+    Example: [[i32::MAX,0],[-1,i32::MAX]] -> [[1,0],[-1,2]].
+  starter: |
+    use std::collections::VecDeque;
+
+    fn walls_and_gates(rooms: &mut [Vec<i32>]) {
+
+    }
+  solution: |
+    use std::collections::VecDeque;
+
+    fn walls_and_gates(rooms: &mut [Vec<i32>]) {
+        let rows = rooms.len();
+        let cols = if rows == 0 { 0 } else { rooms[0].len() };
+        let mut queue: VecDeque<(usize, usize)> = VecDeque::new();
+        for (r, row) in rooms.iter().enumerate() {
+            for (c, &val) in row.iter().enumerate() {
+                if val == 0 {
+                    queue.push_back((r, c));
+                }
+            }
+        }
+        while let Some((r, c)) = queue.pop_front() {
+            let d = rooms[r][c];
+            let mut step = |nr: usize, nc: usize, q: &mut VecDeque<(usize, usize)>| {
+                if rooms[nr][nc] == i32::MAX {
+                    rooms[nr][nc] = d + 1;
+                    q.push_back((nr, nc));
+                }
+            };
+            if r > 0 {
+                step(r - 1, c, &mut queue);
+            }
+            if r + 1 < rows {
+                step(r + 1, c, &mut queue);
+            }
+            if c > 0 {
+                step(r, c - 1, &mut queue);
+            }
+            if c + 1 < cols {
+                step(r, c + 1, &mut queue);
+            }
+        }
+    }
+  notes: |
+    Multi-source BFS: seed the queue with every gate (distance 0) at once. Because
+    BFS expands in layers, the first time a room is reached is via its nearest gate,
+    so each empty cell is set exactly once. O(rows*cols).
+  source: "NeetCode 150 · Graphs"
+  tags: [rust, neetcode, graphs]
+  tests: |
+    let inf = i32::MAX;
+    let mut rooms = vec![
+        vec![inf, -1, 0, inf],
+        vec![inf, inf, inf, -1],
+        vec![inf, -1, inf, -1],
+        vec![0, -1, inf, inf],
+    ];
+    walls_and_gates(&mut rooms);
+    assert_eq!(
+        rooms,
+        vec![
+            vec![3, -1, 0, 1],
+            vec![2, 2, 1, -1],
+            vec![1, -1, 2, -1],
+            vec![0, -1, 3, 4],
+        ]
+    );
+
+- instruction: |
+    Rotting Oranges. Write `oranges_rotting(grid: &mut [Vec<i32>]) -> i32`:
+    cells are 0 (empty), 1 (fresh), 2 (rotten). Each minute a rotten orange rots
+    its 4-directional fresh neighbours. Return the minutes until none are fresh, or
+    -1 if some can never rot.
+    Example: [[2,1,1],[1,1,0],[0,1,1]] -> 4.
+  starter: |
+    use std::collections::VecDeque;
+
+    fn oranges_rotting(grid: &mut [Vec<i32>]) -> i32 {
+
+    }
+  solution: |
+    use std::collections::VecDeque;
+
+    fn oranges_rotting(grid: &mut [Vec<i32>]) -> i32 {
+        let rows = grid.len();
+        let cols = if rows == 0 { 0 } else { grid[0].len() };
+        let mut queue: VecDeque<(usize, usize)> = VecDeque::new();
+        let mut fresh = 0;
+        for (r, row) in grid.iter().enumerate() {
+            for (c, &val) in row.iter().enumerate() {
+                match val {
+                    2 => queue.push_back((r, c)),
+                    1 => fresh += 1,
+                    _ => {}
+                }
+            }
+        }
+        let mut minutes = 0;
+        while !queue.is_empty() && fresh > 0 {
+            for _ in 0..queue.len() {
+                let (r, c) = queue.pop_front().unwrap();
+                let mut step = |nr: usize, nc: usize, q: &mut VecDeque<(usize, usize)>, f: &mut i32| {
+                    if grid[nr][nc] == 1 {
+                        grid[nr][nc] = 2;
+                        *f -= 1;
+                        q.push_back((nr, nc));
+                    }
+                };
+                if r > 0 {
+                    step(r - 1, c, &mut queue, &mut fresh);
+                }
+                if r + 1 < rows {
+                    step(r + 1, c, &mut queue, &mut fresh);
+                }
+                if c > 0 {
+                    step(r, c - 1, &mut queue, &mut fresh);
+                }
+                if c + 1 < cols {
+                    step(r, c + 1, &mut queue, &mut fresh);
+                }
+            }
+            minutes += 1;
+        }
+        if fresh == 0 {
+            minutes
+        } else {
+            -1
+        }
+    }
+  notes: |
+    Multi-source BFS where each "level" is one minute: drain the whole current
+    queue before incrementing the clock. Track the fresh count; if any remain when
+    the queue empties they are unreachable, so return -1. O(rows*cols).
+  source: "NeetCode 150 · Graphs"
+  tags: [rust, neetcode, graphs]
+  tests: |
+    let mut g = vec![vec![2, 1, 1], vec![1, 1, 0], vec![0, 1, 1]];
+    assert_eq!(oranges_rotting(&mut g), 4);
+    let mut unreach = vec![vec![2, 1, 1], vec![0, 1, 1], vec![1, 0, 1]];
+    assert_eq!(oranges_rotting(&mut unreach), -1);
+    let mut none_fresh = vec![vec![0, 2]];
+    assert_eq!(oranges_rotting(&mut none_fresh), 0);
+
+- instruction: |
+    Pacific Atlantic Water Flow. The Pacific touches the top and left edges, the
+    Atlantic the bottom and right. Water flows from a cell to an equal-or-lower
+    neighbour. Write `pacific_atlantic(heights: &[Vec<i32>]) -> Vec<[usize; 2]>`
+    listing [row, col] of cells that can reach BOTH oceans (any order).
+    Example: a 5x5 grid -> its border-reachable overlap.
+  starter: |
+    fn pacific_atlantic(heights: &[Vec<i32>]) -> Vec<[usize; 2]> {
+
+    }
+  solution: |
+    fn pacific_atlantic(heights: &[Vec<i32>]) -> Vec<[usize; 2]> {
+        let rows = heights.len();
+        let cols = if rows == 0 { 0 } else { heights[0].len() };
+        if rows == 0 || cols == 0 {
+            return Vec::new();
+        }
+        let mut pacific = vec![vec![false; cols]; rows];
+        let mut atlantic = vec![vec![false; cols]; rows];
+        for r in 0..rows {
+            flow(heights, &mut pacific, r, 0);
+            flow(heights, &mut atlantic, r, cols - 1);
+        }
+        for c in 0..cols {
+            flow(heights, &mut pacific, 0, c);
+            flow(heights, &mut atlantic, rows - 1, c);
+        }
+        let mut res = Vec::new();
+        for r in 0..rows {
+            for c in 0..cols {
+                if pacific[r][c] && atlantic[r][c] {
+                    res.push([r, c]);
+                }
+            }
+        }
+        res
+    }
+
+    fn flow(heights: &[Vec<i32>], seen: &mut Vec<Vec<bool>>, r: usize, c: usize) {
+        if seen[r][c] {
+            return;
+        }
+        seen[r][c] = true;
+        let h = heights[r][c];
+        if r > 0 && heights[r - 1][c] >= h {
+            flow(heights, seen, r - 1, c);
+        }
+        if r + 1 < heights.len() && heights[r + 1][c] >= h {
+            flow(heights, seen, r + 1, c);
+        }
+        if c > 0 && heights[r][c - 1] >= h {
+            flow(heights, seen, r, c - 1);
+        }
+        if c + 1 < heights[0].len() && heights[r][c + 1] >= h {
+            flow(heights, seen, r, c + 1);
+        }
+    }
+  notes: |
+    Instead of testing every cell, run DFS INWARD from each ocean's border,
+    climbing to equal-or-higher neighbours (the reverse of water flow). A cell
+    reaches an ocean iff that ocean's flood marked it; the answer is the overlap.
+    O(rows*cols).
+  source: "NeetCode 150 · Graphs"
+  tags: [rust, neetcode, graphs]
+  tests: |
+    let heights = vec![
+        vec![1, 2, 2, 3, 5],
+        vec![3, 2, 3, 4, 4],
+        vec![2, 4, 5, 3, 1],
+        vec![6, 7, 1, 4, 5],
+        vec![5, 1, 1, 2, 4],
+    ];
+    let mut got = pacific_atlantic(&heights);
+    got.sort();
+    let mut want = vec![
+        [0, 4],
+        [1, 3],
+        [1, 4],
+        [2, 2],
+        [3, 0],
+        [3, 1],
+        [4, 0],
+    ];
+    want.sort();
+    assert_eq!(got, want);
+
+- instruction: |
+    Surrounded Regions. Write `solve(board: &mut Vec<Vec<char>>)`: flip every 'O'
+    that is NOT connected (4-directionally) to a border 'O' into 'X'. Border-
+    touching regions stay 'O'.
+    Example: a board whose only safe O's are on/attached to the edge.
+  starter: |
+    fn solve(board: &mut Vec<Vec<char>>) {
+
+    }
+  solution: |
+    fn solve(board: &mut Vec<Vec<char>>) {
+        let rows = board.len();
+        let cols = if rows == 0 { 0 } else { board[0].len() };
+        if rows == 0 || cols == 0 {
+            return;
+        }
+        for r in 0..rows {
+            mark(board, r, 0);
+            mark(board, r, cols - 1);
+        }
+        for c in 0..cols {
+            mark(board, 0, c);
+            mark(board, rows - 1, c);
+        }
+        for row in board.iter_mut() {
+            for cell in row.iter_mut() {
+                *cell = match *cell {
+                    'S' => 'O',
+                    _ => 'X',
+                };
+            }
+        }
+    }
+
+    fn mark(board: &mut Vec<Vec<char>>, r: usize, c: usize) {
+        if board[r][c] != 'O' {
+            return;
+        }
+        board[r][c] = 'S';
+        if r > 0 {
+            mark(board, r - 1, c);
+        }
+        if r + 1 < board.len() {
+            mark(board, r + 1, c);
+        }
+        if c > 0 {
+            mark(board, r, c - 1);
+        }
+        if c + 1 < board[0].len() {
+            mark(board, r, c + 1);
+        }
+    }
+  notes: |
+    Invert the problem: the O's that SURVIVE are exactly those reachable from a
+    border O. Flood those to a temporary 'S', then sweep once — 'S' becomes 'O',
+    everything else becomes 'X'. O(rows*cols).
+  source: "NeetCode 150 · Graphs"
+  tags: [rust, neetcode, graphs]
+  tests: |
+    let mut board = vec![
+        vec!['X', 'X', 'X', 'X'],
+        vec!['X', 'O', 'O', 'X'],
+        vec!['X', 'X', 'O', 'X'],
+        vec!['X', 'O', 'X', 'X'],
+    ];
+    solve(&mut board);
+    assert_eq!(
+        board,
+        vec![
+            vec!['X', 'X', 'X', 'X'],
+            vec!['X', 'X', 'X', 'X'],
+            vec!['X', 'X', 'X', 'X'],
+            vec!['X', 'O', 'X', 'X'],
+        ]
+    );
+
+- instruction: |
+    Course Schedule. Write `can_finish(num_courses: usize, prerequisites: &[[usize; 2]]) -> bool`:
+    each pair [a, b] means b must be taken before a. Return true iff all courses
+    can be completed (the prerequisite graph has no cycle).
+    Example: (2, [[1, 0]]) -> true; (2, [[1, 0], [0, 1]]) -> false.
+  starter: |
+    fn can_finish(num_courses: usize, prerequisites: &[[usize; 2]]) -> bool {
+
+    }
+  solution: |
+    fn can_finish(num_courses: usize, prerequisites: &[[usize; 2]]) -> bool {
+        let mut adj: Vec<Vec<usize>> = vec![Vec::new(); num_courses];
+        let mut indegree = vec![0usize; num_courses];
+        for &[a, b] in prerequisites {
+            adj[b].push(a);
+            indegree[a] += 1;
+        }
+        let mut stack: Vec<usize> = (0..num_courses).filter(|&i| indegree[i] == 0).collect();
+        let mut taken = 0;
+        while let Some(node) = stack.pop() {
+            taken += 1;
+            for &next in &adj[node] {
+                indegree[next] -= 1;
+                if indegree[next] == 0 {
+                    stack.push(next);
+                }
+            }
+        }
+        taken == num_courses
+    }
+  notes: |
+    Kahn's algorithm: repeatedly remove a course with no remaining prerequisites.
+    If a cycle exists, those courses never reach indegree 0, so fewer than
+    `num_courses` are processed. O(V + E).
+  source: "NeetCode 150 · Graphs"
+  tags: [rust, neetcode, graphs]
+  tests: |
+    assert!(can_finish(2, &[[1, 0]]));
+    assert!(!can_finish(2, &[[1, 0], [0, 1]]));
+    assert!(can_finish(4, &[[1, 0], [2, 0], [3, 1], [3, 2]]));
+    assert!(can_finish(1, &[]));
+
+- instruction: |
+    Course Schedule II. Write `find_order(num_courses: usize, prerequisites: &[[usize; 2]]) -> Vec<usize>`:
+    each [a, b] means b before a. Return a valid order to take all courses, or an
+    empty vec if impossible.
+    Example: (4, [[1,0],[2,1],[3,2]]) -> [0, 1, 2, 3] (unique chain).
+  starter: |
+    use std::collections::VecDeque;
+
+    fn find_order(num_courses: usize, prerequisites: &[[usize; 2]]) -> Vec<usize> {
+
+    }
+  solution: |
+    use std::collections::VecDeque;
+
+    fn find_order(num_courses: usize, prerequisites: &[[usize; 2]]) -> Vec<usize> {
+        let mut adj: Vec<Vec<usize>> = vec![Vec::new(); num_courses];
+        let mut indegree = vec![0usize; num_courses];
+        for &[a, b] in prerequisites {
+            adj[b].push(a);
+            indegree[a] += 1;
+        }
+        let mut queue: VecDeque<usize> =
+            (0..num_courses).filter(|&i| indegree[i] == 0).collect();
+        let mut order = Vec::with_capacity(num_courses);
+        while let Some(node) = queue.pop_front() {
+            order.push(node);
+            for &next in &adj[node] {
+                indegree[next] -= 1;
+                if indegree[next] == 0 {
+                    queue.push_back(next);
+                }
+            }
+        }
+        if order.len() == num_courses {
+            order
+        } else {
+            Vec::new()
+        }
+    }
+  notes: |
+    Kahn's topological sort: emit courses as they reach indegree 0. The emitted
+    sequence is a valid order; if a cycle blocks some courses the result is shorter
+    than `num_courses`, so we return empty. O(V + E).
+  source: "NeetCode 150 · Graphs"
+  tags: [rust, neetcode, graphs]
+  tests: |
+    assert_eq!(find_order(4, &[[1, 0], [2, 1], [3, 2]]), vec![0, 1, 2, 3]);
+    assert_eq!(find_order(2, &[[1, 0]]), vec![0, 1]);
+    assert_eq!(find_order(2, &[[0, 1], [1, 0]]), Vec::<usize>::new());
+    assert_eq!(find_order(1, &[]), vec![0]);
+
+- instruction: |
+    Graph Valid Tree. Write `valid_tree(n: usize, edges: &[[usize; 2]]) -> bool`:
+    given an undirected graph on nodes 0..n, return true iff it forms a tree
+    (fully connected and acyclic).
+    Example: (5, [[0,1],[0,2],[0,3],[1,4]]) -> true.
+  starter: |
+    fn valid_tree(n: usize, edges: &[[usize; 2]]) -> bool {
+
+    }
+  solution: |
+    fn valid_tree(n: usize, edges: &[[usize; 2]]) -> bool {
+        if edges.len() + 1 != n {
+            return false;
+        }
+        let mut parent: Vec<usize> = (0..n).collect();
+        for &[a, b] in edges {
+            let ra = find(&mut parent, a);
+            let rb = find(&mut parent, b);
+            if ra == rb {
+                return false;
+            }
+            parent[ra] = rb;
+        }
+        true
+    }
+
+    fn find(parent: &mut [usize], x: usize) -> usize {
+        let mut root = x;
+        while parent[root] != root {
+            root = parent[root];
+        }
+        let mut cur = x;
+        while parent[cur] != root {
+            let next = parent[cur];
+            parent[cur] = root;
+            cur = next;
+        }
+        root
+    }
+  notes: |
+    A tree on n nodes has exactly n-1 edges and no cycle. Check the edge count
+    first, then union-find: if an edge joins two already-connected nodes there is a
+    cycle. n-1 edges plus no cycle implies connected. Near O(n + e).
+  source: "NeetCode 150 · Graphs"
+  tags: [rust, neetcode, graphs]
+  tests: |
+    assert!(valid_tree(5, &[[0, 1], [0, 2], [0, 3], [1, 4]]));
+    assert!(!valid_tree(5, &[[0, 1], [1, 2], [2, 3], [1, 3], [1, 4]]));
+    assert!(!valid_tree(4, &[[0, 1], [2, 3]]));
+    assert!(valid_tree(1, &[]));
+
+- instruction: |
+    Number of Connected Components. Write
+    `count_components(n: usize, edges: &[[usize; 2]]) -> i32`: count connected
+    components in an undirected graph on nodes 0..n.
+    Example: (5, [[0,1],[1,2],[3,4]]) -> 2.
+  starter: |
+    fn count_components(n: usize, edges: &[[usize; 2]]) -> i32 {
+
+    }
+  solution: |
+    fn count_components(n: usize, edges: &[[usize; 2]]) -> i32 {
+        let mut parent: Vec<usize> = (0..n).collect();
+        let mut components = n;
+        for &[a, b] in edges {
+            let ra = find(&mut parent, a);
+            let rb = find(&mut parent, b);
+            if ra != rb {
+                parent[ra] = rb;
+                components -= 1;
+            }
+        }
+        components as i32
+    }
+
+    fn find(parent: &mut [usize], x: usize) -> usize {
+        let mut root = x;
+        while parent[root] != root {
+            root = parent[root];
+        }
+        let mut cur = x;
+        while parent[cur] != root {
+            let next = parent[cur];
+            parent[cur] = root;
+            cur = next;
+        }
+        root
+    }
+  notes: |
+    Start with n singletons; every edge that unites two different sets reduces the
+    component count by one. Path compression keeps find near O(1). O(n + e).
+  source: "NeetCode 150 · Graphs"
+  tags: [rust, neetcode, graphs]
+  tests: |
+    assert_eq!(count_components(5, &[[0, 1], [1, 2], [3, 4]]), 2);
+    assert_eq!(count_components(5, &[[0, 1], [1, 2], [2, 3], [3, 4]]), 1);
+    assert_eq!(count_components(4, &[]), 4);
+
+- instruction: |
+    Redundant Connection. A tree on nodes 1..=n had one extra edge added, making
+    exactly one cycle. Write
+    `find_redundant_connection(edges: &[[usize; 2]]) -> [usize; 2]` returning the
+    edge that, if removed, restores a tree (the last such edge in input order).
+    Example: [[1,2],[1,3],[2,3]] -> [2, 3].
+  starter: |
+    fn find_redundant_connection(edges: &[[usize; 2]]) -> [usize; 2] {
+
+    }
+  solution: |
+    fn find_redundant_connection(edges: &[[usize; 2]]) -> [usize; 2] {
+        let n = edges.len();
+        let mut parent: Vec<usize> = (0..=n).collect();
+        for &[a, b] in edges {
+            let ra = find(&mut parent, a);
+            let rb = find(&mut parent, b);
+            if ra == rb {
+                return [a, b];
+            }
+            parent[ra] = rb;
+        }
+        [0, 0]
+    }
+
+    fn find(parent: &mut [usize], x: usize) -> usize {
+        let mut root = x;
+        while parent[root] != root {
+            root = parent[root];
+        }
+        let mut cur = x;
+        while parent[cur] != root {
+            let next = parent[cur];
+            parent[cur] = root;
+            cur = next;
+        }
+        root
+    }
+  notes: |
+    Union nodes edge by edge; the first edge whose endpoints are ALREADY in the
+    same set closes the cycle, and since there is exactly one extra edge that is the
+    one to remove. Nodes are 1-indexed, so size the parent array 0..=n. O(n).
+  source: "NeetCode 150 · Graphs"
+  tags: [rust, neetcode, graphs]
+  tests: |
+    assert_eq!(find_redundant_connection(&[[1, 2], [1, 3], [2, 3]]), [2, 3]);
+    assert_eq!(
+        find_redundant_connection(&[[1, 2], [2, 3], [3, 4], [1, 4], [1, 5]]),
+        [1, 4]
+    );
+
+- instruction: |
+    Word Ladder. Write
+    `ladder_length(begin_word: &str, end_word: &str, word_list: &[String]) -> i32`:
+    the length of the shortest transformation sequence from begin to end where each
+    step changes one letter and every intermediate word is in the list. Return 0 if
+    impossible (the count includes both endpoints).
+    Example: ("hit", "cog", ["hot","dot","dog","lot","log","cog"]) -> 5.
+  starter: |
+    use std::collections::{HashSet, VecDeque};
+
+    fn ladder_length(begin_word: &str, end_word: &str, word_list: &[String]) -> i32 {
+
+    }
+  solution: |
+    use std::collections::{HashSet, VecDeque};
+
+    fn ladder_length(begin_word: &str, end_word: &str, word_list: &[String]) -> i32 {
+        let mut unused: HashSet<String> = word_list.iter().cloned().collect();
+        if !unused.contains(end_word) {
+            return 0;
+        }
+        let mut queue: VecDeque<String> = VecDeque::new();
+        queue.push_back(begin_word.to_string());
+        unused.remove(begin_word);
+        let mut steps = 1;
+        while !queue.is_empty() {
+            for _ in 0..queue.len() {
+                let word = queue.pop_front().unwrap();
+                if word == end_word {
+                    return steps;
+                }
+                let mut chars: Vec<char> = word.chars().collect();
+                for i in 0..chars.len() {
+                    let original = chars[i];
+                    for c in 'a'..='z' {
+                        if c == original {
+                            continue;
+                        }
+                        chars[i] = c;
+                        let candidate: String = chars.iter().collect();
+                        if unused.remove(&candidate) {
+                            queue.push_back(candidate);
+                        }
+                    }
+                    chars[i] = original;
+                }
+            }
+            steps += 1;
+        }
+        0
+    }
+  notes: |
+    BFS over the implicit graph where words one letter apart are adjacent. Generate
+    neighbours by trying each of 26 letters at every position, consuming words from
+    a "not yet visited" set so each is enqueued once. Level count = path length.
+  source: "NeetCode 150 · Graphs"
+  tags: [rust, neetcode, graphs]
+  tests: |
+    let list: Vec<String> = ["hot", "dot", "dog", "lot", "log", "cog"]
+        .iter()
+        .map(|s| s.to_string())
+        .collect();
+    assert_eq!(ladder_length("hit", "cog", &list), 5);
+    let list2: Vec<String> = ["hot", "dot", "dog", "lot", "log"]
+        .iter()
+        .map(|s| s.to_string())
+        .collect();
+    assert_eq!(ladder_length("hit", "cog", &list2), 0);

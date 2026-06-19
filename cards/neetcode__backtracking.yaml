@@ -1,0 +1,502 @@
+# NeetCode 150 — Backtracking. Original prompts; idiomatic, clippy-clean
+# Rust; example tests run by `python check_cards.py`.
+- instruction: |
+    Subsets. Write `subsets(nums: &[i32]) -> Vec<Vec<i32>>` returning every
+    subset (the power set) of distinct integers. Subset/element order is up to you.
+    Example: [1, 2] -> [[], [1], [1, 2], [2]].
+  starter: |
+    fn subsets(nums: &[i32]) -> Vec<Vec<i32>> {
+
+    }
+  solution: |
+    fn subsets(nums: &[i32]) -> Vec<Vec<i32>> {
+        let mut res = Vec::new();
+        let mut cur = Vec::new();
+        backtrack(nums, 0, &mut cur, &mut res);
+        res
+    }
+
+    fn backtrack(nums: &[i32], start: usize, cur: &mut Vec<i32>, res: &mut Vec<Vec<i32>>) {
+        res.push(cur.clone());
+        for i in start..nums.len() {
+            cur.push(nums[i]);
+            backtrack(nums, i + 1, cur, res);
+            cur.pop();
+        }
+    }
+  notes: |
+    Classic include/exclude tree: record the current path at every node, then try
+    extending with each later element. Pushing before recursing and popping after
+    keeps `cur` in sync. 2^n subsets, O(n * 2^n) total work.
+  source: "NeetCode 150 · Backtracking"
+  tags: [rust, neetcode, backtracking]
+  tests: |
+    let mut got = subsets(&[1, 2, 3]);
+    for s in &mut got {
+        s.sort();
+    }
+    got.sort();
+    assert_eq!(
+        got,
+        vec![
+            vec![],
+            vec![1],
+            vec![1, 2],
+            vec![1, 2, 3],
+            vec![1, 3],
+            vec![2],
+            vec![2, 3],
+            vec![3],
+        ]
+    );
+    assert_eq!(subsets(&[]), vec![vec![]]);
+
+- instruction: |
+    Combination Sum. Write `combination_sum(candidates: &[i32], target: i32) -> Vec<Vec<i32>>`
+    returning all unique combinations of distinct candidates summing to `target`;
+    each candidate may be reused unlimited times. Order is up to you.
+    Example: ([2, 3, 6, 7], 7) -> [[2, 2, 3], [7]].
+  starter: |
+    fn combination_sum(candidates: &[i32], target: i32) -> Vec<Vec<i32>> {
+
+    }
+  solution: |
+    fn combination_sum(candidates: &[i32], target: i32) -> Vec<Vec<i32>> {
+        let mut res = Vec::new();
+        let mut cur = Vec::new();
+        backtrack(candidates, target, 0, &mut cur, &mut res);
+        res
+    }
+
+    fn backtrack(
+        candidates: &[i32],
+        remaining: i32,
+        start: usize,
+        cur: &mut Vec<i32>,
+        res: &mut Vec<Vec<i32>>,
+    ) {
+        if remaining == 0 {
+            res.push(cur.clone());
+            return;
+        }
+        for i in start..candidates.len() {
+            let c = candidates[i];
+            if c <= remaining {
+                cur.push(c);
+                backtrack(candidates, remaining - c, i, cur, res);
+                cur.pop();
+            }
+        }
+    }
+  notes: |
+    Passing `i` (not `i + 1`) as the next start allows reusing a candidate while a
+    non-decreasing index prevents permuted duplicates like [3, 2, 2] vs [2, 2, 3].
+    Skip any candidate larger than the remaining target.
+  source: "NeetCode 150 · Backtracking"
+  tags: [rust, neetcode, backtracking]
+  tests: |
+    let mut got = combination_sum(&[2, 3, 6, 7], 7);
+    for c in &mut got {
+        c.sort();
+    }
+    got.sort();
+    assert_eq!(got, vec![vec![2, 2, 3], vec![7]]);
+    let mut got2 = combination_sum(&[2, 3, 5], 8);
+    for c in &mut got2 {
+        c.sort();
+    }
+    got2.sort();
+    assert_eq!(got2, vec![vec![2, 2, 2, 2], vec![2, 3, 3], vec![3, 5]]);
+    assert!(combination_sum(&[2], 1).is_empty());
+
+- instruction: |
+    Permutations. Write `permute(nums: &[i32]) -> Vec<Vec<i32>>` returning all
+    orderings of the distinct integers. Order of the permutations is up to you.
+    Example: [1, 2] -> [[1, 2], [2, 1]].
+  starter: |
+    fn permute(nums: &[i32]) -> Vec<Vec<i32>> {
+
+    }
+  solution: |
+    fn permute(nums: &[i32]) -> Vec<Vec<i32>> {
+        let mut res = Vec::new();
+        let mut cur = nums.to_vec();
+        backtrack(&mut cur, 0, &mut res);
+        res
+    }
+
+    fn backtrack(cur: &mut [i32], k: usize, res: &mut Vec<Vec<i32>>) {
+        if k == cur.len() {
+            res.push(cur.to_vec());
+            return;
+        }
+        for i in k..cur.len() {
+            cur.swap(k, i);
+            backtrack(cur, k + 1, res);
+            cur.swap(k, i);
+        }
+    }
+  notes: |
+    Build permutations in place by swapping each remaining element into position
+    `k`, recursing, then swapping back to restore order. n! results, no extra
+    "used" bookkeeping needed.
+  source: "NeetCode 150 · Backtracking"
+  tags: [rust, neetcode, backtracking]
+  tests: |
+    let mut got = permute(&[1, 2, 3]);
+    got.sort();
+    assert_eq!(
+        got,
+        vec![
+            vec![1, 2, 3],
+            vec![1, 3, 2],
+            vec![2, 1, 3],
+            vec![2, 3, 1],
+            vec![3, 1, 2],
+            vec![3, 2, 1],
+        ]
+    );
+    assert_eq!(permute(&[0]), vec![vec![0]]);
+
+- instruction: |
+    Subsets II. Write `subsets_with_dup(nums: &[i32]) -> Vec<Vec<i32>>` returning
+    all subsets where the input may contain duplicates, with no duplicate subset.
+    Order is up to you.
+    Example: [1, 2, 2] -> [[], [1], [1, 2], [1, 2, 2], [2], [2, 2]].
+  starter: |
+    fn subsets_with_dup(nums: &[i32]) -> Vec<Vec<i32>> {
+
+    }
+  solution: |
+    fn subsets_with_dup(nums: &[i32]) -> Vec<Vec<i32>> {
+        let mut sorted = nums.to_vec();
+        sorted.sort_unstable();
+        let mut res = Vec::new();
+        let mut cur = Vec::new();
+        backtrack(&sorted, 0, &mut cur, &mut res);
+        res
+    }
+
+    fn backtrack(nums: &[i32], start: usize, cur: &mut Vec<i32>, res: &mut Vec<Vec<i32>>) {
+        res.push(cur.clone());
+        for i in start..nums.len() {
+            if i > start && nums[i] == nums[i - 1] {
+                continue;
+            }
+            cur.push(nums[i]);
+            backtrack(nums, i + 1, cur, res);
+            cur.pop();
+        }
+    }
+  notes: |
+    Sort first so equal values are adjacent, then within one recursion level skip a
+    value identical to its predecessor (`i > start`). This picks each multiset of
+    duplicates exactly once, avoiding duplicate subsets without a HashSet.
+  source: "NeetCode 150 · Backtracking"
+  tags: [rust, neetcode, backtracking]
+  tests: |
+    let mut got = subsets_with_dup(&[1, 2, 2]);
+    for s in &mut got {
+        s.sort();
+    }
+    got.sort();
+    assert_eq!(
+        got,
+        vec![
+            vec![],
+            vec![1],
+            vec![1, 2],
+            vec![1, 2, 2],
+            vec![2],
+            vec![2, 2],
+        ]
+    );
+
+- instruction: |
+    Combination Sum II. Write `combination_sum2(candidates: &[i32], target: i32) -> Vec<Vec<i32>>`
+    returning all unique combinations summing to `target` where each candidate is
+    used at most once (the input may contain duplicates). Order is up to you.
+    Example: ([10, 1, 2, 7, 6, 1, 5], 8) -> [[1, 1, 6], [1, 2, 5], [1, 7], [2, 6]].
+  starter: |
+    fn combination_sum2(candidates: &[i32], target: i32) -> Vec<Vec<i32>> {
+
+    }
+  solution: |
+    fn combination_sum2(candidates: &[i32], target: i32) -> Vec<Vec<i32>> {
+        let mut sorted = candidates.to_vec();
+        sorted.sort_unstable();
+        let mut res = Vec::new();
+        let mut cur = Vec::new();
+        backtrack(&sorted, target, 0, &mut cur, &mut res);
+        res
+    }
+
+    fn backtrack(
+        candidates: &[i32],
+        remaining: i32,
+        start: usize,
+        cur: &mut Vec<i32>,
+        res: &mut Vec<Vec<i32>>,
+    ) {
+        if remaining == 0 {
+            res.push(cur.clone());
+            return;
+        }
+        for i in start..candidates.len() {
+            if i > start && candidates[i] == candidates[i - 1] {
+                continue;
+            }
+            let c = candidates[i];
+            if c > remaining {
+                break;
+            }
+            cur.push(c);
+            backtrack(candidates, remaining - c, i + 1, cur, res);
+            cur.pop();
+        }
+    }
+  notes: |
+    Sort, then advance with `i + 1` so each element is used once. The `i > start`
+    skip drops duplicate values at the same level; because the array is sorted, a
+    candidate exceeding the remainder lets us `break` the rest of the loop.
+  source: "NeetCode 150 · Backtracking"
+  tags: [rust, neetcode, backtracking]
+  tests: |
+    let mut got = combination_sum2(&[10, 1, 2, 7, 6, 1, 5], 8);
+    for c in &mut got {
+        c.sort();
+    }
+    got.sort();
+    assert_eq!(
+        got,
+        vec![vec![1, 1, 6], vec![1, 2, 5], vec![1, 7], vec![2, 6]]
+    );
+    let mut got2 = combination_sum2(&[2, 5, 2, 1, 2], 5);
+    for c in &mut got2 {
+        c.sort();
+    }
+    got2.sort();
+    assert_eq!(got2, vec![vec![1, 2, 2], vec![5]]);
+
+- instruction: |
+    Word Search. Write `exist(board: &[Vec<char>], word: &str) -> bool`: true if
+    `word` can be formed by a path of horizontally/vertically adjacent cells, each
+    cell used at most once.
+    Example: board [[A,B],[C,D]] with "ABDC" -> true; "ABCD" -> false.
+  starter: |
+    fn exist(board: &[Vec<char>], word: &str) -> bool {
+
+    }
+  solution: |
+    fn exist(board: &[Vec<char>], word: &str) -> bool {
+        let word: Vec<char> = word.chars().collect();
+        if word.is_empty() {
+            return true;
+        }
+        let mut grid: Vec<Vec<char>> = board.to_vec();
+        let rows = grid.len();
+        for r in 0..rows {
+            for c in 0..grid[r].len() {
+                if dfs(&mut grid, &word, r, c, 0) {
+                    return true;
+                }
+            }
+        }
+        false
+    }
+
+    fn dfs(grid: &mut [Vec<char>], word: &[char], r: usize, c: usize, k: usize) -> bool {
+        if grid[r][c] != word[k] {
+            return false;
+        }
+        if k + 1 == word.len() {
+            return true;
+        }
+        let saved = grid[r][c];
+        grid[r][c] = '\0';
+        let found = (r > 0 && dfs(grid, word, r - 1, c, k + 1))
+            || (r + 1 < grid.len() && dfs(grid, word, r + 1, c, k + 1))
+            || (c > 0 && dfs(grid, word, r, c - 1, k + 1))
+            || (c + 1 < grid[r].len() && dfs(grid, word, r, c + 1, k + 1));
+        grid[r][c] = saved;
+        found
+    }
+  notes: |
+    DFS from every cell. Temporarily overwrite a visited cell with a sentinel
+    ('\0') to forbid reuse within the current path, then restore it on backtrack.
+    Short-circuit `||` stops at the first successful direction.
+  source: "NeetCode 150 · Backtracking"
+  tags: [rust, neetcode, backtracking]
+  tests: |
+    let board = vec![
+        vec!['A', 'B', 'C', 'E'],
+        vec!['S', 'F', 'C', 'S'],
+        vec!['A', 'D', 'E', 'E'],
+    ];
+    assert!(exist(&board, "ABCCED"));
+    assert!(exist(&board, "SEE"));
+    assert!(!exist(&board, "ABCB"));
+
+- instruction: |
+    Palindrome Partitioning. Write `partition(s: &str) -> Vec<Vec<String>>`
+    returning every way to split `s` into substrings that are all palindromes.
+    Order is up to you.
+    Example: "aab" -> [["a", "a", "b"], ["aa", "b"]].
+  starter: |
+    fn partition(s: &str) -> Vec<Vec<String>> {
+
+    }
+  solution: |
+    fn partition(s: &str) -> Vec<Vec<String>> {
+        let chars: Vec<char> = s.chars().collect();
+        let mut res = Vec::new();
+        let mut cur = Vec::new();
+        backtrack(&chars, 0, &mut cur, &mut res);
+        res
+    }
+
+    fn is_palindrome(chars: &[char]) -> bool {
+        let mut i = 0;
+        let mut j = chars.len();
+        while i + 1 < j {
+            j -= 1;
+            if chars[i] != chars[j] {
+                return false;
+            }
+            i += 1;
+        }
+        true
+    }
+
+    fn backtrack(chars: &[char], start: usize, cur: &mut Vec<String>, res: &mut Vec<Vec<String>>) {
+        if start == chars.len() {
+            res.push(cur.clone());
+            return;
+        }
+        for end in start + 1..=chars.len() {
+            if is_palindrome(&chars[start..end]) {
+                cur.push(chars[start..end].iter().collect());
+                backtrack(chars, end, cur, res);
+                cur.pop();
+            }
+        }
+    }
+  notes: |
+    At each position try every prefix `start..end`; if it is a palindrome, commit it
+    and recurse from `end`. Reaching the string's end yields one valid partition.
+    Working on a `Vec<char>` keeps slicing index-safe for any Unicode input.
+  source: "NeetCode 150 · Backtracking"
+  tags: [rust, neetcode, backtracking]
+  tests: |
+    let mut got = partition("aab");
+    got.sort();
+    assert_eq!(
+        got,
+        vec![
+            vec!["a".to_string(), "a".to_string(), "b".to_string()],
+            vec!["aa".to_string(), "b".to_string()],
+        ]
+    );
+    assert_eq!(partition("a"), vec![vec!["a".to_string()]]);
+
+- instruction: |
+    Letter Combinations of a Phone Number. Write
+    `letter_combinations(digits: &str) -> Vec<String>` mapping digits 2-9 to letters
+    (2=abc ... 9=wxyz) and returning every combination. Empty input -> empty Vec.
+    Example: "23" -> ["ad","ae","af","bd","be","bf","cd","ce","cf"].
+  starter: |
+    fn letter_combinations(digits: &str) -> Vec<String> {
+
+    }
+  solution: |
+    fn letter_combinations(digits: &str) -> Vec<String> {
+        if digits.is_empty() {
+            return Vec::new();
+        }
+        const MAP: [&str; 8] = ["abc", "def", "ghi", "jkl", "mno", "pqrs", "tuv", "wxyz"];
+        let mut res = vec![String::new()];
+        for d in digits.chars() {
+            let letters = MAP[d as usize - '2' as usize];
+            let mut next = Vec::with_capacity(res.len() * letters.len());
+            for prefix in &res {
+                for ch in letters.chars() {
+                    let mut s = prefix.clone();
+                    s.push(ch);
+                    next.push(s);
+                }
+            }
+            res = next;
+        }
+        res
+    }
+  notes: |
+    Iterative product: keep the set of combinations built so far and, for each new
+    digit, extend every existing string with each of that digit's letters. The
+    empty-input guard avoids returning the spurious `[""]`.
+  source: "NeetCode 150 · Backtracking"
+  tags: [rust, neetcode, backtracking]
+  tests: |
+    let mut got = letter_combinations("23");
+    got.sort();
+    assert_eq!(
+        got,
+        vec!["ad", "ae", "af", "bd", "be", "bf", "cd", "ce", "cf"]
+    );
+    assert!(letter_combinations("").is_empty());
+    assert_eq!(letter_combinations("9").len(), 4);
+
+- instruction: |
+    N-Queens. Write `solve_n_queens(n: usize) -> usize` returning how many distinct
+    ways `n` queens can be placed on an n x n board so none attack another.
+    Example: n = 4 -> 2; n = 1 -> 1.
+  starter: |
+    fn solve_n_queens(n: usize) -> usize {
+
+    }
+  solution: |
+    fn solve_n_queens(n: usize) -> usize {
+        let mut cols = vec![false; n];
+        let mut diag = vec![false; 2 * n - 1];
+        let mut anti = vec![false; 2 * n - 1];
+        let mut count = 0;
+        place(n, 0, &mut cols, &mut diag, &mut anti, &mut count);
+        count
+    }
+
+    fn place(
+        n: usize,
+        row: usize,
+        cols: &mut [bool],
+        diag: &mut [bool],
+        anti: &mut [bool],
+        count: &mut usize,
+    ) {
+        if row == n {
+            *count += 1;
+            return;
+        }
+        for col in 0..n {
+            let d = row + col;
+            let a = row + n - 1 - col;
+            if cols[col] || diag[d] || anti[a] {
+                continue;
+            }
+            cols[col] = true;
+            diag[d] = true;
+            anti[a] = true;
+            place(n, row + 1, cols, diag, anti, count);
+            cols[col] = false;
+            diag[d] = false;
+            anti[a] = false;
+        }
+    }
+  notes: |
+    Place one queen per row. A column is free iff its `cols` flag and both diagonal
+    flags are clear, where `row + col` identifies one diagonal and `row - col`
+    (shifted by n-1 to stay non-negative) the other. O(1) attack checks via flags.
+  source: "NeetCode 150 · Backtracking"
+  tags: [rust, neetcode, backtracking]
+  tests: |
+    assert_eq!(solve_n_queens(1), 1);
+    assert_eq!(solve_n_queens(4), 2);
+    assert_eq!(solve_n_queens(8), 92);

@@ -121,9 +121,11 @@ def build_models():
 
 
 def deck_for(stem):
-    title = stem.replace("_", " ").replace("-", " ").title().replace(" ", "")
+    # "__" separates subdecks: neetcode__arrays_hashing -> Rust::Neetcode::Arrays Hashing
+    parts = [seg.replace("_", " ").replace("-", " ").title() for seg in stem.split("__")]
+    name = "Rust::" + "::".join(parts)
     deck_id = 1700000000 + (zlib.crc32(stem.encode()) % 100000000)
-    return genanki.Deck(deck_id, "Rust::" + title)
+    return genanki.Deck(deck_id, name)
 
 
 def main():

@@ -1,0 +1,291 @@
+# NeetCode 150 — Tries. Original prompts; idiomatic, clippy-clean
+# Rust; example tests run by `python check_cards.py`.
+- instruction: |
+    Implement Trie (Prefix Tree). Build a `Trie` supporting `insert(&str)`,
+    `search(&str) -> bool` (whole word present), and `starts_with(&str) -> bool`
+    (any word has this prefix). Implement `new`, `insert`, `search`, `starts_with`.
+    Example: insert "apple"; search "apple" -> true; search "app" -> false;
+    starts_with "app" -> true.
+  starter: |
+    use std::collections::HashMap;
+
+    #[derive(Default)]
+    struct Trie {
+        children: HashMap<char, Trie>,
+        is_word: bool,
+    }
+
+    impl Trie {
+        fn new() -> Self {
+
+        }
+
+        fn insert(&mut self, word: &str) {
+
+        }
+
+        fn search(&self, word: &str) -> bool {
+
+        }
+
+        fn starts_with(&self, prefix: &str) -> bool {
+
+        }
+    }
+  solution: |
+    use std::collections::HashMap;
+
+    #[derive(Default)]
+    struct Trie {
+        children: HashMap<char, Trie>,
+        is_word: bool,
+    }
+
+    impl Trie {
+        fn new() -> Self {
+            Trie::default()
+        }
+
+        fn insert(&mut self, word: &str) {
+            let mut node = self;
+            for c in word.chars() {
+                node = node.children.entry(c).or_default();
+            }
+            node.is_word = true;
+        }
+
+        fn find(&self, s: &str) -> Option<&Trie> {
+            let mut node = self;
+            for c in s.chars() {
+                node = node.children.get(&c)?;
+            }
+            Some(node)
+        }
+
+        fn search(&self, word: &str) -> bool {
+            self.find(word).is_some_and(|node| node.is_word)
+        }
+
+        fn starts_with(&self, prefix: &str) -> bool {
+            self.find(prefix).is_some()
+        }
+    }
+  notes: |
+    Each node holds a child map keyed by character plus an `is_word` flag marking
+    word ends. `insert` walks/creates nodes with `entry().or_default()`. A shared
+    `find` helper walks the path; `search` also checks `is_word`, `starts_with`
+    just needs the path to exist. Operations are O(length of the string).
+  source: "NeetCode 150 · Tries"
+  tags: [rust, neetcode, trie]
+  tests: |
+    let mut t = Trie::new();
+    t.insert("apple");
+    assert!(t.search("apple"));
+    assert!(!t.search("app"));
+    assert!(t.starts_with("app"));
+    t.insert("app");
+    assert!(t.search("app"));
+    assert!(!t.search("apples"));
+    assert!(!t.starts_with("b"));
+
+- instruction: |
+    Design Add and Search Words Data Structure. Build `WordDictionary` supporting
+    `add_word(&str)` and `search(&str) -> bool`, where in a search query '.' matches
+    any single character. Implement `new`, `add_word`, `search`.
+    Example: add "bad","dad","mad"; search "pad" -> false; search ".ad" -> true;
+    search "b.." -> true.
+  starter: |
+    use std::collections::HashMap;
+
+    #[derive(Default)]
+    struct WordDictionary {
+        children: HashMap<char, WordDictionary>,
+        is_word: bool,
+    }
+
+    impl WordDictionary {
+        fn new() -> Self {
+
+        }
+
+        fn add_word(&mut self, word: &str) {
+
+        }
+
+        fn search(&self, word: &str) -> bool {
+
+        }
+    }
+  solution: |
+    use std::collections::HashMap;
+
+    #[derive(Default)]
+    struct WordDictionary {
+        children: HashMap<char, WordDictionary>,
+        is_word: bool,
+    }
+
+    impl WordDictionary {
+        fn new() -> Self {
+            WordDictionary::default()
+        }
+
+        fn add_word(&mut self, word: &str) {
+            let mut node = self;
+            for c in word.chars() {
+                node = node.children.entry(c).or_default();
+            }
+            node.is_word = true;
+        }
+
+        fn search(&self, word: &str) -> bool {
+            Self::search_from(self, &word.chars().collect::<Vec<char>>(), 0)
+        }
+
+        fn search_from(node: &WordDictionary, chars: &[char], i: usize) -> bool {
+            if i == chars.len() {
+                return node.is_word;
+            }
+            let c = chars[i];
+            if c == '.' {
+                node.children
+                    .values()
+                    .any(|child| Self::search_from(child, chars, i + 1))
+            } else if let Some(child) = node.children.get(&c) {
+                Self::search_from(child, chars, i + 1)
+            } else {
+                false
+            }
+        }
+    }
+  notes: |
+    A trie with a recursive search. A concrete character follows the single matching
+    edge; a '.' branches into every child and succeeds if any branch matches the
+    rest. Worst case (all dots) the search visits many nodes, but plain words stay
+    O(length).
+  source: "NeetCode 150 · Tries"
+  tags: [rust, neetcode, trie]
+  tests: |
+    let mut d = WordDictionary::new();
+    d.add_word("bad");
+    d.add_word("dad");
+    d.add_word("mad");
+    assert!(!d.search("pad"));
+    assert!(d.search("bad"));
+    assert!(d.search(".ad"));
+    assert!(d.search("b.."));
+    assert!(d.search("...")); // three dots match any 3-letter word
+    assert!(!d.search("....")); // no 4-letter words were added
+
+- instruction: |
+    Word Search II. Given an m x n board of characters and a list of words, return
+    all words that can be formed by a path of adjacent (up/down/left/right) cells,
+    using each cell at most once per word. Write
+    `find_words(board: &[Vec<char>], words: &[String]) -> Vec<String>`.
+    Example: board with "oath","eat" present among letters -> ["eat","oath"]
+    (order doesn't matter).
+  starter: |
+    use std::collections::HashMap;
+
+    fn find_words(board: &[Vec<char>], words: &[String]) -> Vec<String> {
+
+    }
+  solution: |
+    use std::collections::HashMap;
+
+    #[derive(Default)]
+    struct Node {
+        children: HashMap<char, Node>,
+        word: Option<String>,
+    }
+
+    fn find_words(board: &[Vec<char>], words: &[String]) -> Vec<String> {
+        // Build a trie of all words; store the full word at its end node.
+        let mut root = Node::default();
+        for w in words {
+            let mut node = &mut root;
+            for c in w.chars() {
+                node = node.children.entry(c).or_default();
+            }
+            node.word = Some(w.clone());
+        }
+
+        if board.is_empty() || board[0].is_empty() {
+            return Vec::new();
+        }
+        let rows = board.len();
+        let cols = board[0].len();
+        let mut grid: Vec<Vec<char>> = board.to_vec();
+        let mut found = Vec::new();
+
+        for r in 0..rows {
+            for c in 0..cols {
+                dfs(&mut grid, r, c, &mut root, &mut found);
+            }
+        }
+        found
+    }
+
+    fn dfs(
+        grid: &mut [Vec<char>],
+        r: usize,
+        c: usize,
+        node: &mut Node,
+        found: &mut Vec<String>,
+    ) {
+        let ch = grid[r][c];
+        if ch == '#' {
+            return;
+        }
+        let Some(next) = node.children.get_mut(&ch) else {
+            return;
+        };
+        if let Some(word) = next.word.take() {
+            found.push(word);
+        }
+        grid[r][c] = '#'; // mark visited
+        let rows = grid.len();
+        let cols = grid[0].len();
+        if r + 1 < rows {
+            dfs(grid, r + 1, c, next, found);
+        }
+        if r > 0 {
+            dfs(grid, r - 1, c, next, found);
+        }
+        if c + 1 < cols {
+            dfs(grid, r, c + 1, next, found);
+        }
+        if c > 0 {
+            dfs(grid, r, c - 1, next, found);
+        }
+        grid[r][c] = ch; // restore
+    }
+  notes: |
+    Put all words in a trie, then DFS from every cell, descending the trie in step
+    with the board. Marking the cell '#' during recursion prevents reuse; `word.take`
+    records a hit once and avoids duplicates. Searching all words together (rather
+    than one at a time) shares prefixes and prunes dead branches early.
+  source: "NeetCode 150 · Tries"
+  tags: [rust, neetcode, trie]
+  tests: |
+    let board = vec![
+        vec!['o', 'a', 'a', 'n'],
+        vec!['e', 't', 'a', 'e'],
+        vec!['i', 'h', 'k', 'r'],
+        vec!['i', 'f', 'l', 'v'],
+    ];
+    let words = vec![
+        "oath".to_string(),
+        "pea".to_string(),
+        "eat".to_string(),
+        "rain".to_string(),
+    ];
+    let mut got = find_words(&board, &words);
+    got.sort();
+    assert_eq!(got, vec!["eat".to_string(), "oath".to_string()]);
+    let empty: Vec<Vec<char>> = vec![];
+    assert!(find_words(&empty, &words).is_empty());
+    let single = vec![vec!['a']];
+    let mut got2 = find_words(&single, &["a".to_string(), "b".to_string()]);
+    got2.sort();
+    assert_eq!(got2, vec!["a".to_string()]);

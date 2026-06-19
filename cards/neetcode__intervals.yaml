@@ -1,0 +1,244 @@
+# NeetCode 150 — Intervals. Original prompts; idiomatic, clippy-clean
+# Rust; example tests run by `python check_cards.py`.
+- instruction: |
+    Insert Interval. Write `insert(intervals: &[[i32; 2]], new_interval: [i32; 2]) -> Vec<[i32; 2]>`.
+    `intervals` is sorted and non-overlapping; insert `new_interval`, merging any
+    overlaps, keeping the result sorted.
+    Example: ([[1,3],[6,9]], [2,5]) -> [[1,5],[6,9]].
+  starter: |
+    fn insert(intervals: &[[i32; 2]], new_interval: [i32; 2]) -> Vec<[i32; 2]> {
+
+    }
+  solution: |
+    fn insert(intervals: &[[i32; 2]], new_interval: [i32; 2]) -> Vec<[i32; 2]> {
+        let mut res = Vec::new();
+        let [mut start, mut end] = new_interval;
+        let mut i = 0;
+        while i < intervals.len() && intervals[i][1] < start {
+            res.push(intervals[i]);
+            i += 1;
+        }
+        while i < intervals.len() && intervals[i][0] <= end {
+            start = start.min(intervals[i][0]);
+            end = end.max(intervals[i][1]);
+            i += 1;
+        }
+        res.push([start, end]);
+        res.extend_from_slice(&intervals[i..]);
+        res
+    }
+  notes: |
+    Three phases: copy intervals ending before the new one starts, absorb every
+    interval that overlaps (widening start/end), then append the merged interval and
+    the untouched tail. O(n), single pass.
+  source: "NeetCode 150 · Intervals"
+  tags: [rust, neetcode, intervals]
+  tests: |
+    assert_eq!(insert(&[[1, 3], [6, 9]], [2, 5]), vec![[1, 5], [6, 9]]);
+    assert_eq!(
+        insert(&[[1, 2], [3, 5], [6, 7], [8, 10], [12, 16]], [4, 8]),
+        vec![[1, 2], [3, 10], [12, 16]]
+    );
+    assert_eq!(insert(&[], [5, 7]), vec![[5, 7]]);
+
+- instruction: |
+    Merge Intervals. Write `merge(intervals: &[[i32; 2]]) -> Vec<[i32; 2]>`:
+    combine all overlapping intervals and return them sorted by start.
+    Example: [[1,3],[2,6],[8,10],[15,18]] -> [[1,6],[8,10],[15,18]].
+  starter: |
+    fn merge(intervals: &[[i32; 2]]) -> Vec<[i32; 2]> {
+
+    }
+  solution: |
+    fn merge(intervals: &[[i32; 2]]) -> Vec<[i32; 2]> {
+        let mut sorted = intervals.to_vec();
+        sorted.sort_unstable();
+        let mut res: Vec<[i32; 2]> = Vec::new();
+        for iv in sorted {
+            match res.last_mut() {
+                Some(last) if iv[0] <= last[1] => last[1] = last[1].max(iv[1]),
+                _ => res.push(iv),
+            }
+        }
+        res
+    }
+  notes: |
+    Sort by start, then sweep: if the next interval starts at or before the last
+    merged interval's end, extend that end; otherwise begin a new interval.
+    `last_mut` lets us widen in place. O(n log n) from the sort.
+  source: "NeetCode 150 · Intervals"
+  tags: [rust, neetcode, intervals]
+  tests: |
+    assert_eq!(
+        merge(&[[1, 3], [2, 6], [8, 10], [15, 18]]),
+        vec![[1, 6], [8, 10], [15, 18]]
+    );
+    assert_eq!(merge(&[[1, 4], [4, 5]]), vec![[1, 5]]);
+    assert_eq!(merge(&[[1, 4]]), vec![[1, 4]]);
+
+- instruction: |
+    Non-overlapping Intervals. Write `erase_overlap_intervals(intervals: &[[i32; 2]]) -> i32`:
+    the minimum number of intervals to remove so the rest don't overlap (touching
+    endpoints are allowed).
+    Example: [[1,2],[2,3],[3,4],[1,3]] -> 1.
+  starter: |
+    fn erase_overlap_intervals(intervals: &[[i32; 2]]) -> i32 {
+
+    }
+  solution: |
+    fn erase_overlap_intervals(intervals: &[[i32; 2]]) -> i32 {
+        let mut sorted = intervals.to_vec();
+        sorted.sort_unstable_by_key(|iv| iv[1]);
+        let mut removed = 0;
+        let mut prev_end = i32::MIN;
+        for iv in sorted {
+            if iv[0] >= prev_end {
+                prev_end = iv[1];
+            } else {
+                removed += 1;
+            }
+        }
+        removed
+    }
+  notes: |
+    Greedy activity selection: sort by end time and always keep the interval that
+    finishes earliest, since it leaves the most room. Any interval starting before
+    the kept one's end must be removed. O(n log n).
+  source: "NeetCode 150 · Intervals"
+  tags: [rust, neetcode, intervals]
+  tests: |
+    assert_eq!(
+        erase_overlap_intervals(&[[1, 2], [2, 3], [3, 4], [1, 3]]),
+        1
+    );
+    assert_eq!(erase_overlap_intervals(&[[1, 2], [1, 2], [1, 2]]), 2);
+    assert_eq!(erase_overlap_intervals(&[[1, 2], [2, 3]]), 0);
+
+- instruction: |
+    Meeting Rooms. Write `can_attend_meetings(intervals: &[[i32; 2]]) -> bool`: true
+    if a single person can attend every meeting, i.e. no two intervals overlap
+    (touching endpoints are fine).
+    Example: [[0,30],[5,10],[15,20]] -> false; [[7,10],[2,4]] -> true.
+  starter: |
+    fn can_attend_meetings(intervals: &[[i32; 2]]) -> bool {
+
+    }
+  solution: |
+    fn can_attend_meetings(intervals: &[[i32; 2]]) -> bool {
+        let mut sorted = intervals.to_vec();
+        sorted.sort_unstable();
+        sorted.windows(2).all(|w| w[0][1] <= w[1][0])
+    }
+  notes: |
+    Sort by start, then a conflict can only occur between neighbours: every meeting
+    must end no later than the next one begins. `windows(2)` checks each adjacent
+    pair. O(n log n).
+  source: "NeetCode 150 · Intervals"
+  tags: [rust, neetcode, intervals]
+  tests: |
+    assert!(!can_attend_meetings(&[[0, 30], [5, 10], [15, 20]]));
+    assert!(can_attend_meetings(&[[7, 10], [2, 4]]));
+    assert!(can_attend_meetings(&[]));
+
+- instruction: |
+    Meeting Rooms II. Write `min_meeting_rooms(intervals: &[[i32; 2]]) -> i32`: the
+    minimum number of rooms needed so no two concurrent meetings share a room
+    (a meeting ending at time t frees the room for one starting at t).
+    Example: [[0,30],[5,10],[15,20]] -> 2.
+  starter: |
+    fn min_meeting_rooms(intervals: &[[i32; 2]]) -> i32 {
+
+    }
+  solution: |
+    fn min_meeting_rooms(intervals: &[[i32; 2]]) -> i32 {
+        let mut starts: Vec<i32> = intervals.iter().map(|iv| iv[0]).collect();
+        let mut ends: Vec<i32> = intervals.iter().map(|iv| iv[1]).collect();
+        starts.sort_unstable();
+        ends.sort_unstable();
+        let mut rooms = 0;
+        let mut max_rooms = 0;
+        let mut j = 0;
+        for &s in &starts {
+            while j < ends.len() && ends[j] <= s {
+                rooms -= 1;
+                j += 1;
+            }
+            rooms += 1;
+            max_rooms = max_rooms.max(rooms);
+        }
+        max_rooms
+    }
+  notes: |
+    Sort start and end times separately and sweep a timeline. Before each start, free
+    every room whose meeting has already ended (`ends[j] <= s`), then claim a room.
+    The peak concurrency is the answer. O(n log n).
+  source: "NeetCode 150 · Intervals"
+  tags: [rust, neetcode, intervals]
+  tests: |
+    assert_eq!(min_meeting_rooms(&[[0, 30], [5, 10], [15, 20]]), 2);
+    assert_eq!(min_meeting_rooms(&[[7, 10], [2, 4]]), 1);
+    assert_eq!(min_meeting_rooms(&[]), 0);
+
+- instruction: |
+    Minimum Interval to Include Each Query. Write
+    `min_interval(intervals: &[[i32; 2]], queries: &[i32]) -> Vec<i32>`: for each
+    query q, the size (end - start + 1) of the smallest interval [a, b] with
+    a <= q <= b, or -1 if none.
+    Example: (intervals [[1,4],[2,4],[3,6],[4,4]], queries [2,3,4,5]) -> [3,3,1,4].
+  starter: |
+    use std::cmp::Reverse;
+    use std::collections::BinaryHeap;
+
+    fn min_interval(intervals: &[[i32; 2]], queries: &[i32]) -> Vec<i32> {
+
+    }
+  solution: |
+    use std::cmp::Reverse;
+    use std::collections::BinaryHeap;
+
+    fn min_interval(intervals: &[[i32; 2]], queries: &[i32]) -> Vec<i32> {
+        let mut sorted = intervals.to_vec();
+        sorted.sort_unstable_by_key(|iv| iv[0]);
+        let mut order: Vec<usize> = (0..queries.len()).collect();
+        order.sort_unstable_by_key(|&i| queries[i]);
+        let mut res = vec![-1; queries.len()];
+        // Min-heap of (interval_size, interval_end) for intervals already started.
+        let mut heap: BinaryHeap<Reverse<(i32, i32)>> = BinaryHeap::new();
+        let mut i = 0;
+        for &qi in &order {
+            let q = queries[qi];
+            while i < sorted.len() && sorted[i][0] <= q {
+                let size = sorted[i][1] - sorted[i][0] + 1;
+                heap.push(Reverse((size, sorted[i][1])));
+                i += 1;
+            }
+            while let Some(&Reverse((_, end))) = heap.peek() {
+                if end < q {
+                    heap.pop();
+                } else {
+                    break;
+                }
+            }
+            if let Some(&Reverse((size, _))) = heap.peek() {
+                res[qi] = size;
+            }
+        }
+        res
+    }
+  notes: |
+    Offline: process queries in ascending order. Push every interval that has begun
+    by the current query into a min-heap keyed on size, discard those that already
+    ended (`end < q`), and the heap top is the smallest interval still covering q.
+    O((n + m) log n).
+  source: "NeetCode 150 · Intervals"
+  tags: [rust, neetcode, intervals]
+  tests: |
+    assert_eq!(
+        min_interval(&[[1, 4], [2, 4], [3, 6], [4, 4]], &[2, 3, 4, 5]),
+        vec![3, 3, 1, 4]
+    );
+    assert_eq!(
+        min_interval(&[[2, 3], [2, 5], [1, 8], [20, 25]], &[2, 19, 5, 22]),
+        vec![2, -1, 4, 6]
+    );
+    assert_eq!(min_interval(&[], &[1, 2]), vec![-1, -1]);

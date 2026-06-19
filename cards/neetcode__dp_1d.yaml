@@ -1,0 +1,433 @@
+# NeetCode 150 — 1-D Dynamic Programming. Original prompts; idiomatic, clippy-clean
+# Rust; example tests run by `python check_cards.py`.
+- instruction: |
+    Climbing Stairs. Write `climb_stairs(n: u32) -> u32`: count the distinct ways
+    to reach step `n` taking 1 or 2 steps at a time.
+    Example: 3 -> 3 (1+1+1, 1+2, 2+1).
+  starter: |
+    fn climb_stairs(n: u32) -> u32 {
+
+    }
+  solution: |
+    fn climb_stairs(n: u32) -> u32 {
+        let (mut prev, mut cur) = (1u32, 1u32);
+        for _ in 1..n {
+            let next = prev + cur;
+            prev = cur;
+            cur = next;
+        }
+        cur
+    }
+  notes: |
+    The number of ways to reach step i is ways(i-1) + ways(i-2): the Fibonacci
+    recurrence. Two rolling variables give O(n) time and O(1) space.
+  source: "NeetCode 150 · 1-D DP"
+  tags: [rust, neetcode, dp]
+  tests: |
+    assert_eq!(climb_stairs(2), 2);
+    assert_eq!(climb_stairs(3), 3);
+    assert_eq!(climb_stairs(5), 8);
+    assert_eq!(climb_stairs(0), 1);
+
+- instruction: |
+    Min Cost Climbing Stairs. Write `min_cost_climbing_stairs(cost: &[i32]) -> i32`:
+    pay cost[i] to step on stair i, climb 1 or 2 at a time, start before index 0
+    or 1, and reach the top (past the last stair) for the minimum total.
+    Example: [10, 15, 20] -> 15.
+  starter: |
+    fn min_cost_climbing_stairs(cost: &[i32]) -> i32 {
+
+    }
+  solution: |
+    fn min_cost_climbing_stairs(cost: &[i32]) -> i32 {
+        let (mut prev, mut cur) = (0, 0);
+        for &c in cost {
+            let next = c + prev.min(cur);
+            prev = cur;
+            cur = next;
+        }
+        prev.min(cur)
+    }
+  notes: |
+    `cur` is the min cost to stand on the current stair; reaching it costs `c` plus
+    the cheaper of the two prior stairs. The top is reachable from the last two.
+  source: "NeetCode 150 · 1-D DP"
+  tags: [rust, neetcode, dp]
+  tests: |
+    assert_eq!(min_cost_climbing_stairs(&[10, 15, 20]), 15);
+    assert_eq!(min_cost_climbing_stairs(&[1, 100, 1, 1, 1, 100, 1, 1, 100, 1]), 6);
+    assert_eq!(min_cost_climbing_stairs(&[]), 0);
+
+- instruction: |
+    House Robber. Write `rob(nums: &[i32]) -> i32`: maximum sum of a subset of the
+    array with no two adjacent elements chosen.
+    Example: [2, 7, 9, 3, 1] -> 12 (2 + 9 + 1).
+  starter: |
+    fn rob(nums: &[i32]) -> i32 {
+
+    }
+  solution: |
+    fn rob(nums: &[i32]) -> i32 {
+        let (mut skip, mut take) = (0, 0);
+        for &n in nums {
+            let new_take = skip + n;
+            skip = skip.max(take);
+            take = new_take;
+        }
+        skip.max(take)
+    }
+  notes: |
+    Track the best totals ending with the previous house robbed (`take`) or not
+    (`skip`). Robbing the current house requires the prior to be skipped.
+  source: "NeetCode 150 · 1-D DP"
+  tags: [rust, neetcode, dp]
+  tests: |
+    assert_eq!(rob(&[1, 2, 3, 1]), 4);
+    assert_eq!(rob(&[2, 7, 9, 3, 1]), 12);
+    assert_eq!(rob(&[]), 0);
+
+- instruction: |
+    House Robber II. Write `rob2(nums: &[i32]) -> i32`: like House Robber, but the
+    houses are arranged in a circle, so the first and last are adjacent.
+    Example: [2, 3, 2] -> 3.
+  starter: |
+    fn rob2(nums: &[i32]) -> i32 {
+
+    }
+  solution: |
+    fn rob2(nums: &[i32]) -> i32 {
+        fn rob_line(houses: &[i32]) -> i32 {
+            let (mut skip, mut take) = (0, 0);
+            for &n in houses {
+                let new_take = skip + n;
+                skip = skip.max(take);
+                take = new_take;
+            }
+            skip.max(take)
+        }
+        match nums {
+            [] => 0,
+            [only] => *only,
+            _ => rob_line(&nums[1..]).max(rob_line(&nums[..nums.len() - 1])),
+        }
+    }
+  notes: |
+    Either the first house is robbed or the last is, never both. Run the linear
+    solver on the array minus the last element and minus the first, take the max.
+  source: "NeetCode 150 · 1-D DP"
+  tags: [rust, neetcode, dp]
+  tests: |
+    assert_eq!(rob2(&[2, 3, 2]), 3);
+    assert_eq!(rob2(&[1, 2, 3, 1]), 4);
+    assert_eq!(rob2(&[5]), 5);
+    assert_eq!(rob2(&[]), 0);
+
+- instruction: |
+    Longest Palindromic Substring. Write `longest_palindrome(s: &str) -> String`
+    returning a longest contiguous substring that reads the same forwards and
+    backwards (assume ASCII). Any valid answer if there are ties.
+    Example: "babad" -> "bab" (or "aba").
+  starter: |
+    fn longest_palindrome(s: &str) -> String {
+
+    }
+  solution: |
+    fn longest_palindrome(s: &str) -> String {
+        let b = s.as_bytes();
+        let n = b.len();
+        if n == 0 {
+            return String::new();
+        }
+        let (mut start, mut len) = (0, 1);
+        let mut expand = |mut l: i32, mut r: usize| {
+            while l >= 0 && r < n && b[l as usize] == b[r] {
+                if r - l as usize + 1 > len {
+                    start = l as usize;
+                    len = r - l as usize + 1;
+                }
+                l -= 1;
+                r += 1;
+            }
+        };
+        for i in 0..n {
+            expand(i as i32, i);
+            if i + 1 < n {
+                expand(i as i32, i + 1);
+            }
+        }
+        s[start..start + len].to_string()
+    }
+  notes: |
+    Every palindrome has a center: a character (odd length) or a gap between two
+    (even). Expand outward from each of the 2n-1 centers; O(n^2) time, O(1) space.
+  source: "NeetCode 150 · 1-D DP"
+  tags: [rust, neetcode, dp]
+  tests: |
+    let r = longest_palindrome("babad");
+    assert!(r == "bab" || r == "aba");
+    assert_eq!(longest_palindrome("cbbd"), "bb");
+    assert_eq!(longest_palindrome("a"), "a");
+    assert_eq!(longest_palindrome(""), "");
+
+- instruction: |
+    Palindromic Substrings. Write `count_substrings(s: &str) -> i32`: the number of
+    contiguous substrings that are palindromes (assume ASCII).
+    Example: "aaa" -> 6 ("a"x3, "aa"x2, "aaa").
+  starter: |
+    fn count_substrings(s: &str) -> i32 {
+
+    }
+  solution: |
+    fn count_substrings(s: &str) -> i32 {
+        let b = s.as_bytes();
+        let n = b.len();
+        let mut count = 0;
+        let mut expand = |mut l: i32, mut r: usize| {
+            while l >= 0 && r < n && b[l as usize] == b[r] {
+                count += 1;
+                l -= 1;
+                r += 1;
+            }
+        };
+        for i in 0..n {
+            expand(i as i32, i);
+            if i + 1 < n {
+                expand(i as i32, i + 1);
+            }
+        }
+        count
+    }
+  notes: |
+    Same expand-around-center idea as the longest-palindrome problem, but count
+    every palindrome found instead of tracking the maximum. O(n^2), O(1) space.
+  source: "NeetCode 150 · 1-D DP"
+  tags: [rust, neetcode, dp]
+  tests: |
+    assert_eq!(count_substrings("abc"), 3);
+    assert_eq!(count_substrings("aaa"), 6);
+    assert_eq!(count_substrings(""), 0);
+
+- instruction: |
+    Decode Ways. Write `num_decodings(s: &str) -> i32`: count the ways to decode a
+    digit string where 'A'..'Z' map to "1".."26". Leading zeros are invalid.
+    Example: "226" -> 3 ("BZ", "VF", "BBF").
+  starter: |
+    fn num_decodings(s: &str) -> i32 {
+
+    }
+  solution: |
+    fn num_decodings(s: &str) -> i32 {
+        let b = s.as_bytes();
+        let n = b.len();
+        if n == 0 {
+            return 0;
+        }
+        // dp1 = ways for suffix starting at i+1, dp2 = ways for suffix at i+2.
+        let (mut dp2, mut dp1) = (0, 1);
+        for i in (0..n).rev() {
+            let mut cur = if b[i] == b'0' { 0 } else { dp1 };
+            if i + 1 < n {
+                let two = (b[i] - b'0') * 10 + (b[i + 1] - b'0');
+                if (10..=26).contains(&two) {
+                    cur += dp2;
+                }
+            }
+            dp2 = dp1;
+            dp1 = cur;
+        }
+        dp1
+    }
+  notes: |
+    Decode from the right: a non-zero digit continues with one fewer char; a pair
+    forming 10..=26 continues with two fewer. Two rolling counts give O(1) space.
+  source: "NeetCode 150 · 1-D DP"
+  tags: [rust, neetcode, dp]
+  tests: |
+    assert_eq!(num_decodings("12"), 2);
+    assert_eq!(num_decodings("226"), 3);
+    assert_eq!(num_decodings("06"), 0);
+    assert_eq!(num_decodings("10"), 1);
+
+- instruction: |
+    Coin Change. Write `coin_change(coins: &[i32], amount: i32) -> i32`: the fewest
+    coins summing to `amount`, or -1 if impossible. Unlimited coins of each value.
+    Example: ([1, 2, 5], 11) -> 3 (5 + 5 + 1).
+  starter: |
+    fn coin_change(coins: &[i32], amount: i32) -> i32 {
+
+    }
+  solution: |
+    fn coin_change(coins: &[i32], amount: i32) -> i32 {
+        let amount = amount as usize;
+        let none = amount + 1;
+        let mut dp = vec![none; amount + 1];
+        dp[0] = 0;
+        for a in 1..=amount {
+            for &c in coins {
+                let c = c as usize;
+                if c <= a {
+                    dp[a] = dp[a].min(dp[a - c] + 1);
+                }
+            }
+        }
+        if dp[amount] > amount {
+            -1
+        } else {
+            dp[amount] as i32
+        }
+    }
+  notes: |
+    Bottom-up: dp[a] is the fewest coins for amount a, built from dp[a - c] + 1 for
+    each coin c. Initialize to a sentinel above any real answer to mark "unreachable".
+  source: "NeetCode 150 · 1-D DP"
+  tags: [rust, neetcode, dp]
+  tests: |
+    assert_eq!(coin_change(&[1, 2, 5], 11), 3);
+    assert_eq!(coin_change(&[2], 3), -1);
+    assert_eq!(coin_change(&[1], 0), 0);
+
+- instruction: |
+    Maximum Product Subarray. Write `max_product(nums: &[i32]) -> i32`: the largest
+    product of any contiguous non-empty subarray.
+    Example: [2, 3, -2, 4] -> 6 (the subarray 2,3).
+  starter: |
+    fn max_product(nums: &[i32]) -> i32 {
+
+    }
+  solution: |
+    fn max_product(nums: &[i32]) -> i32 {
+        let mut best = nums[0];
+        let (mut cur_max, mut cur_min) = (nums[0], nums[0]);
+        for &n in &nums[1..] {
+            if n < 0 {
+                std::mem::swap(&mut cur_max, &mut cur_min);
+            }
+            cur_max = n.max(cur_max * n);
+            cur_min = n.min(cur_min * n);
+            best = best.max(cur_max);
+        }
+        best
+    }
+  notes: |
+    A negative number swaps the roles of the running max and min product, so track
+    both. Each ending position either extends the previous run or starts fresh.
+  source: "NeetCode 150 · 1-D DP"
+  tags: [rust, neetcode, dp]
+  tests: |
+    assert_eq!(max_product(&[2, 3, -2, 4]), 6);
+    assert_eq!(max_product(&[-2, 0, -1]), 0);
+    assert_eq!(max_product(&[-2, 3, -4]), 24);
+    assert_eq!(max_product(&[5]), 5);
+
+- instruction: |
+    Word Break. Write `word_break(s: &str, word_dict: &[String]) -> bool`: true if
+    `s` can be segmented into a sequence of one or more dictionary words.
+    Example: ("leetcode", ["leet", "code"]) -> true.
+  starter: |
+    use std::collections::HashSet;
+
+    fn word_break(s: &str, word_dict: &[String]) -> bool {
+
+    }
+  solution: |
+    use std::collections::HashSet;
+
+    fn word_break(s: &str, word_dict: &[String]) -> bool {
+        let words: HashSet<&str> = word_dict.iter().map(String::as_str).collect();
+        let n = s.len();
+        let mut dp = vec![false; n + 1];
+        dp[0] = true;
+        for end in 1..=n {
+            for start in 0..end {
+                if dp[start] && words.contains(&s[start..end]) {
+                    dp[end] = true;
+                    break;
+                }
+            }
+        }
+        dp[n]
+    }
+  notes: |
+    dp[i] means the prefix of length i is segmentable. It holds when some split
+    point `start` is segmentable and the remaining slice is a dictionary word.
+  source: "NeetCode 150 · 1-D DP"
+  tags: [rust, neetcode, dp]
+  tests: |
+    let dict = ["leet".to_string(), "code".to_string()];
+    assert!(word_break("leetcode", &dict));
+    let dict2 = ["apple".to_string(), "pen".to_string()];
+    assert!(word_break("applepenapple", &dict2));
+    let dict3 = ["cats".to_string(), "dog".to_string(), "sand".to_string()];
+    assert!(!word_break("catsandog", &dict3));
+
+- instruction: |
+    Longest Increasing Subsequence. Write `length_of_lis(nums: &[i32]) -> i32`: the
+    length of the longest strictly increasing subsequence (not necessarily
+    contiguous).
+    Example: [10, 9, 2, 5, 3, 7, 101, 18] -> 4 (e.g. 2,3,7,101).
+  starter: |
+    fn length_of_lis(nums: &[i32]) -> i32 {
+
+    }
+  solution: |
+    fn length_of_lis(nums: &[i32]) -> i32 {
+        let mut tails: Vec<i32> = Vec::new();
+        for &n in nums {
+            match tails.binary_search(&n) {
+                Ok(_) => {}
+                Err(pos) => {
+                    if pos == tails.len() {
+                        tails.push(n);
+                    } else {
+                        tails[pos] = n;
+                    }
+                }
+            }
+        }
+        tails.len() as i32
+    }
+  notes: |
+    Patience sorting: `tails[k]` is the smallest possible tail of an increasing
+    subsequence of length k+1. Binary search keeps each insertion O(log n), so the
+    whole pass is O(n log n). On an exact match we skip (strictly increasing).
+  source: "NeetCode 150 · 1-D DP"
+  tags: [rust, neetcode, dp]
+  tests: |
+    assert_eq!(length_of_lis(&[10, 9, 2, 5, 3, 7, 101, 18]), 4);
+    assert_eq!(length_of_lis(&[0, 1, 0, 3, 2, 3]), 4);
+    assert_eq!(length_of_lis(&[7, 7, 7, 7]), 1);
+
+- instruction: |
+    Partition Equal Subset Sum. Write `can_partition(nums: &[i32]) -> bool`: true if
+    the array can be split into two subsets with equal sums.
+    Example: [1, 5, 11, 5] -> true (1,5,5 and 11).
+  starter: |
+    fn can_partition(nums: &[i32]) -> bool {
+
+    }
+  solution: |
+    fn can_partition(nums: &[i32]) -> bool {
+        let total: i32 = nums.iter().sum();
+        if total % 2 != 0 {
+            return false;
+        }
+        let target = (total / 2) as usize;
+        let mut dp = vec![false; target + 1];
+        dp[0] = true;
+        for &n in nums {
+            let n = n as usize;
+            for a in (n..=target).rev() {
+                dp[a] = dp[a] || dp[a - n];
+            }
+        }
+        dp[target]
+    }
+  notes: |
+    Equal halves exist iff some subset sums to total/2 (so the total must be even).
+    It's a 0/1 subset-sum: iterate amounts downward so each number is used once.
+  source: "NeetCode 150 · 1-D DP"
+  tags: [rust, neetcode, dp]
+  tests: |
+    assert!(can_partition(&[1, 5, 11, 5]));
+    assert!(!can_partition(&[1, 2, 3, 5]));
+    assert!(can_partition(&[2, 2, 2, 2]));
