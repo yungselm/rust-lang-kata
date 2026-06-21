@@ -40,7 +40,8 @@
     Hierholzer's algorithm for an Eulerian path. Keep each airport's destinations
     sorted descending and always take the smallest available next hop; when an
     airport is stuck, pop it onto the route. Reversing the popped order gives the
-    valid path that is lexically smallest. O(E log E).
+    valid path that is lexically smallest.
+    Time O(E log E), Space O(E).
   source: "NeetCode 150 · Advanced Graphs"
   tags: [rust, neetcode, advanced-graphs]
   tests: |
@@ -107,7 +108,8 @@
   notes: |
     Prim's MST: grow a tree from one point, each step pulling the cheapest edge to
     a point not yet in the tree via a min-heap (Reverse on a max-heap). The complete
-    graph has n^2 edges, so this is O(n^2 log n).
+    graph has n^2 edges.
+    Time O(n * n log n), Space O(n * n).
   source: "NeetCode 150 · Advanced Graphs"
   tags: [rust, neetcode, advanced-graphs]
   tests: |
@@ -166,7 +168,8 @@
     Dijkstra from k: a min-heap keyed by distance pops the closest unsettled node
     each time, relaxing its outgoing edges. The whole network is informed when the
     farthest node is, so the answer is the maximum shortest-distance (or -1 if any
-    is unreachable). O(E log V).
+    is unreachable).
+    Time O(E log V), Space O(V + E).
   source: "NeetCode 150 · Advanced Graphs"
   tags: [rust, neetcode, advanced-graphs]
   tests: |
@@ -228,7 +231,8 @@
   notes: |
     Dijkstra-flavoured search where a path's "cost" is the MAXIMUM elevation along
     it. The min-heap always expands the cell reachable with the lowest water level
-    so far, so the first time the goal pops, that level is the answer. O(n^2 log n).
+    so far, so the first time the goal pops, that level is the answer.
+    Time O(n * n log n), Space O(n * n).
   source: "NeetCode 150 · Advanced Graphs"
   tags: [rust, neetcode, advanced-graphs]
   tests: |
@@ -317,6 +321,7 @@
     is invalid. Then topologically sort (Kahn); a leftover cycle means no valid
     order. Note: with multiple roots the order isn't unique, so the test uses input
     with a forced chain.
+    Time O(N * L), Space O(N * L).
   source: "NeetCode 150 · Advanced Graphs"
   tags: [rust, neetcode, advanced-graphs]
   tests: |
@@ -363,7 +368,8 @@
   notes: |
     Bellman-Ford bounded to k+1 rounds (at most k stops = k+1 edges). Relaxing
     against a SNAPSHOT of distances from the previous round prevents using two edges
-    within the same round, correctly capping the hop count. O(k * E).
+    within the same round, correctly capping the hop count.
+    Time O(k * E), Space O(V).
   source: "NeetCode 150 · Advanced Graphs"
   tags: [rust, neetcode, advanced-graphs]
   tests: |

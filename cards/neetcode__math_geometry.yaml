@@ -28,6 +28,7 @@
     A clockwise rotation equals transpose then reverse-each-row. In-place swaps
     over the upper triangle (j > i) avoid double-swapping; indices are needed
     here because we touch symmetric pairs [i][j]/[j][i].
+    Time O(n^2), Space O(1), for an n x n matrix.
   source: "NeetCode 150 · Math & Geometry"
   tags: [rust, neetcode, math-geometry]
   tests: |
@@ -84,6 +85,7 @@
     Walk four shrinking boundaries (top, bottom, left, right). The two guard
     checks before the bottom row and left column prevent re-reading a line when
     the remaining region collapses to a single row or column.
+    Time O(rows * cols), Space O(rows * cols) for the output.
   source: "NeetCode 150 · Math & Geometry"
   tags: [rust, neetcode, math-geometry]
   tests: |
@@ -128,6 +130,7 @@
     First pass records which rows and columns contain a zero; the second pass
     blanks them. Recording first avoids a freshly written 0 triggering more
     rows/columns. (The O(1)-space trick reuses row 0 / column 0 as the markers.)
+    Time O(rows * cols), Space O(rows + cols).
   source: "NeetCode 150 · Math & Geometry"
   tags: [rust, neetcode, math-geometry]
   tests: |
@@ -176,6 +179,7 @@
     The sequence either hits 1 or enters a cycle. A `HashSet` detects the cycle:
     `insert` returns false once a value repeats, ending the loop without reaching
     1. Digit-square sums stay small, so i32 never overflows.
+    Time O(log n), Space O(log n).
   source: "NeetCode 150 · Math & Geometry"
   tags: [rust, neetcode, math-geometry]
   tests: |
@@ -210,6 +214,7 @@
     Add from the least-significant end, carrying by turning trailing 9s into 0s.
     The first digit below 9 absorbs the carry and we stop; if none does, the
     number was all 9s and grows one digit longer.
+    Time O(n), Space O(n), where n is the digit count.
   source: "NeetCode 150 · Math & Geometry"
   tags: [rust, neetcode, math-geometry]
   tests: |
@@ -246,9 +251,10 @@
         }
     }
   notes: |
-    Square-and-multiply runs in O(log n): square the base each step and fold it
-    into the result when the current exponent bit is set. Widening to i64 before
-    taking the magnitude avoids overflow on i32::MIN.
+    Square-and-multiply: square the base each step and fold it into the result when
+    the current exponent bit is set. Widening to i64 before taking the magnitude
+    avoids overflow on i32::MIN.
+    Time O(log n), Space O(1).
   source: "NeetCode 150 · Math & Geometry"
   tags: [rust, neetcode, math-geometry]
   tests: |
@@ -290,6 +296,7 @@
     Schoolbook multiplication on reversed digit vectors: digit i of one number
     times digit j of the other lands at position i+j, with the carry pushed to
     i+j+1. Strip leading zeros, then read the digits back high-to-low.
+    Time O(m * n), Space O(m + n), where m, n are the input lengths.
   source: "NeetCode 150 · Math & Geometry"
   tags: [rust, neetcode, math-geometry]
   tests: |
@@ -360,6 +367,7 @@
     Store a multiset of points as a coordinate->frequency map. For a query corner,
     any stored point on a true diagonal (equal |dx| and |dy|, dx != 0) fixes the
     square; multiply the frequencies of the two remaining corners and sum.
+    Time O(1) for add and O(n) for count, Space O(n), where n is distinct points.
   source: "NeetCode 150 · Math & Geometry"
   tags: [rust, neetcode, math-geometry]
   tests: |

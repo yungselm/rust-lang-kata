@@ -25,6 +25,7 @@
   notes: |
     Paths to a cell = paths from above + paths from the left. Collapse the 2-D table
     to one row: `row[c] += row[c - 1]` folds the cell above into the cell at left.
+    Time O(m * n), Space O(n).
   source: "NeetCode 150 · 2-D DP"
   tags: [rust, neetcode, dp]
   tests: |
@@ -63,6 +64,7 @@
     dp[i][j] is the LCS of the first i and first j chars. On a match it extends the
     diagonal; otherwise it inherits the better of dropping one char from either
     string. Keep only the previous row for O(n) space.
+    Time O(m * n), Space O(n), where m = a.len(), n = b.len().
   source: "NeetCode 150 · 2-D DP"
   tags: [rust, neetcode, dp]
   tests: |
@@ -96,6 +98,7 @@
   notes: |
     Three states each day: holding, just-sold (forces a cooldown next), and resting.
     You may only buy from `rest`, which enforces the one-day wait after selling.
+    Time O(n), Space O(1).
   source: "NeetCode 150 · 2-D DP"
   tags: [rust, neetcode, dp]
   tests: |
@@ -128,6 +131,7 @@
   notes: |
     Process coins in the outer loop so each combination is counted once (a fixed
     coin order avoids permutations). dp[a] accumulates ways to make amount a.
+    Time O(amount * coins), Space O(amount).
   source: "NeetCode 150 · 2-D DP"
   tags: [rust, neetcode, dp]
   tests: |
@@ -165,6 +169,7 @@
   notes: |
     Roll a map from running-sum to the number of sign assignments that reach it. Each
     number branches every sum into +n and -n; the answer is the count at `target`.
+    Time O(n * S), Space O(S), where S is the span of reachable sums (sum of |nums|).
   source: "NeetCode 150 · 2-D DP"
   tags: [rust, neetcode, dp]
   tests: |
@@ -208,6 +213,7 @@
     dp[i][j] asks whether the first i of s1 and first j of s2 form the first i+j of
     s3. Each cell consumes the matching next char from s1 (above) or s2 (left).
     Collapse to one row: `dp[j]` pre-update is the "from above" value.
+    Time O(m * n), Space O(n), where m = s1.len(), n = s2.len().
   source: "NeetCode 150 · 2-D DP"
   tags: [rust, neetcode, dp]
   tests: |
@@ -276,7 +282,8 @@
     }
   notes: |
     The longest path from a cell only depends on strictly larger neighbors, so the
-    graph is acyclic — DFS with memoization caches each cell's answer for O(rows*cols).
+    graph is acyclic — DFS with memoization caches each cell's answer once.
+    Time O(rows * cols), Space O(rows * cols).
   source: "NeetCode 150 · 2-D DP"
   tags: [rust, neetcode, dp]
   tests: |
@@ -311,6 +318,7 @@
   notes: |
     dp[i][j] counts subsequences of s[..i] equal to t[..j]. Matching the new char
     adds dp[i-1][j-1] ways. Iterate j downward to reuse one row as the prior row.
+    Time O(m * n), Space O(n), where m = s.len(), n = t.len().
   source: "NeetCode 150 · 2-D DP"
   tags: [rust, neetcode, dp]
   tests: |
@@ -350,6 +358,7 @@
     dp[i][j] is the edit distance between the prefixes. On a match, carry the diagonal;
     otherwise pay one for the cheapest of substitute (diagonal), delete (above), or
     insert (left). Row i=0/col j=0 are pure insert/delete counts.
+    Time O(m * n), Space O(n), where m = word1.len(), n = word2.len().
   source: "NeetCode 150 · 2-D DP"
   tags: [rust, neetcode, dp]
   tests: |
@@ -391,6 +400,7 @@
     Pick k as the LAST balloon burst in the open interval (l, r): then l and r are
     still present, giving vals[l]*vals[k]*vals[r], plus the two subintervals. Pad
     with sentinel 1s and fill by increasing interval length (interval DP).
+    Time O(n^3), Space O(n^2).
   source: "NeetCode 150 · 2-D DP"
   tags: [rust, neetcode, dp]
   tests: |
@@ -430,6 +440,7 @@
     dp[i][j] asks if the suffixes match. A '*' either skips the pair (zero copies,
     dp[i][j+2]) or consumes one matching char and stays on the pattern (dp[i+1][j]).
     Fill from the bottom-right so dependencies are already computed.
+    Time O(m * n), Space O(m * n), where m = s.len(), n = p.len().
   source: "NeetCode 150 · 2-D DP"
   tags: [rust, neetcode, dp]
   tests: |

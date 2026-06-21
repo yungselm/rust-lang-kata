@@ -45,7 +45,8 @@
     }
   notes: |
     Scan for an unvisited land cell, then flood-fill (DFS) it to '0' so the whole
-    island is consumed once; each new flood marks one more island. O(rows*cols).
+    island is consumed once; each new flood marks one more island.
+    Time O(rows * cols), Space O(rows * cols).
   source: "NeetCode 150 · Graphs"
   tags: [rust, neetcode, graphs]
   tests: |
@@ -111,7 +112,8 @@
     }
   notes: |
     Same flood-fill as counting islands, but the DFS returns the size of the
-    component (1 plus its neighbours) and we keep the running maximum. O(rows*cols).
+    component (1 plus its neighbours) and we keep the running maximum.
+    Time O(rows * cols), Space O(rows * cols).
   source: "NeetCode 150 · Graphs"
   tags: [rust, neetcode, graphs]
   tests: |
@@ -139,6 +141,7 @@
     every neighbour list — no shared references survive. The classic Rc/RefCell
     version would BFS/DFS building old-node -> new-node mappings; here the indices
     already give that mapping, so the structure is preserved by construction.
+    Time O(V + E), Space O(V + E).
   source: "NeetCode 150 · Graphs"
   tags: [rust, neetcode, graphs]
   tests: |
@@ -198,7 +201,8 @@
   notes: |
     Multi-source BFS: seed the queue with every gate (distance 0) at once. Because
     BFS expands in layers, the first time a room is reached is via its nearest gate,
-    so each empty cell is set exactly once. O(rows*cols).
+    so each empty cell is set exactly once.
+    Time O(rows * cols), Space O(rows * cols).
   source: "NeetCode 150 · Graphs"
   tags: [rust, neetcode, graphs]
   tests: |
@@ -284,7 +288,8 @@
   notes: |
     Multi-source BFS where each "level" is one minute: drain the whole current
     queue before incrementing the clock. Track the fresh count; if any remain when
-    the queue empties they are unreachable, so return -1. O(rows*cols).
+    the queue empties they are unreachable, so return -1.
+    Time O(rows * cols), Space O(rows * cols).
   source: "NeetCode 150 · Graphs"
   tags: [rust, neetcode, graphs]
   tests: |
@@ -356,7 +361,7 @@
     Instead of testing every cell, run DFS INWARD from each ocean's border,
     climbing to equal-or-higher neighbours (the reverse of water flow). A cell
     reaches an ocean iff that ocean's flood marked it; the answer is the overlap.
-    O(rows*cols).
+    Time O(rows * cols), Space O(rows * cols).
   source: "NeetCode 150 · Graphs"
   tags: [rust, neetcode, graphs]
   tests: |
@@ -436,7 +441,8 @@
   notes: |
     Invert the problem: the O's that SURVIVE are exactly those reachable from a
     border O. Flood those to a temporary 'S', then sweep once — 'S' becomes 'O',
-    everything else becomes 'X'. O(rows*cols).
+    everything else becomes 'X'.
+    Time O(rows * cols), Space O(rows * cols).
   source: "NeetCode 150 · Graphs"
   tags: [rust, neetcode, graphs]
   tests: |
@@ -490,7 +496,8 @@
   notes: |
     Kahn's algorithm: repeatedly remove a course with no remaining prerequisites.
     If a cycle exists, those courses never reach indegree 0, so fewer than
-    `num_courses` are processed. O(V + E).
+    `num_courses` are processed.
+    Time O(V + E), Space O(V + E).
   source: "NeetCode 150 · Graphs"
   tags: [rust, neetcode, graphs]
   tests: |
@@ -541,7 +548,8 @@
   notes: |
     Kahn's topological sort: emit courses as they reach indegree 0. The emitted
     sequence is a valid order; if a cycle blocks some courses the result is shorter
-    than `num_courses`, so we return empty. O(V + E).
+    than `num_courses`, so we return empty.
+    Time O(V + E), Space O(V + E).
   source: "NeetCode 150 · Graphs"
   tags: [rust, neetcode, graphs]
   tests: |
@@ -592,7 +600,8 @@
   notes: |
     A tree on n nodes has exactly n-1 edges and no cycle. Check the edge count
     first, then union-find: if an edge joins two already-connected nodes there is a
-    cycle. n-1 edges plus no cycle implies connected. Near O(n + e).
+    cycle. n-1 edges plus no cycle implies connected.
+    Time O(V + E), Space O(V + E).
   source: "NeetCode 150 · Graphs"
   tags: [rust, neetcode, graphs]
   tests: |
@@ -640,7 +649,8 @@
     }
   notes: |
     Start with n singletons; every edge that unites two different sets reduces the
-    component count by one. Path compression keeps find near O(1). O(n + e).
+    component count by one. Path compression keeps find near O(1).
+    Time O(V + E), Space O(V + E).
   source: "NeetCode 150 · Graphs"
   tags: [rust, neetcode, graphs]
   tests: |
@@ -689,7 +699,8 @@
   notes: |
     Union nodes edge by edge; the first edge whose endpoints are ALREADY in the
     same set closes the cycle, and since there is exactly one extra edge that is the
-    one to remove. Nodes are 1-indexed, so size the parent array 0..=n. O(n).
+    one to remove. Nodes are 1-indexed, so size the parent array 0..=n.
+    Time O(V + E), Space O(V + E).
   source: "NeetCode 150 · Graphs"
   tags: [rust, neetcode, graphs]
   tests: |
@@ -754,6 +765,7 @@
     BFS over the implicit graph where words one letter apart are adjacent. Generate
     neighbours by trying each of 26 letters at every position, consuming words from
     a "not yet visited" set so each is enqueued once. Level count = path length.
+    Time O(N * L * L), Space O(N * L).
   source: "NeetCode 150 · Graphs"
   tags: [rust, neetcode, graphs]
   tests: |

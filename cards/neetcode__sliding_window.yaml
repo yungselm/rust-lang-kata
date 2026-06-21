@@ -21,7 +21,8 @@
     }
   notes: |
     Track the lowest price seen so far (the best day to have bought); each day the
-    candidate profit is today's price minus that minimum. One pass, O(n).
+    candidate profit is today's price minus that minimum. One pass.
+    Time O(n), Space O(1).
   source: "NeetCode 150 · Sliding Window"
   tags: [rust, neetcode, sliding-window]
   tests: |
@@ -62,7 +63,8 @@
   notes: |
     Slide a window; when a repeat appears whose last position is inside the window,
     jump `start` just past it. Storing each char's last index lets the window move
-    in O(1) amortised, so the whole scan is O(n).
+    in O(1) amortised.
+    Time O(n), Space O(n).
   source: "NeetCode 150 · Sliding Window"
   tags: [rust, neetcode, sliding-window]
   tests: |
@@ -102,7 +104,8 @@
   notes: |
     A window is valid when (its length - count of its most frequent char) <= k,
     i.e. the others can all be replaced. Grow the window, shrinking from the left
-    only when that condition breaks. Assumes uppercase A-Z. O(n).
+    only when that condition breaks. Assumes uppercase A-Z.
+    Time O(n), Space O(1).
   source: "NeetCode 150 · Sliding Window"
   tags: [rust, neetcode, sliding-window]
   tests: |
@@ -149,7 +152,8 @@
   notes: |
     A permutation is just a matching letter histogram. Slide a fixed window of
     length `s1.len()` across `s2`, adding the new byte and dropping the one that
-    fell off, and compare the 26-count arrays. O(n) with O(1) comparisons.
+    fell off, and compare the 26-count arrays (each comparison O(1)).
+    Time O(n), Space O(1).
   source: "NeetCode 150 · Sliding Window"
   tags: [rust, neetcode, sliding-window]
   tests: |
@@ -213,7 +217,8 @@
   notes: |
     Expand the window until it covers all of `t` (tracked by how many distinct
     required chars have hit their needed count), then contract from the left to
-    minimise it, recording the best span. Each index enters/leaves once: O(n).
+    minimise it, recording the best span. Each index enters/leaves once.
+    Time O(n), Space O(n).
   source: "NeetCode 150 · Sliding Window"
   tags: [rust, neetcode, sliding-window]
   tests: |
@@ -266,8 +271,8 @@
   notes: |
     The deque holds indices whose values are strictly decreasing, so its front is
     always the window's max. Pop smaller values off the back before pushing, and
-    drop the front once it slides out of range. Each index is pushed/popped once:
-    O(n).
+    drop the front once it slides out of range. Each index is pushed/popped once.
+    Time O(n), Space O(n).
   source: "NeetCode 150 · Sliding Window"
   tags: [rust, neetcode, sliding-window]
   tests: |

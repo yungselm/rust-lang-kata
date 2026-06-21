@@ -24,7 +24,8 @@
     }
   notes: |
     `HashSet::insert` returns false if the value was already present, so a single
-    pass detects a duplicate in O(n).
+    pass detects a duplicate.
+    Time O(n), Space O(n).
   source: "NeetCode 150 · Arrays & Hashing"
   tags: [rust, neetcode, arrays-hashing]
   tests: |
@@ -46,18 +47,22 @@
     use std::collections::HashMap;
 
     fn is_anagram(s: &str, t: &str) -> bool {
-        let mut counts: HashMap<char, i32> = HashMap::new();
-        for c in s.chars() {
-            *counts.entry(c).or_insert(0) += 1;
+        if s.len() != t.len() {
+            return false;
         }
-        for c in t.chars() {
-            *counts.entry(c).or_insert(0) -= 1;
+        let mut count_s: HashMap<u8, i32> = HashMap::new();
+        let mut count_t: HashMap<u8, i32> = HashMap::new();
+        for (a, b) in s.bytes().zip(t.bytes()) {
+            *count_s.entry(a).or_insert(0) += 1;
+            *count_t.entry(b).or_insert(0) += 1;
         }
-        counts.values().all(|&v| v == 0)
+        count_s == count_t
     }
   notes: |
-    Add one per char of `s`, subtract one per char of `t`; they're anagrams iff
-    every count nets to zero. Differing lengths fall out automatically.
+    Count each byte of `s` and of `t`, then compare the two maps. The length check
+    is REQUIRED: `zip` stops at the shorter string, so without it ("a","ab") would
+    only compare the first byte and wrongly return true. Assumes ASCII/bytes (fine
+    for the lowercase-letter inputs). Time O(n), Space O(1) (at most 26 keys).
   source: "NeetCode 150 · Arrays & Hashing"
   tags: [rust, neetcode, arrays-hashing]
   tests: |
@@ -91,6 +96,7 @@
   notes: |
     One pass: for each number, check whether its complement was already seen.
     The map stores value -> index, giving O(n) instead of the O(n^2) brute force.
+    Time O(n), Space O(n).
   source: "NeetCode 150 · Arrays & Hashing"
   tags: [rust, neetcode, arrays-hashing]
   tests: |
@@ -127,7 +133,8 @@
     }
   notes: |
     The 26-letter count array is identical for anagrams, so it makes a perfect
-    hash key — O(n*k) without sorting each word. `into_values` consumes the map.
+    hash key without sorting each word. `into_values` consumes the map.
+    Time O(n*k), Space O(n*k).
   source: "NeetCode 150 · Arrays & Hashing"
   tags: [rust, neetcode, arrays-hashing]
   tests: |
@@ -175,6 +182,7 @@
   notes: |
     Count, then sort by frequency descending. `std::cmp::Reverse` flips the sort
     order without writing a custom comparator. (A bucket sort gives strict O(n).)
+    Time O(n log n), Space O(n).
   source: "NeetCode 150 · Arrays & Hashing"
   tags: [rust, neetcode, arrays-hashing]
   tests: |
@@ -225,6 +233,7 @@
   notes: |
     Length-prefix encoding ("4#neet5#code...") is robust to any delimiter inside
     the payload, because you read exactly `len` bytes rather than splitting.
+    Time O(n), Space O(n).
   source: "NeetCode 150 · Arrays & Hashing"
   tags: [rust, neetcode, arrays-hashing]
   tests: |
@@ -263,7 +272,8 @@
     }
   notes: |
     Two passes: first fill each slot with the product of everything to its LEFT,
-    then multiply in the product of everything to its RIGHT. O(n), no division.
+    then multiply in the product of everything to its RIGHT (no division).
+    Time O(n), Space O(1).
   source: "NeetCode 150 · Arrays & Hashing"
   tags: [rust, neetcode, arrays-hashing]
   tests: |
@@ -302,7 +312,8 @@
     }
   notes: |
     Track which digits each row/column/box has seen with 9x9 boolean grids; the
-    box index is `(r / 3) * 3 + c / 3`. One pass, O(1) space (fixed 9x9).
+    box index is `(r / 3) * 3 + c / 3`. One pass over the fixed 9x9 grid.
+    Time O(rows*cols), Space O(1).
   source: "NeetCode 150 · Arrays & Hashing"
   tags: [rust, neetcode, arrays-hashing]
   tests: |
@@ -354,7 +365,8 @@
     }
   notes: |
     Only start counting from a run's smallest element (one with no `n - 1` in the
-    set). Each element is visited at most twice, so it's O(n) despite the inner loop.
+    set). Each element is visited at most twice despite the inner loop.
+    Time O(n), Space O(n).
   source: "NeetCode 150 · Arrays & Hashing"
   tags: [rust, neetcode, arrays-hashing]
   tests: |

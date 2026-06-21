@@ -53,7 +53,8 @@
   notes: |
     Keep a min-heap (via `Reverse`) of only the k largest values: push, then drop
     the smallest while the size exceeds k. The heap's minimum is then the k-th
-    largest. Each add is O(log k).
+    largest.
+    Time O(log k), Space O(k).
   source: "NeetCode 150 · Heap / Priority Queue"
   tags: [rust, neetcode, heap]
   tests: |
@@ -93,6 +94,7 @@
     A max-heap gives the two heaviest stones in O(log n) each. `BinaryHeap` is a
     max-heap by default, so popping twice yields the pair to smash; push back the
     difference when they differ.
+    Time O(n log n), Space O(n).
   source: "NeetCode 150 · Heap / Priority Queue"
   tags: [rust, neetcode, heap]
   tests: |
@@ -129,8 +131,9 @@
     }
   notes: |
     Compare by squared distance (no need for the costly sqrt). A max-heap capped at
-    size k evicts the farthest point as we go, leaving the k closest in O(n log k).
+    size k evicts the farthest point as we go, leaving the k closest.
     `Reverse` would instead give a sort-and-take; either is fine.
+    Time O(n log k), Space O(k).
   source: "NeetCode 150 · Heap / Priority Queue"
   tags: [rust, neetcode, heap]
   tests: |
@@ -168,9 +171,10 @@
         heap.peek().expect("k <= nums.len()").0
     }
   notes: |
-    Maintaining a size-k min-heap keeps memory at O(k) and runs in O(n log k); the
-    smallest of the k largest is exactly the k-th largest. (Quickselect gives
+    Maintaining a size-k min-heap caps memory at the k largest values; the
+    smallest of them is exactly the k-th largest. (Quickselect gives
     average O(n).)
+    Time O(n log k), Space O(k).
   source: "NeetCode 150 · Heap / Priority Queue"
   tags: [rust, neetcode, heap]
   tests: |
@@ -207,7 +211,8 @@
     The most frequent task forces a skeleton of (max_count - 1) gaps of width
     n+1, finished by the tasks tied for that maximum. If there are enough distinct
     tasks to fill every idle slot, no idling is needed, hence the max with the
-    total count. O(t).
+    total count.
+    Time O(t), Space O(1).
   source: "NeetCode 150 · Heap / Priority Queue"
   tags: [rust, neetcode, heap]
   tests: |
@@ -313,6 +318,7 @@
     Stamp every tweet with a global monotonic counter so recency is a total order.
     The feed merges the relevant authors' tweets through a max-heap keyed on that
     timestamp and pops the 10 newest. Follow/unfollow just edit a set per user.
+    Time O(t log t), Space O(t).
   source: "NeetCode 150 · Heap / Priority Queue"
   tags: [rust, neetcode, heap]
   tests: |
@@ -396,7 +402,8 @@
     Two heaps split the data at the median: a max-heap for the lower half and a
     min-heap for the upper. Funneling each insert through `lo` then rebalancing
     keeps the sizes within one, so the median is a heap top (or the average of
-    both). O(log n) per add, O(1) per query.
+    both), making each query a constant-time peek.
+    Time O(log n), Space O(n).
   source: "NeetCode 150 · Heap / Priority Queue"
   tags: [rust, neetcode, heap]
   tests: |

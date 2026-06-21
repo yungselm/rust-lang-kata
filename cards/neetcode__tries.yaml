@@ -74,7 +74,8 @@
     Each node holds a child map keyed by character plus an `is_word` flag marking
     word ends. `insert` walks/creates nodes with `entry().or_default()`. A shared
     `find` helper walks the path; `search` also checks `is_word`, `starts_with`
-    just needs the path to exist. Operations are O(length of the string).
+    just needs the path to exist.
+    Time O(L) per insert/search/starts_with where L = word length, Space O(total chars inserted).
   source: "NeetCode 150 · Tries"
   tags: [rust, neetcode, trie]
   tests: |
@@ -161,8 +162,8 @@
   notes: |
     A trie with a recursive search. A concrete character follows the single matching
     edge; a '.' branches into every child and succeeds if any branch matches the
-    rest. Worst case (all dots) the search visits many nodes, but plain words stay
-    O(length).
+    rest. Worst case (all dots) the search visits many nodes.
+    Time O(L) per add_word where L = word length; search O(L) for a plain word but up to O(number of nodes) with dots, Space O(total chars added).
   source: "NeetCode 150 · Tries"
   tags: [rust, neetcode, trie]
   tests: |
@@ -265,6 +266,7 @@
     with the board. Marking the cell '#' during recursion prevents reuse; `word.take`
     records a hit once and avoids duplicates. Searching all words together (rather
     than one at a time) shares prefixes and prunes dead branches early.
+    Time O(m*n*4^L) where m*n = board cells and L = max word length, Space O(total chars in words).
   source: "NeetCode 150 · Tries"
   tags: [rust, neetcode, trie]
   tests: |

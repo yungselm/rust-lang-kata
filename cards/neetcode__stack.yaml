@@ -28,7 +28,8 @@
     }
   notes: |
     Push the expected closer when you see an opener; on a closer it must equal the
-    top of the stack. An empty stack at the end means everything matched. O(n).
+    top of the stack. An empty stack at the end means everything matched.
+    Time O(n), Space O(n).
   source: "NeetCode 150 · Stack"
   tags: [rust, neetcode, stack]
   tests: |
@@ -107,7 +108,8 @@
     }
   notes: |
     Keep a parallel stack whose top is always the running minimum: on each push,
-    store min(new value, previous min). Every operation is O(1).
+    store min(new value, previous min).
+    Time O(1) per operation, Space O(n).
   source: "NeetCode 150 · Stack"
   tags: [rust, neetcode, stack]
   tests: |
@@ -155,6 +157,7 @@
   notes: |
     Push numbers; on an operator pop the two operands (the second popped is the
     left-hand side) and push the result. Rust's `/` already truncates toward zero.
+    Time O(n), Space O(n).
   source: "NeetCode 150 · Stack"
   tags: [rust, neetcode, stack]
   tests: |
@@ -200,6 +203,7 @@
   notes: |
     Backtracking: add '(' while opens remain, add ')' only while closes trail
     opens (keeping the prefix valid). The count is the nth Catalan number.
+    Time O(4^n / sqrt(n)), Space O(4^n / sqrt(n)).
   source: "NeetCode 150 · Stack"
   tags: [rust, neetcode, stack]
   tests: |
@@ -244,7 +248,8 @@
     }
   notes: |
     A monotonic stack of indices with decreasing temperatures: when today is
-    warmer, pop and record the day gap. Each index is pushed/popped once -> O(n).
+    warmer, pop and record the day gap. Each index is pushed/popped once.
+    Time O(n), Space O(n).
   source: "NeetCode 150 · Stack"
   tags: [rust, neetcode, stack]
   tests: |
@@ -285,7 +290,8 @@
   notes: |
     Sort cars from closest-to-target back. Process in that order: a car whose
     arrival time exceeds the current fleet leader's starts a new fleet; otherwise
-    it catches up and merges. O(n log n).
+    it catches up and merges.
+    Time O(n log n), Space O(n).
   source: "NeetCode 150 · Stack"
   tags: [rust, neetcode, stack]
   tests: |
@@ -328,7 +334,8 @@
   notes: |
     Monotonic increasing stack of (start index, height). When a shorter bar
     arrives, pop taller bars and close their rectangles, extending the new bar's
-    start back to the popped position. Leftovers reach the end. O(n).
+    start back to the popped position. Leftovers reach the end.
+    Time O(n), Space O(n).
   source: "NeetCode 150 · Stack"
   tags: [rust, neetcode, stack]
   tests: |

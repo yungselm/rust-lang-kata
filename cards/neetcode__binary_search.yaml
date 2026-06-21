@@ -26,7 +26,8 @@
     }
   notes: |
     Half-open range [lo, hi): shrink toward the target by comparing the midpoint.
-    Using `lo + (hi - lo) / 2` avoids overflow. O(log n).
+    Using `lo + (hi - lo) / 2` avoids overflow.
+    Time O(log n), Space O(1).
   source: "NeetCode 150 · Binary Search"
   tags: [rust, neetcode, binary-search]
   tests: |
@@ -68,7 +69,8 @@
     }
   notes: |
     Treat the grid as a flat sorted array of length rows*cols and binary-search it;
-    map a flat index `i` back with `(i / cols, i % cols)`. O(log(m*n)).
+    map a flat index `i` back with `(i / cols, i % cols)`.
+    Time O(log(m*n)), Space O(1).
   source: "NeetCode 150 · Binary Search"
   tags: [rust, neetcode, binary-search]
   tests: |
@@ -112,7 +114,8 @@
   notes: |
     Binary-search the answer over speeds 1..=max(pile). Hours needed is monotonic
     in k, so find the smallest k whose total hours fit. `(p + k - 1) / k` is the
-    ceiling division. O(n log(max pile)).
+    ceiling division.
+    Time O(n log(max pile)), Space O(1).
   source: "NeetCode 150 · Binary Search"
   tags: [rust, neetcode, binary-search]
   tests: |
@@ -145,7 +148,8 @@
     }
   notes: |
     If the midpoint exceeds the right end, the minimum lies strictly to its right;
-    otherwise it's at mid or left. The range collapses onto the pivot. O(log n).
+    otherwise it's at mid or left. The range collapses onto the pivot.
+    Time O(log n), Space O(1).
   source: "NeetCode 150 · Binary Search"
   tags: [rust, neetcode, binary-search]
   tests: |
@@ -189,7 +193,8 @@
   notes: |
     One half of [lo, hi) is always sorted. Decide which by comparing nums[lo] to
     nums[mid], then check whether the target falls inside that sorted half to pick
-    a side. O(log n).
+    a side.
+    Time O(log n), Space O(1).
   source: "NeetCode 150 · Binary Search"
   tags: [rust, neetcode, binary-search]
   tests: |
@@ -255,7 +260,8 @@
   notes: |
     Each key maps to a list of (timestamp, value) kept sorted by insertion order.
     `partition_point` finds where timestamps stop being <= the query; the entry
-    just before it is the answer. get is O(log n).
+    just before it is the answer.
+    Time O(log n) per get, O(1) amortized per set, Space O(n) total.
   source: "NeetCode 150 · Binary Search"
   tags: [rust, neetcode, binary-search]
   tests: |
@@ -306,6 +312,7 @@
     Merge both sorted slices like merge-sort, then read the middle (or average the
     two middles for an even total). This is O(m + n); the textbook O(log(m + n))
     partition search is faster but far more error-prone.
+    Time O(m + n), Space O(m + n).
   source: "NeetCode 150 · Binary Search"
   tags: [rust, neetcode, binary-search]
   tests: |

@@ -16,6 +16,7 @@
     XOR is its own inverse and commutative, so every paired value cancels to 0,
     leaving the lone element. Starting from 0 (the XOR identity) folds the slice
     in one pass with no extra storage.
+    Time O(n), Space O(1).
   source: "NeetCode 150 · Bit Manipulation"
   tags: [rust, neetcode, bit-manipulation]
   tests: |
@@ -45,6 +46,7 @@
     `n & (n - 1)` clears the lowest set bit, so the loop runs once per set bit
     rather than 32 times. The standard library exposes this directly as
     `n.count_ones()`; here we build it by hand.
+    Time O(1), Space O(1).
   source: "NeetCode 150 · Bit Manipulation"
   tags: [rust, neetcode, bit-manipulation]
   tests: |
@@ -72,8 +74,9 @@
     }
   notes: |
     Dropping the lowest bit (i >> 1) gives a smaller, already-solved subproblem;
-    add back whatever the lowest bit contributes (i & 1). Each entry is O(1), so
-    the whole table is O(n).
+    add back whatever the lowest bit contributes (i & 1). Each entry is constant
+    work.
+    Time O(n), Space O(n).
   source: "NeetCode 150 · Bit Manipulation"
   tags: [rust, neetcode, bit-manipulation]
   tests: |
@@ -102,6 +105,7 @@
     Pull bits off the bottom of `n` and push them onto the bottom of `result`,
     which shifts left each step — so the first bit out lands in the top position.
     Exactly 32 iterations cover every bit.
+    Time O(1), Space O(1).
   source: "NeetCode 150 · Bit Manipulation"
   tags: [rust, neetcode, bit-manipulation]
   tests: |
@@ -131,6 +135,7 @@
     XOR each index together with each value, plus the final index n. Every present
     number cancels with its index, leaving only the missing one. No sum means no
     overflow worries.
+    Time O(n), Space O(1).
   source: "NeetCode 150 · Bit Manipulation"
   tags: [rust, neetcode, bit-manipulation]
   tests: |
@@ -163,6 +168,7 @@
     XOR adds bit-by-bit ignoring carries; AND-then-shift produces the carries.
     Repeat until no carry remains. Rust would panic on overflowing shifts/adds in
     debug, but XOR/AND/`<<` here stay in range, so plain operators suffice.
+    Time O(1), Space O(1).
   source: "NeetCode 150 · Bit Manipulation"
   tags: [rust, neetcode, bit-manipulation]
   tests: |
@@ -200,6 +206,7 @@
     Peel digits with `% 10` / `/= 10` — this works for negatives too, since Rust
     truncates toward zero. `checked_mul`/`checked_add` return None on overflow, so
     a result outside i32's range short-circuits to 0 instead of panicking.
+    Time O(1), Space O(1).
   source: "NeetCode 150 · Bit Manipulation"
   tags: [rust, neetcode, bit-manipulation]
   tests: |

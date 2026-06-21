@@ -27,7 +27,8 @@
   notes: |
     Classic include/exclude tree: record the current path at every node, then try
     extending with each later element. Pushing before recursing and popping after
-    keeps `cur` in sync. 2^n subsets, O(n * 2^n) total work.
+    keeps `cur` in sync. There are 2^n subsets in all.
+    Time O(n * 2^n), Space O(n).
   source: "NeetCode 150 · Backtracking"
   tags: [rust, neetcode, backtracking]
   tests: |
@@ -92,6 +93,7 @@
     Passing `i` (not `i + 1`) as the next start allows reusing a candidate while a
     non-decreasing index prevents permuted duplicates like [3, 2, 2] vs [2, 2, 3].
     Skip any candidate larger than the remaining target.
+    Time O(n^(t/m)), Space O(t/m).
   source: "NeetCode 150 · Backtracking"
   tags: [rust, neetcode, backtracking]
   tests: |
@@ -140,6 +142,7 @@
     Build permutations in place by swapping each remaining element into position
     `k`, recursing, then swapping back to restore order. n! results, no extra
     "used" bookkeeping needed.
+    Time O(n * n!), Space O(n).
   source: "NeetCode 150 · Backtracking"
   tags: [rust, neetcode, backtracking]
   tests: |
@@ -192,6 +195,7 @@
     Sort first so equal values are adjacent, then within one recursion level skip a
     value identical to its predecessor (`i > start`). This picks each multiset of
     duplicates exactly once, avoiding duplicate subsets without a HashSet.
+    Time O(n * 2^n), Space O(n).
   source: "NeetCode 150 · Backtracking"
   tags: [rust, neetcode, backtracking]
   tests: |
@@ -259,6 +263,7 @@
     Sort, then advance with `i + 1` so each element is used once. The `i > start`
     skip drops duplicate values at the same level; because the array is sorted, a
     candidate exceeding the remainder lets us `break` the rest of the loop.
+    Time O(n * 2^n), Space O(n).
   source: "NeetCode 150 · Backtracking"
   tags: [rust, neetcode, backtracking]
   tests: |
@@ -325,6 +330,7 @@
     DFS from every cell. Temporarily overwrite a visited cell with a sentinel
     ('\0') to forbid reuse within the current path, then restore it on backtrack.
     Short-circuit `||` stops at the first successful direction.
+    Time O(m * n * 4^L), Space O(L).
   source: "NeetCode 150 · Backtracking"
   tags: [rust, neetcode, backtracking]
   tests: |
@@ -385,6 +391,7 @@
     At each position try every prefix `start..end`; if it is a palindrome, commit it
     and recurse from `end`. Reaching the string's end yields one valid partition.
     Working on a `Vec<char>` keeps slicing index-safe for any Unicode input.
+    Time O(n * 2^n), Space O(n).
   source: "NeetCode 150 · Backtracking"
   tags: [rust, neetcode, backtracking]
   tests: |
@@ -433,6 +440,7 @@
     Iterative product: keep the set of combinations built so far and, for each new
     digit, extend every existing string with each of that digit's letters. The
     empty-input guard avoids returning the spurious `[""]`.
+    Time O(n * 4^n), Space O(n).
   source: "NeetCode 150 · Backtracking"
   tags: [rust, neetcode, backtracking]
   tests: |
@@ -494,6 +502,7 @@
     Place one queen per row. A column is free iff its `cols` flag and both diagonal
     flags are clear, where `row + col` identifies one diagonal and `row - col`
     (shifted by n-1 to stay non-negative) the other. O(1) attack checks via flags.
+    Time O(n!), Space O(n).
   source: "NeetCode 150 · Backtracking"
   tags: [rust, neetcode, backtracking]
   tests: |

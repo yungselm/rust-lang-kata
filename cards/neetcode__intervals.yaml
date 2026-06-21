@@ -30,7 +30,8 @@
   notes: |
     Three phases: copy intervals ending before the new one starts, absorb every
     interval that overlaps (widening start/end), then append the merged interval and
-    the untouched tail. O(n), single pass.
+    the untouched tail in a single pass.
+    Time O(n), Space O(n).
   source: "NeetCode 150 · Intervals"
   tags: [rust, neetcode, intervals]
   tests: |
@@ -65,7 +66,8 @@
   notes: |
     Sort by start, then sweep: if the next interval starts at or before the last
     merged interval's end, extend that end; otherwise begin a new interval.
-    `last_mut` lets us widen in place. O(n log n) from the sort.
+    `last_mut` lets us widen in place; the sort dominates the cost.
+    Time O(n log n), Space O(n).
   source: "NeetCode 150 · Intervals"
   tags: [rust, neetcode, intervals]
   tests: |
@@ -103,7 +105,8 @@
   notes: |
     Greedy activity selection: sort by end time and always keep the interval that
     finishes earliest, since it leaves the most room. Any interval starting before
-    the kept one's end must be removed. O(n log n).
+    the kept one's end must be removed.
+    Time O(n log n), Space O(n).
   source: "NeetCode 150 · Intervals"
   tags: [rust, neetcode, intervals]
   tests: |
@@ -132,7 +135,8 @@
   notes: |
     Sort by start, then a conflict can only occur between neighbours: every meeting
     must end no later than the next one begins. `windows(2)` checks each adjacent
-    pair. O(n log n).
+    pair.
+    Time O(n log n), Space O(n).
   source: "NeetCode 150 · Intervals"
   tags: [rust, neetcode, intervals]
   tests: |
@@ -171,7 +175,8 @@
   notes: |
     Sort start and end times separately and sweep a timeline. Before each start, free
     every room whose meeting has already ended (`ends[j] <= s`), then claim a room.
-    The peak concurrency is the answer. O(n log n).
+    The peak concurrency is the answer.
+    Time O(n log n), Space O(n).
   source: "NeetCode 150 · Intervals"
   tags: [rust, neetcode, intervals]
   tests: |
@@ -229,7 +234,7 @@
     Offline: process queries in ascending order. Push every interval that has begun
     by the current query into a min-heap keyed on size, discard those that already
     ended (`end < q`), and the heap top is the smallest interval still covering q.
-    O((n + m) log n).
+    Time O((n + m) log(n + m)), Space O(n + m), where n = intervals, m = queries.
   source: "NeetCode 150 · Intervals"
   tags: [rust, neetcode, intervals]
   tests: |

@@ -33,7 +33,8 @@
   notes: |
     Walk the list, repeatedly detaching the head with `take`, splicing it onto the
     front of the already-reversed `prev`. Moving the boxes around avoids any clones
-    and satisfies the borrow checker. O(n) time, O(1) extra space.
+    and satisfies the borrow checker.
+    Time O(n), Space O(1).
   source: "NeetCode 150 · Linked List"
   tags: [rust, neetcode, linked-list]
   tests: |
@@ -102,7 +103,8 @@
   notes: |
     A dummy head lets `tail` always point at a real node, so appending is uniform.
     Detach the smaller node, move it onto the tail, advance. When one list empties,
-    splice the remainder with `a.or(b)`. O(n + m).
+    splice the remainder with `a.or(b)`.
+    Time O(n + m), Space O(1).
   source: "NeetCode 150 · Linked List"
   tags: [rust, neetcode, linked-list]
   tests: |
@@ -182,7 +184,8 @@
   notes: |
     Owning each node in a `Vec` turns the two-pointer weave (front, back, front, ...)
     into simple indexing, avoiding the borrow-checker pain of reversing the second
-    half in place. Relink by folding from the back. O(n) time and space.
+    half in place. Relink by folding from the back.
+    Time O(n), Space O(n).
   source: "NeetCode 150 · Linked List"
   tags: [rust, neetcode, linked-list]
   tests: |
@@ -259,6 +262,7 @@
     Owning the nodes in a `Vec` makes "nth from end" a plain index `len - n`, and
     `Vec::remove` drops it cleanly. Relink by folding from the back. O(n); a
     two-pointer (gap of n) version is also O(n) with O(1) space but fiddlier here.
+    Time O(n), Space O(n).
   source: "NeetCode 150 · Linked List"
   tags: [rust, neetcode, linked-list]
   tests: |
@@ -299,7 +303,8 @@
     Modeling random pointers as indices makes the deep copy trivial: copying the
     `(val, index)` pairs preserves the topology because positions are unchanged.
     With real pointers you'd map each original node to its clone (a HashMap pass,
-    or the interleave-and-split trick) to translate the random links. O(n).
+    or the interleave-and-split trick) to translate the random links.
+    Time O(n), Space O(n).
   source: "NeetCode 150 · Linked List"
   tags: [rust, neetcode, linked-list]
   tests: |
@@ -367,7 +372,8 @@
   notes: |
     Schoolbook addition: at each step sum the two current digits plus carry, emit
     `sum % 10`, keep `sum / 10`. Reverse-order storage means we add from the least
-    significant digit first, so no reversal is needed. O(max(n, m)).
+    significant digit first, so no reversal is needed.
+    Time O(max(n, m)), Space O(max(n, m)).
   source: "NeetCode 150 · Linked List"
   tags: [rust, neetcode, linked-list]
   tests: |
@@ -417,7 +423,8 @@
   notes: |
     Floyd's algorithm: a slow pointer steps once, a fast pointer twice. If they ever
     coincide on a node, there is a cycle; if fast reaches the end, there is not.
-    Indices model the links because safe `Box` lists can't be cyclic. O(n), O(1).
+    Indices model the links because safe `Box` lists can't be cyclic.
+    Time O(n), Space O(1).
   source: "NeetCode 150 · Linked List"
   tags: [rust, neetcode, linked-list]
   tests: |
@@ -461,7 +468,8 @@
   notes: |
     Following `i -> nums[i]` forms a linked structure whose cycle entrance is the
     duplicated value. Phase 1 finds a meeting point with tortoise-and-hare; phase 2
-    walks one pointer from the start in lockstep to locate the entrance. O(n), O(1).
+    walks one pointer from the start in lockstep to locate the entrance.
+    Time O(n), Space O(1).
   source: "NeetCode 150 · Linked List"
   tags: [rust, neetcode, linked-list]
   tests: |
@@ -551,6 +559,7 @@
     access removes the key and re-pushes it to the back. Eviction pops the front.
     The `position`/`remove` scan is O(n); a true O(1) design needs an intrusive
     doubly linked list, which is awkward in safe Rust without an index-arena.
+    Time O(n) per get/put (recency scan), Space O(capacity).
   source: "NeetCode 150 · Linked List"
   tags: [rust, neetcode, linked-list]
   tests: |
@@ -647,6 +656,7 @@
     Reuse the two-list merge and combine lists pairwise, halving the count each
     round. That gives O(N log k) total work for N nodes across k lists, beating the
     O(N k) of merging one at a time.
+    Time O(N log k), Space O(1).
   source: "NeetCode 150 · Linked List"
   tags: [rust, neetcode, linked-list]
   tests: |
@@ -722,7 +732,8 @@
   notes: |
     Owning the nodes in a `Vec` reduces k-group reversal to reversing fixed-size
     slices, dodging the borrow-checker gymnastics of in-place pointer surgery. Only
-    complete groups are reversed (`len / k * k`). O(n) time and space.
+    complete groups are reversed (`len / k * k`).
+    Time O(n), Space O(n).
   source: "NeetCode 150 · Linked List"
   tags: [rust, neetcode, linked-list]
   tests: |

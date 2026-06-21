@@ -20,7 +20,8 @@
     }
   notes: |
     The number of ways to reach step i is ways(i-1) + ways(i-2): the Fibonacci
-    recurrence. Two rolling variables give O(n) time and O(1) space.
+    recurrence. Two rolling variables (constant extra space).
+    Time O(n), Space O(1).
   source: "NeetCode 150 · 1-D DP"
   tags: [rust, neetcode, dp]
   tests: |
@@ -51,6 +52,7 @@
   notes: |
     `cur` is the min cost to stand on the current stair; reaching it costs `c` plus
     the cheaper of the two prior stairs. The top is reachable from the last two.
+    Time O(n), Space O(1).
   source: "NeetCode 150 · 1-D DP"
   tags: [rust, neetcode, dp]
   tests: |
@@ -79,6 +81,7 @@
   notes: |
     Track the best totals ending with the previous house robbed (`take`) or not
     (`skip`). Robbing the current house requires the prior to be skipped.
+    Time O(n), Space O(1).
   source: "NeetCode 150 · 1-D DP"
   tags: [rust, neetcode, dp]
   tests: |
@@ -114,6 +117,7 @@
   notes: |
     Either the first house is robbed or the last is, never both. Run the linear
     solver on the array minus the last element and minus the first, take the max.
+    Time O(n), Space O(1).
   source: "NeetCode 150 · 1-D DP"
   tags: [rust, neetcode, dp]
   tests: |
@@ -159,7 +163,8 @@
     }
   notes: |
     Every palindrome has a center: a character (odd length) or a gap between two
-    (even). Expand outward from each of the 2n-1 centers; O(n^2) time, O(1) space.
+    (even). Expand outward from each of the 2n-1 centers.
+    Time O(n^2), Space O(1).
   source: "NeetCode 150 · 1-D DP"
   tags: [rust, neetcode, dp]
   tests: |
@@ -199,7 +204,8 @@
     }
   notes: |
     Same expand-around-center idea as the longest-palindrome problem, but count
-    every palindrome found instead of tracking the maximum. O(n^2), O(1) space.
+    every palindrome found instead of tracking the maximum.
+    Time O(n^2), Space O(1).
   source: "NeetCode 150 · 1-D DP"
   tags: [rust, neetcode, dp]
   tests: |
@@ -239,7 +245,8 @@
     }
   notes: |
     Decode from the right: a non-zero digit continues with one fewer char; a pair
-    forming 10..=26 continues with two fewer. Two rolling counts give O(1) space.
+    forming 10..=26 continues with two fewer. Two rolling counts suffice.
+    Time O(n), Space O(1).
   source: "NeetCode 150 · 1-D DP"
   tags: [rust, neetcode, dp]
   tests: |
@@ -279,6 +286,7 @@
   notes: |
     Bottom-up: dp[a] is the fewest coins for amount a, built from dp[a - c] + 1 for
     each coin c. Initialize to a sentinel above any real answer to mark "unreachable".
+    Time O(amount * coins), Space O(amount).
   source: "NeetCode 150 · 1-D DP"
   tags: [rust, neetcode, dp]
   tests: |
@@ -311,6 +319,7 @@
   notes: |
     A negative number swaps the roles of the running max and min product, so track
     both. Each ending position either extends the previous run or starts fresh.
+    Time O(n), Space O(1).
   source: "NeetCode 150 · 1-D DP"
   tags: [rust, neetcode, dp]
   tests: |
@@ -350,6 +359,7 @@
   notes: |
     dp[i] means the prefix of length i is segmentable. It holds when some split
     point `start` is segmentable and the remaining slice is a dictionary word.
+    Time O(n^2) substrings times O(n) per slice hash, so O(n^3) worst case, Space O(n).
   source: "NeetCode 150 · 1-D DP"
   tags: [rust, neetcode, dp]
   tests: |
@@ -388,8 +398,9 @@
     }
   notes: |
     Patience sorting: `tails[k]` is the smallest possible tail of an increasing
-    subsequence of length k+1. Binary search keeps each insertion O(log n), so the
-    whole pass is O(n log n). On an exact match we skip (strictly increasing).
+    subsequence of length k+1. Binary search keeps each insertion logarithmic. On
+    an exact match we skip (strictly increasing).
+    Time O(n log n), Space O(n).
   source: "NeetCode 150 · 1-D DP"
   tags: [rust, neetcode, dp]
   tests: |
@@ -425,6 +436,7 @@
   notes: |
     Equal halves exist iff some subset sums to total/2 (so the total must be even).
     It's a 0/1 subset-sum: iterate amounts downward so each number is used once.
+    Time O(n * sum), Space O(sum), where sum is total/2.
   source: "NeetCode 150 · 1-D DP"
   tags: [rust, neetcode, dp]
   tests: |

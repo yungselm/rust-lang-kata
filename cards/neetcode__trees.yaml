@@ -35,7 +35,8 @@
     }
   notes: |
     Take ownership, recurse on each subtree, then store them back swapped. Working
-    by value lets us move boxes around without clones. O(n) time, O(h) stack.
+    by value lets us move boxes around without clones.
+    Time O(n), Space O(h).
   source: "NeetCode 150 · Trees"
   tags: [rust, neetcode, trees]
   tests: |
@@ -85,7 +86,8 @@
     }
   notes: |
     Depth of a node is one plus the deeper of its two children; an empty tree has
-    depth 0. Borrowing with `&Option<Box<...>>` avoids any cloning. O(n).
+    depth 0. Borrowing with `&Option<Box<...>>` avoids any cloning.
+    Time O(n), Space O(h).
   source: "NeetCode 150 · Trees"
   tags: [rust, neetcode, trees]
   tests: |
@@ -147,7 +149,8 @@
   notes: |
     For each node the longest path bending at it is left height + right height
     (in edges); the answer is the max over all nodes. One post-order pass returns
-    both height and best-so-far, giving O(n).
+    both height and best-so-far.
+    Time O(n), Space O(h).
   source: "NeetCode 150 · Trees"
   tags: [rust, neetcode, trees]
   tests: |
@@ -210,7 +213,8 @@
     }
   notes: |
     A bottom-up height function that returns the sentinel -1 the moment it sees an
-    imbalance lets us short-circuit and stay O(n), versus recomputing heights.
+    imbalance lets us short-circuit, versus recomputing heights at every node.
+    Time O(n), Space O(h).
   source: "NeetCode 150 · Trees"
   tags: [rust, neetcode, trees]
   tests: |
@@ -274,7 +278,8 @@
   notes: |
     Match the pair of nodes simultaneously: both empty is equal, both present
     requires equal values and equal subtrees, and a mismatch in presence is not.
-    O(n). (`#[derive(PartialEq)]` would also work via `p == q`.)
+    (`#[derive(PartialEq)]` would also work via `p == q`.)
+    Time O(n), Space O(h).
   source: "NeetCode 150 · Trees"
   tags: [rust, neetcode, trees]
   tests: |
@@ -339,7 +344,9 @@
   notes: |
     At each node, either the subtree rooted here equals `sub` (the derived
     `PartialEq` compares whole trees) or `sub` lives in a child. An empty `root`
-    only matches an empty `sub`. O(n*m) worst case.
+    only matches an empty `sub`; in the worst case every node triggers a full
+    subtree comparison.
+    Time O(n * m), Space O(h).
   source: "NeetCode 150 · Trees"
   tags: [rust, neetcode, trees]
   tests: |
@@ -407,7 +414,8 @@
   notes: |
     Walk down: if both targets are smaller go left, if both are larger go right;
     the first node where they diverge (or one equals it) is the split point and
-    thus the LCA. O(h), no recursion needed.
+    thus the LCA. No recursion needed.
+    Time O(h), Space O(1).
   source: "NeetCode 150 · Trees"
   tags: [rust, neetcode, trees]
   tests: |
@@ -482,7 +490,8 @@
     }
   notes: |
     Classic BFS: snapshot the queue length to know how many nodes are on the
-    current level, then drain exactly that many before moving down. O(n).
+    current level, then drain exactly that many before moving down.
+    Time O(n), Space O(n).
   source: "NeetCode 150 · Trees"
   tags: [rust, neetcode, trees]
   tests: |
@@ -553,7 +562,8 @@
     }
   notes: |
     BFS level by level; the last node dequeued on each level is the one seen from
-    the right. Enqueueing left-then-right keeps that ordering. O(n).
+    the right. Enqueueing left-then-right keeps that ordering.
+    Time O(n), Space O(n).
   source: "NeetCode 150 · Trees"
   tags: [rust, neetcode, trees]
   tests: |
@@ -618,7 +628,8 @@
   notes: |
     Carry the maximum value seen on the path down the recursion; a node is "good"
     when it is at least that running max. Start the threshold at the root's own
-    value so the root always counts. O(n).
+    value so the root always counts.
+    Time O(n), Space O(h).
   source: "NeetCode 150 · Trees"
   tags: [rust, neetcode, trees]
   tests: |
@@ -683,7 +694,8 @@
   notes: |
     Each node must lie within an open (lo, hi) range; descending left tightens the
     upper bound to the node's value, descending right tightens the lower bound.
-    `Option<i32>` bounds avoid overflow at i32::MIN/MAX. O(n).
+    `Option<i32>` bounds avoid overflow at i32::MIN/MAX.
+    Time O(n), Space O(h).
   source: "NeetCode 150 · Trees"
   tags: [rust, neetcode, trees]
   tests: |
@@ -745,7 +757,8 @@
   notes: |
     An in-order traversal of a BST yields values in sorted order, so the k-th
     visited node is the answer. A mutable counter lets us short-circuit as soon as
-    it reaches zero. O(h + k).
+    it reaches zero.
+    Time O(h + k), Space O(h).
   source: "NeetCode 150 · Trees"
   tags: [rust, neetcode, trees]
   tests: |
@@ -804,6 +817,7 @@
     The first preorder element is the root; its position in the inorder array
     splits the remaining nodes into the left and right subtrees, whose sizes then
     slice the preorder array. Recursion rebuilds each side.
+    Time O(n^2), Space O(n).
   source: "NeetCode 150 · Trees"
   tags: [rust, neetcode, trees]
   tests: |
@@ -867,7 +881,8 @@
   notes: |
     Each node returns the best straight-line path going down (clamping negative
     contributions to 0), while we separately track the best "bent" path that uses
-    both children. The global best is the answer. O(n).
+    both children. The global best is the answer.
+    Time O(n), Space O(h).
   source: "NeetCode 150 · Trees"
   tags: [rust, neetcode, trees]
   tests: |
@@ -947,7 +962,8 @@
   notes: |
     Preorder with explicit "#" markers for null children uniquely encodes the
     tree. Deserializing consumes the comma-split tokens in the same preorder, so
-    each call reconstructs a node then its left and right subtrees. O(n) both ways.
+    each call reconstructs a node then its left and right subtrees.
+    Time O(n), Space O(n).
   source: "NeetCode 150 · Trees"
   tags: [rust, neetcode, trees]
   tests: |

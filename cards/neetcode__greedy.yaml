@@ -21,7 +21,8 @@
   notes: |
     Kadane: `cur` is the best sum ending at the current index. Either extend the
     previous run or restart at `n`, whichever is larger; track the running maximum.
-    O(n), O(1). Assumes a non-empty slice.
+    Assumes a non-empty slice.
+    Time O(n), Space O(1).
   source: "NeetCode 150 · Greedy"
   tags: [rust, neetcode, greedy]
   tests: |
@@ -53,6 +54,7 @@
   notes: |
     Track the furthest index reachable so far. If the loop ever reaches an index
     beyond `reach`, there's a gap and the end is unreachable. Greedy, single pass.
+    Time O(n), Space O(1).
   source: "NeetCode 150 · Greedy"
   tags: [rust, neetcode, greedy]
   tests: |
@@ -86,7 +88,8 @@
   notes: |
     BFS by levels: `cur_end` marks the boundary of the current jump's reach. When
     the scan hits that boundary, commit one more jump and extend to `farthest`.
-    Stopping before the last index avoids an extra count. O(n).
+    Stopping before the last index avoids an extra count.
+    Time O(n), Space O(1).
   source: "NeetCode 150 · Greedy"
   tags: [rust, neetcode, greedy]
   tests: |
@@ -126,7 +129,8 @@
   notes: |
     A solution exists iff total gas >= total cost. If the tank goes negative at
     station i, no start in `start..=i` works, so jump the candidate start to i + 1.
-    One pass finds the unique valid start. O(n).
+    One pass finds the unique valid start.
+    Time O(n), Space O(1).
   source: "NeetCode 150 · Greedy"
   tags: [rust, neetcode, greedy]
   tests: |
@@ -175,6 +179,7 @@
     A `BTreeMap` keeps cards sorted, so the smallest remaining card must start a
     group. Remove `n` copies each of the next `group_size` consecutive values; if
     any are missing, no valid grouping exists.
+    Time O(n log n), Space O(n).
   source: "NeetCode 150 · Greedy"
   tags: [rust, neetcode, greedy]
   tests: |
@@ -210,6 +215,7 @@
     Any triplet with a component exceeding the target would spoil the max, so ignore
     those. Among the rest, we just need each target component matched exactly by
     some usable triplet; merging those triplets then yields exactly the target.
+    Time O(n), Space O(1).
   source: "NeetCode 150 · Greedy"
   tags: [rust, neetcode, greedy]
   tests: |
@@ -255,6 +261,7 @@
     Record each letter's last occurrence, then sweep: extend the current part's end
     to the furthest last-seen position of any letter inside it. When the scan index
     meets that end, the part is closed. Lowercase a-z assumed.
+    Time O(n), Space O(1).
   source: "NeetCode 150 · Greedy"
   tags: [rust, neetcode, greedy]
   tests: |
@@ -303,6 +310,7 @@
     Track the range of possible open-paren counts: `low` treats each '*' as ')' (or
     empty) and `high` as '('. If `high` ever drops below zero there are too many
     ')'; clamp `low` at zero. The string is valid iff zero open parens is reachable.
+    Time O(n), Space O(1).
   source: "NeetCode 150 · Greedy"
   tags: [rust, neetcode, greedy]
   tests: |

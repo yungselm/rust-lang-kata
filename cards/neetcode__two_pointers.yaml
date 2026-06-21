@@ -30,6 +30,7 @@
   notes: |
     Filter to alphanumerics and lowercase once, then walk a pointer in from each
     end. Decrementing `j` first keeps the indices valid without underflow on usize.
+    Time O(n), Space O(n).
   source: "NeetCode 150 · Two Pointers"
   tags: [rust, neetcode, two-pointers]
   tests: |
@@ -67,7 +68,8 @@
     }
   notes: |
     Because the array is sorted, a sum too small means we need a bigger value
-    (advance `lo`); too large means a smaller one (retreat `hi`). O(n), O(1) space.
+    (advance `lo`); too large means a smaller one (retreat `hi`).
+    Time O(n), Space O(1).
   source: "NeetCode 150 · Two Pointers"
   tags: [rust, neetcode, two-pointers]
   tests: |
@@ -121,7 +123,8 @@
   notes: |
     Sort, then fix the first element and two-pointer the rest. Skipping equal
     neighbours (for `i`, and after each hit for `lo`/`hi`) suppresses duplicates.
-    O(n^2) time, O(1) extra beyond the sort.
+    The extra space is constant beyond the sort.
+    Time O(n^2), Space O(1).
   source: "NeetCode 150 · Two Pointers"
   tags: [rust, neetcode, two-pointers]
   tests: |
@@ -162,7 +165,7 @@
   notes: |
     Start at the widest pair and move whichever pointer has the shorter line: the
     width only shrinks, so the only way to beat the current area is a taller line.
-    O(n).
+    Time O(n), Space O(1).
   source: "NeetCode 150 · Two Pointers"
   tags: [rust, neetcode, two-pointers]
   tests: |
@@ -206,7 +209,8 @@
   notes: |
     Water over a bar is min(maxLeft, maxRight) - height. Advance from the side
     with the smaller running max: that side's max is then guaranteed to be the
-    limiting wall, so the trapped amount there is known. O(n), O(1).
+    limiting wall, so the trapped amount there is known.
+    Time O(n), Space O(1).
   source: "NeetCode 150 · Two Pointers"
   tags: [rust, neetcode, two-pointers]
   tests: |
