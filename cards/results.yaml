@@ -148,8 +148,9 @@
   tags: [rust, results, ok_or, option]
 
 - instruction: |
-    Write `get_first_owned(v: &[i32]) -> Result<i32, String>` like the previous,
-    but with an owned `String` error built lazily via `ok_or_else`.
+    Write `get_first_owned(v: &[i32]) -> Result<i32, String>` like the previous
+    (the first elemnt or `Err("empty")`) but with an owned `String` error built 
+    lazily via `ok_or_else`.
   starter: |
     fn get_first_owned(v: &[i32]) -> Result<i32, String> {
 

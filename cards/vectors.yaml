@@ -188,8 +188,11 @@
         v
     }
   notes: |
-    `sort()` sorts in place, O(n log n), stable. Taking `mut v` by value lets us
-    mutate then return it.
+    `sort()` sorts in place, O(n log n), stable. It returns `()`, not the vec — so
+    `return v.sort()` is a type error (unit vs `Vec<i32>`); sort, then return `v` on
+    the next line. Rust's in-place mutators (sort/push/reverse/retain/dedup/truncate
+    …) all return `()`, never `Self`, so they don't chain. Taking `mut v` by value
+    lets us mutate it and hand it back.
   source: "std slice::sort"
   tags: [rust, vec, sorting]
 
@@ -206,7 +209,8 @@
     }
   notes: |
     `sort_by_key(f)` sorts by a derived key. For a full custom comparison use
-    `sort_by(|a, b| ...)`.
+    `sort_by(|a, b| ...)`. Like `sort`, it mutates in place and returns `()`, so
+    sort then return `v` — not `return v.sort_by_key(...)`.
   source: "std slice::sort_by_key"
   tags: [rust, vec, sorting]
 
@@ -225,7 +229,8 @@
     }
   notes: |
     `dedup()` removes CONSECUTIVE duplicates, so sort first. `sort_unstable` is a
-    good default — faster, no allocation.
+    good default — faster, no allocation. Both mutate in place and return `()`, so
+    apply them and then return `v`.
   source: "std Vec::dedup"
   tags: [rust, vec, sorting]
 
