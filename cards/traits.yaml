@@ -1,0 +1,645 @@
+# Traits — implement the named trait for the given type (the struct/trait is
+# pre-filled; write the impl). Sources: The Rust Programming Language ch.10/13/18
+# + Rustlings (traits).
+- instruction: |
+    Implement `std::fmt::Display` for `Point` so it formats as "(x, y)".
+    Example: Point { x: 1, y: 2 } prints as "(1, 2)".
+  starter: |
+    use std::fmt;
+
+    struct Point {
+        x: i32,
+        y: i32,
+    }
+
+    impl fmt::Display for Point {
+
+    }
+  solution: |
+    use std::fmt;
+
+    struct Point {
+        x: i32,
+        y: i32,
+    }
+
+    impl fmt::Display for Point {
+        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+            write!(f, "({}, {})", self.x, self.y)
+        }
+    }
+  notes: |
+    The one required method is `fmt(&self, f: &mut Formatter) -> fmt::Result`; you
+    `write!` into `f`. Implementing `Display` also gives you `.to_string()` for free.
+  source: "Rust Book §10.2 · std::fmt::Display"
+  tags: [rust, traits]
+  tests: |
+    assert_eq!(format!("{}", Point { x: 1, y: 2 }), "(1, 2)");
+    assert_eq!(Point { x: -3, y: 0 }.to_string(), "(-3, 0)");
+
+- instruction: |
+    Define a trait `Summary` with one method `summarize(&self) -> String`, and
+    implement it for `Article` so it returns "<title> by <author>".
+    Example: Article { title: "Rust", author: "Team" } -> "Rust by Team".
+  starter: |
+    trait Summary {
+        fn summarize(&self) -> String;
+    }
+
+    struct Article {
+        title: String,
+        author: String,
+    }
+
+    impl Summary for Article {
+
+    }
+  solution: |
+    trait Summary {
+        fn summarize(&self) -> String;
+    }
+
+    struct Article {
+        title: String,
+        author: String,
+    }
+
+    impl Summary for Article {
+        fn summarize(&self) -> String {
+            format!("{} by {}", self.title, self.author)
+        }
+    }
+  notes: |
+    A trait declares shared behaviour (here one required method); an `impl Trait
+    for Type` block provides it for a concrete type.
+  source: "Rust Book §10.2 (Defining a Trait) · Rustlings traits"
+  tags: [rust, traits]
+  tests: |
+    let a = Article { title: "Rust".to_string(), author: "Team".to_string() };
+    assert_eq!(a.summarize(), "Rust by Team");
+
+- instruction: |
+    Give the trait `Greet` a DEFAULT method `hello(&self) -> String` that returns
+    "hi", then implement `Greet` for `Robot` using the default (empty impl block).
+  starter: |
+    trait Greet {
+
+    }
+
+    struct Robot;
+
+    impl Greet for Robot {}
+  solution: |
+    trait Greet {
+        fn hello(&self) -> String {
+            "hi".to_string()
+        }
+    }
+
+    struct Robot;
+
+    impl Greet for Robot {}
+  notes: |
+    A trait method with a body is a DEFAULT: implementors may use it as-is (an
+    empty `impl` block) or override it.
+  source: "Rust Book §10.2 (Default Implementations) · Rustlings traits"
+  tags: [rust, traits]
+  tests: |
+    assert_eq!(Robot.hello(), "hi");
+
+- instruction: |
+    Add a `#[derive(...)]` attribute so `Color` can be debug-printed (`{:?}`),
+    cloned, and compared with `==`.
+  starter: |
+    struct Color {
+        r: u8,
+        g: u8,
+        b: u8,
+    }
+  solution: |
+    #[derive(Debug, Clone, PartialEq)]
+    struct Color {
+        r: u8,
+        g: u8,
+        b: u8,
+    }
+  notes: |
+    `derive` auto-generates the obvious field-by-field impl. `Debug` enables
+    `{:?}`, `Clone` enables `.clone()`, `PartialEq` enables `==`/`!=`.
+  source: "Rust Book §10.2 / §5.2 (derivable traits) · Rustlings traits"
+  tags: [rust, traits, derive]
+  tests: |
+    let c = Color { r: 1, g: 2, b: 3 };
+    assert_eq!(c.clone(), c);
+    assert_eq!(format!("{c:?}"), "Color { r: 1, g: 2, b: 3 }");
+    assert_ne!(c, Color { r: 0, g: 0, b: 0 });
+
+- instruction: |
+    Implement `PartialEq` for `CiStr` (a wrapper around a `String`) so two values
+    are equal when their contents match ignoring ASCII case.
+    Example: CiStr("Hi") == CiStr("hi").
+  starter: |
+    struct CiStr(String);
+
+    impl PartialEq for CiStr {
+
+    }
+  solution: |
+    struct CiStr(String);
+
+    impl PartialEq for CiStr {
+        fn eq(&self, other: &Self) -> bool {
+            self.0.eq_ignore_ascii_case(&other.0)
+        }
+    }
+  notes: |
+    Implement `PartialEq` by hand when equality isn't just field-by-field. You only
+    write `eq`; `!=` comes from the default `ne`.
+  source: "Rust Book §10.2 · std::cmp::PartialEq"
+  tags: [rust, traits]
+  tests: |
+    assert!(CiStr("Hi".to_string()) == CiStr("hi".to_string()));
+    assert!(CiStr("a".to_string()) != CiStr("b".to_string()));
+
+- instruction: |
+    Implement `From<i32>` for `Celsius` (a tuple struct wrapping an `i32`) so an
+    integer can be converted into a `Celsius`.
+  starter: |
+    #[derive(PartialEq, Debug)]
+    struct Celsius(i32);
+
+    impl From<i32> for Celsius {
+
+    }
+  solution: |
+    #[derive(PartialEq, Debug)]
+    struct Celsius(i32);
+
+    impl From<i32> for Celsius {
+        fn from(value: i32) -> Self {
+            Celsius(value)
+        }
+    }
+  notes: |
+    Implementing `From<T>` gives you `Into<U>` for free (so `20.into()` works), and
+    it's what the `?` operator uses to convert error types.
+  source: "Rust Book §10.2 / §9.2 · std::convert::From"
+  tags: [rust, traits]
+  tests: |
+    assert_eq!(Celsius::from(20), Celsius(20));
+    let c: Celsius = 20.into();
+    assert_eq!(c, Celsius(20));
+
+- instruction: |
+    Implement `Default` for `Config` so the default has `verbose: false` and
+    `level: 1`.
+  starter: |
+    #[derive(PartialEq, Debug)]
+    struct Config {
+        verbose: bool,
+        level: i32,
+    }
+
+    impl Default for Config {
+
+    }
+  solution: |
+    #[derive(PartialEq, Debug)]
+    struct Config {
+        verbose: bool,
+        level: i32,
+    }
+
+    impl Default for Config {
+        fn default() -> Self {
+            Config { verbose: false, level: 1 }
+        }
+    }
+  notes: |
+    Implement `Default` by hand when the zero/empty value isn't what you want
+    (here `level` should be 1, not 0). `Config::default()` then gives the value.
+  source: "Rust Book §10.2 · std::default::Default"
+  tags: [rust, traits]
+  tests: |
+    assert_eq!(Config::default(), Config { verbose: false, level: 1 });
+
+- instruction: |
+    Implement the `+` operator for `Point` by implementing `std::ops::Add`, adding
+    the two fields component-wise.
+    Example: Point { x: 1, y: 2 } + Point { x: 3, y: 4 } == Point { x: 4, y: 6 }.
+  starter: |
+    #[derive(PartialEq, Debug)]
+    struct Point {
+        x: i32,
+        y: i32,
+    }
+
+    impl std::ops::Add for Point {
+
+    }
+  solution: |
+    #[derive(PartialEq, Debug)]
+    struct Point {
+        x: i32,
+        y: i32,
+    }
+
+    impl std::ops::Add for Point {
+        type Output = Point;
+
+        fn add(self, other: Point) -> Point {
+            Point {
+                x: self.x + other.x,
+                y: self.y + other.y,
+            }
+        }
+    }
+  notes: |
+    Operators are traits: `+` is `Add`. You set the associated type `Output` and
+    write `add`. The same pattern gives `-` (`Sub`), `*` (`Mul`), etc.
+  source: "Rust Book §19.x (Operator Overloading) · std::ops::Add"
+  tags: [rust, traits, operators]
+  tests: |
+    assert_eq!(
+        Point { x: 1, y: 2 } + Point { x: 3, y: 4 },
+        Point { x: 4, y: 6 }
+    );
+
+- instruction: |
+    Implement `Iterator` for `Counter` (whose `count` starts at 0) so it yields
+    1, 2, 3, 4, 5 and then `None`.
+  starter: |
+    struct Counter {
+        count: u32,
+    }
+
+    impl Iterator for Counter {
+
+    }
+  solution: |
+    struct Counter {
+        count: u32,
+    }
+
+    impl Iterator for Counter {
+        type Item = u32;
+
+        fn next(&mut self) -> Option<u32> {
+            if self.count < 5 {
+                self.count += 1;
+                Some(self.count)
+            } else {
+                None
+            }
+        }
+    }
+  notes: |
+    Implementing `Iterator` means picking the associated type `Item` and writing
+    `next`. You then get `map`, `filter`, `sum`, `collect`, ... for free.
+  source: "Rust Book §13.2 (Implementing Iterator)"
+  tags: [rust, traits, iterators]
+  tests: |
+    let c = Counter { count: 0 };
+    assert_eq!(c.take(5).collect::<Vec<_>>(), vec![1, 2, 3, 4, 5]);
+    assert_eq!(Counter { count: 0 }.sum::<u32>(), 15);
+
+- instruction: |
+    The trait `Summary` and a type that implements it are given. Write
+    `notify(item: &impl Summary) -> String` returning "Breaking! <summary>".
+    Example: a tweet summarizing to "hi" -> "Breaking! hi".
+  starter: |
+    trait Summary {
+        fn summarize(&self) -> String;
+    }
+
+    struct Tweet {
+        text: String,
+    }
+
+    impl Summary for Tweet {
+        fn summarize(&self) -> String {
+            self.text.clone()
+        }
+    }
+
+    fn notify(item: &impl Summary) -> String {
+
+    }
+  solution: |
+    trait Summary {
+        fn summarize(&self) -> String;
+    }
+
+    struct Tweet {
+        text: String,
+    }
+
+    impl Summary for Tweet {
+        fn summarize(&self) -> String {
+            self.text.clone()
+        }
+    }
+
+    fn notify(item: &impl Summary) -> String {
+        format!("Breaking! {}", item.summarize())
+    }
+  notes: |
+    `&impl Summary` accepts any type implementing `Summary` (a trait bound in
+    sugar form; equivalent to `fn notify<T: Summary>(item: &T)`). Static dispatch.
+  source: "Rust Book §10.2 (Traits as Parameters)"
+  tags: [rust, traits]
+  tests: |
+    assert_eq!(notify(&Tweet { text: "hi".to_string() }), "Breaking! hi");
+
+- instruction: |
+    Write `make_adder(n: i32) -> impl Fn(i32) -> i32` that returns a closure adding
+    `n` to its argument.
+    Example: make_adder(5)(10) == 15.
+  starter: |
+    fn make_adder(n: i32) -> impl Fn(i32) -> i32 {
+
+    }
+  solution: |
+    fn make_adder(n: i32) -> impl Fn(i32) -> i32 {
+        move |x| x + n
+    }
+  notes: |
+    `-> impl Trait` returns "some concrete type implementing this trait" without
+    naming it — needed here because each closure has its own unnameable type.
+    `move` makes the closure own `n`.
+  source: "Rust Book §10.2 / §13.1 (returning impl Trait)"
+  tags: [rust, traits, closures]
+  tests: |
+    let add5 = make_adder(5);
+    assert_eq!(add5(10), 15);
+    assert_eq!(make_adder(-2)(10), 8);
+
+- instruction: |
+    The trait `Summary` and two implementing types are given. Write
+    `summarize_all(items: &[Box<dyn Summary>]) -> Vec<String>` returning each
+    item's summary, using dynamic dispatch.
+  starter: |
+    trait Summary {
+        fn summarize(&self) -> String;
+    }
+
+    struct Tweet {
+        text: String,
+    }
+    impl Summary for Tweet {
+        fn summarize(&self) -> String {
+            self.text.clone()
+        }
+    }
+
+    struct Article {
+        title: String,
+    }
+    impl Summary for Article {
+        fn summarize(&self) -> String {
+            self.title.clone()
+        }
+    }
+
+    fn summarize_all(items: &[Box<dyn Summary>]) -> Vec<String> {
+
+    }
+  solution: |
+    trait Summary {
+        fn summarize(&self) -> String;
+    }
+
+    struct Tweet {
+        text: String,
+    }
+    impl Summary for Tweet {
+        fn summarize(&self) -> String {
+            self.text.clone()
+        }
+    }
+
+    struct Article {
+        title: String,
+    }
+    impl Summary for Article {
+        fn summarize(&self) -> String {
+            self.title.clone()
+        }
+    }
+
+    fn summarize_all(items: &[Box<dyn Summary>]) -> Vec<String> {
+        items.iter().map(|item| item.summarize()).collect()
+    }
+  notes: |
+    `Box<dyn Summary>` is a trait object: it stores different concrete types behind
+    one type, dispatched at runtime via a vtable. That's what lets a single `Vec`
+    hold a `Tweet` and an `Article` together.
+  source: "Rust Book §18.2 (Trait Objects)"
+  tags: [rust, traits, dyn]
+  tests: |
+    let items: Vec<Box<dyn Summary>> = vec![
+        Box::new(Tweet { text: "hi".to_string() }),
+        Box::new(Article { title: "News".to_string() }),
+    ];
+    assert_eq!(summarize_all(&items), vec!["hi".to_string(), "News".to_string()]);
+
+- instruction: |
+    Define a trait `Loud` whose SUPERTRAIT is `Display`, with a default method
+    `shout(&self) -> String` returning the value's display text followed by "!!!".
+    Implement `Display` for `Dog` as "woof" and `Loud` for `Dog`.
+    Example: Dog.shout() == "woof!!!".
+  starter: |
+    use std::fmt;
+
+    trait Loud: fmt::Display {
+
+    }
+
+    struct Dog;
+
+    impl fmt::Display for Dog {
+        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+            write!(f, "woof")
+        }
+    }
+
+    impl Loud for Dog {}
+  solution: |
+    use std::fmt;
+
+    trait Loud: fmt::Display {
+        fn shout(&self) -> String {
+            format!("{self}!!!")
+        }
+    }
+
+    struct Dog;
+
+    impl fmt::Display for Dog {
+        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+            write!(f, "woof")
+        }
+    }
+
+    impl Loud for Dog {}
+  notes: |
+    `trait Loud: Display` means any `Loud` type must also be `Display`, so the
+    default `shout` may rely on `{self}`. Supertraits express "requires another
+    trait".
+  source: "Rust Book §19.x (Supertraits)"
+  tags: [rust, traits]
+  tests: |
+    assert_eq!(Dog.shout(), "woof!!!");
+
+- instruction: |
+    Define a trait `Describe` with a required method `name(&self) -> String` and a
+    DEFAULT method `describe(&self) -> String` returning "This is <name>". Implement
+    it for `Cat` whose name is "cat".
+    Example: Cat.describe() == "This is cat".
+  starter: |
+    trait Describe {
+
+    }
+
+    struct Cat;
+
+    impl Describe for Cat {
+
+    }
+  solution: |
+    trait Describe {
+        fn name(&self) -> String;
+
+        fn describe(&self) -> String {
+            format!("This is {}", self.name())
+        }
+    }
+
+    struct Cat;
+
+    impl Describe for Cat {
+        fn name(&self) -> String {
+            "cat".to_string()
+        }
+    }
+  notes: |
+    A default method can call the trait's other (required) methods — implementors
+    only supply `name`, and get `describe` for free built on top of it.
+  source: "Rust Book §10.2 (default methods calling required methods)"
+  tags: [rust, traits]
+  tests: |
+    assert_eq!(Cat.describe(), "This is cat");
+    assert_eq!(Cat.name(), "cat");
+
+# --- concept cards ---
+- type: concept
+  question: |
+    Difference between `impl Trait` (e.g. `fn f(x: &impl T)`) and `dyn Trait` (e.g.
+    `Box<dyn T>`) — static vs dynamic dispatch?
+  answer: |
+    `impl Trait` is STATIC dispatch: the compiler monomorphizes a copy per concrete
+    type, resolved at compile time (zero overhead, but one type per call site).
+    `dyn Trait` is DYNAMIC dispatch: one copy of the code, the method looked up at
+    runtime through a vtable — slightly slower, but lets a single collection hold
+    different concrete types (`Vec<Box<dyn T>>`).
+  source: "Rust Book §18.2"
+  tags: [rust, traits, concept]
+
+- type: concept
+  question: |
+    The orphan rule: when are you allowed to implement a trait for a type?
+  answer: |
+    Only if the trait OR the type is local to your crate (at least one is yours).
+    You can't `impl ExternalTrait for ExternalType` — that "orphan" impl is
+    forbidden so two crates can't write conflicting impls (coherence). Work around
+    it with the newtype pattern (wrap the foreign type in your own struct).
+  source: "Rust Book §10.2 (coherence / orphan rule)"
+  tags: [rust, traits, concept]
+
+- type: concept
+  question: |
+    What is a default method, and what can it do?
+  answer: |
+    A trait method with a body. Implementors can use it as-is (empty `impl` block)
+    or override it. A default method may call the trait's other methods — including
+    required ones the implementor must provide — letting a trait build rich
+    behaviour on a small required surface.
+  source: "Rust Book §10.2 (Default Implementations)"
+  tags: [rust, traits, concept]
+
+- type: concept
+  question: |
+    Associated type (like `Iterator::Item`) vs a generic trait parameter (like
+    `Trait<T>`) — when do you use each?
+  answer: |
+    An associated type fixes ONE output type per impl: a type implements `Iterator`
+    once, with one `Item`. A generic trait parameter lets a type implement the
+    trait MANY times with different parameters (e.g. `From<i32>` and `From<&str>`
+    on the same type). Use an associated type when there's a single natural choice.
+  source: "Rust Book §19.x (Associated Types)"
+  tags: [rust, traits, concept]
+
+- type: concept
+  question: |
+    What does `#[derive(...)]` do, and which common std traits are derivable?
+  answer: |
+    It auto-generates the obvious field-by-field implementation of a trait.
+    Derivable std traits include `Debug`, `Clone`, `Copy`, `PartialEq`, `Eq`,
+    `Hash`, `PartialOrd`, `Ord`, and `Default`. For custom logic (e.g. case-
+    insensitive equality) you write the `impl` by hand instead.
+  source: "Rust Book Appendix C (Derivable Traits)"
+  tags: [rust, traits, derive, concept]
+
+- instruction: |
+    Two traits `SomeTrait` and `OtherTrait` (each with a default method returning a
+    bool) and two structs implementing both are given. Write
+    `some_func(item: impl SomeTrait + OtherTrait) -> bool` returning whether BOTH
+    methods return true — requiring the argument to implement both traits.
+  starter: |
+    trait SomeTrait {
+        fn some_function(&self) -> bool {
+            true
+        }
+    }
+
+    trait OtherTrait {
+        fn other_function(&self) -> bool {
+            true
+        }
+    }
+
+    struct SomeStruct;
+    impl SomeTrait for SomeStruct {}
+    impl OtherTrait for SomeStruct {}
+
+    fn some_func(item: impl SomeTrait + OtherTrait) -> bool {
+
+    }
+  solution: |
+    trait SomeTrait {
+        fn some_function(&self) -> bool {
+            true
+        }
+    }
+
+    trait OtherTrait {
+        fn other_function(&self) -> bool {
+            true
+        }
+    }
+
+    struct SomeStruct;
+    impl SomeTrait for SomeStruct {}
+    impl OtherTrait for SomeStruct {}
+
+    fn some_func(item: impl SomeTrait + OtherTrait) -> bool {
+        item.some_function() && item.other_function()
+    }
+  notes: |
+    `impl SomeTrait + OtherTrait` requires the argument to implement BOTH traits, so
+    the body may call methods from each. (Equivalent to `fn some_func<T: SomeTrait +
+    OtherTrait>(item: T)`.)
+  source: "Rustlings traits5 · Book §10.2 (multiple trait bounds)"
+  tags: [rust, traits, rustlings]
+  tests: |
+    assert!(some_func(SomeStruct));

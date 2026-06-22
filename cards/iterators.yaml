@@ -474,3 +474,220 @@
     Ideal for "parse/validate all or fail".
   source: "std FromIterator for Result"
   tags: [rust, iterators, concept, results]
+
+# --- Rustlings iterators4 / iterators5 ---
+- instruction: |
+    Write `factorial(num: u64) -> u64` using an iterator and NO loop or mutable
+    variable. (factorial(0) = 1.)
+    Example: factorial(4) -> 24.
+  starter: |
+    fn factorial(num: u64) -> u64 {
+
+    }
+  solution: |
+    fn factorial(num: u64) -> u64 {
+        (1..=num).product()
+    }
+  notes: |
+    `product()` multiplies the range; the inclusive range `1..=num` is empty for
+    num = 0, and the product of an empty iterator is 1 — so 0! falls out correctly.
+    (Rustlings writes `(2..=num).product()`, which is equivalent since *1 is a no-op.)
+  source: "Rustlings iterators4 · std Iterator::product"
+  tags: [rust, iterators, rustlings]
+  tests: |
+    assert_eq!(factorial(0), 1);
+    assert_eq!(factorial(1), 1);
+    assert_eq!(factorial(4), 24);
+    assert_eq!(factorial(5), 120);
+
+- instruction: |
+    Given the `Progress` enum and a `HashMap<String, Progress>`, write
+    `count_iterator(map, value) -> usize`: how many values equal `value`. Use
+    iterators, no loop.
+  starter: |
+    use std::collections::HashMap;
+
+    #[derive(Clone, Copy, PartialEq, Eq)]
+    enum Progress {
+        None,
+        Some,
+        Complete,
+    }
+
+    fn count_iterator(map: &HashMap<String, Progress>, value: Progress) -> usize {
+
+    }
+  solution: |
+    use std::collections::HashMap;
+
+    #[derive(Clone, Copy, PartialEq, Eq)]
+    enum Progress {
+        None,
+        Some,
+        Complete,
+    }
+
+    fn count_iterator(map: &HashMap<String, Progress>, value: Progress) -> usize {
+        map.values().filter(|&&v| v == value).count()
+    }
+  notes: |
+    `values()` iterates `&Progress`; `filter` then `count` replaces the imperative
+    "loop and increment". `Progress` is `Copy`, so `|&&v|` binds a plain `Progress`.
+  source: "Rustlings iterators5 · std Iterator::filter/count"
+  tags: [rust, iterators, hashmap, rustlings]
+  tests: |
+    let mut map = HashMap::new();
+    map.insert("a".to_string(), Progress::Complete);
+    map.insert("b".to_string(), Progress::Complete);
+    map.insert("c".to_string(), Progress::Complete);
+    map.insert("d".to_string(), Progress::Some);
+    map.insert("e".to_string(), Progress::None);
+    map.insert("f".to_string(), Progress::None);
+    assert_eq!(count_iterator(&map, Progress::Complete), 3);
+    assert_eq!(count_iterator(&map, Progress::Some), 1);
+    assert_eq!(count_iterator(&map, Progress::None), 2);
+
+- instruction: |
+    Given `count_iterator` (counts matching values in one map), write
+    `count_collection_iterator(collection: &[HashMap<String, Progress>], value)
+    -> usize` summing the counts across every map. Use iterators, no loop.
+  starter: |
+    use std::collections::HashMap;
+
+    #[derive(Clone, Copy, PartialEq, Eq)]
+    enum Progress {
+        None,
+        Some,
+        Complete,
+    }
+
+    fn count_iterator(map: &HashMap<String, Progress>, value: Progress) -> usize {
+        map.values().filter(|&&v| v == value).count()
+    }
+
+    fn count_collection_iterator(
+        collection: &[HashMap<String, Progress>],
+        value: Progress,
+    ) -> usize {
+
+    }
+  solution: |
+    use std::collections::HashMap;
+
+    #[derive(Clone, Copy, PartialEq, Eq)]
+    enum Progress {
+        None,
+        Some,
+        Complete,
+    }
+
+    fn count_iterator(map: &HashMap<String, Progress>, value: Progress) -> usize {
+        map.values().filter(|&&v| v == value).count()
+    }
+
+    fn count_collection_iterator(
+        collection: &[HashMap<String, Progress>],
+        value: Progress,
+    ) -> usize {
+        collection.iter().map(|map| count_iterator(map, value)).sum()
+    }
+  notes: |
+    Map each inner map to its count, then `sum()` — an iterator of iterators handled
+    by reusing the per-map counter.
+  source: "Rustlings iterators5 · std Iterator::map/sum"
+  tags: [rust, iterators, hashmap, rustlings]
+  tests: |
+    let mut a = HashMap::new();
+    a.insert("x".to_string(), Progress::Complete);
+    a.insert("y".to_string(), Progress::Complete);
+    a.insert("z".to_string(), Progress::None);
+    let mut b = HashMap::new();
+    b.insert("p".to_string(), Progress::Complete);
+    b.insert("q".to_string(), Progress::Some);
+    let coll = vec![a, b];
+    assert_eq!(count_collection_iterator(&coll, Progress::Complete), 3);
+    assert_eq!(count_collection_iterator(&coll, Progress::Some), 1);
+    assert_eq!(count_collection_iterator(&coll, Progress::None), 1);
+
+- instruction: |
+    Write `count_collection_iterator_flat(collection: &[HashMap<String, Progress>],
+    value) -> usize` that counts matching values across all maps by FLATTENING the
+    maps into one stream of values (`flat_map`), then filtering and counting.
+  starter: |
+    use std::collections::HashMap;
+
+    #[derive(Clone, Copy, PartialEq, Eq)]
+    enum Progress {
+        None,
+        Some,
+        Complete,
+    }
+
+    fn count_collection_iterator_flat(
+        collection: &[HashMap<String, Progress>],
+        value: Progress,
+    ) -> usize {
+
+    }
+  solution: |
+    use std::collections::HashMap;
+
+    #[derive(Clone, Copy, PartialEq, Eq)]
+    enum Progress {
+        None,
+        Some,
+        Complete,
+    }
+
+    fn count_collection_iterator_flat(
+        collection: &[HashMap<String, Progress>],
+        value: Progress,
+    ) -> usize {
+        collection
+            .iter()
+            .flat_map(HashMap::values)
+            .filter(|&&v| v == value)
+            .count()
+    }
+  notes: |
+    `flat_map(HashMap::values)` turns the slice of maps into one flat stream of
+    `&Progress`, so a single filter+count does the whole job — no inner helper.
+  source: "Rustlings iterators5 · std Iterator::flat_map"
+  tags: [rust, iterators, hashmap, rustlings]
+  tests: |
+    let mut a = HashMap::new();
+    a.insert("x".to_string(), Progress::Complete);
+    a.insert("y".to_string(), Progress::None);
+    let mut b = HashMap::new();
+    b.insert("p".to_string(), Progress::Complete);
+    b.insert("q".to_string(), Progress::Complete);
+    let coll = vec![a, b];
+    assert_eq!(count_collection_iterator_flat(&coll, Progress::Complete), 3);
+    assert_eq!(count_collection_iterator_flat(&coll, Progress::None), 1);
+
+- instruction: |
+    Write `capitalize_first(input: &str) -> String`: upper-case the first character
+    and keep the rest unchanged; an empty string stays "".
+    Example: "hello" -> "Hello".
+  starter: |
+    fn capitalize_first(input: &str) -> String {
+
+    }
+  solution: |
+    fn capitalize_first(input: &str) -> String {
+        let mut chars = input.chars();
+        match chars.next() {
+            None => String::new(),
+            Some(first) => first.to_uppercase().to_string() + chars.as_str(),
+        }
+    }
+  notes: |
+    Pull the first `char` off the iterator with `next()`, upper-case it, then append
+    the REST via `chars.as_str()` (the still-unconsumed tail of the iterator). `None`
+    means the input was empty.
+  source: "Rustlings iterators2 · std char::to_uppercase"
+  tags: [rust, iterators, strings, rustlings]
+  tests: |
+    assert_eq!(capitalize_first("hello"), "Hello");
+    assert_eq!(capitalize_first(""), "");
+    assert_eq!(capitalize_first("a"), "A");

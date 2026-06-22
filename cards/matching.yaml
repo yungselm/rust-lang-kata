@@ -472,8 +472,97 @@
   question: |
     What are "default binding modes" (match ergonomics)?
   answer: |
-    When you match a reference against a non-reference pattern, the bindings
-    automatically become references — so `match &opt { Some(x) => ... }` gives
-    `x: &T` without writing `ref`. Saves manual `ref`/`&` when matching borrows.
-  source: "book §18.3"
-  tags: [rust, matching, concept]
+    When you match a reference against a non-reference pattern, the bindi
+- instruction: |
+    A `Message` enum (a struct variant `Resize { width, height }`, a tuple variant
+    `Move(Point)`, `Echo(String)`, `ChangeColor(u8, u8, u8)`, and unit `Quit`) plus a
+    `State` are given. Write `State::process(&mut self, message: Message)` that, via a
+    single `match`, updates the matching field(s): Resize sets width/height, Move sets
+    position, Echo sets message, ChangeColor sets color, Quit sets quit = true.
+  starter: |
+    #[derive(Default)]
+    struct Point {
+        x: u64,
+        y: u64,
+    }
+
+    enum Message {
+        Resize { width: u64, height: u64 },
+        Move(Point),
+        Echo(String),
+        ChangeColor(u8, u8, u8),
+        Quit,
+    }
+
+    #[derive(Default)]
+    struct State {
+        width: u64,
+        height: u64,
+        position: Point,
+        message: String,
+        color: (u8, u8, u8),
+        quit: bool,
+    }
+
+    impl State {
+        fn process(&mut self, message: Message) {
+
+        }
+    }
+  solution: |
+    #[derive(Default)]
+    struct Point {
+        x: u64,
+        y: u64,
+    }
+
+    enum Message {
+        Resize { width: u64, height: u64 },
+        Move(Point),
+        Echo(String),
+        ChangeColor(u8, u8, u8),
+        Quit,
+    }
+
+    #[derive(Default)]
+    struct State {
+        width: u64,
+        height: u64,
+        position: Point,
+        message: String,
+        color: (u8, u8, u8),
+        quit: bool,
+    }
+
+    impl State {
+        fn process(&mut self, message: Message) {
+            match message {
+                Message::Resize { width, height } => {
+                    self.width = width;
+                    self.height = height;
+                }
+                Message::Move(point) => self.position = point,
+                Message::Echo(s) => self.message = s,
+                Message::ChangeColor(r, g, b) => self.color = (r, g, b),
+                Message::Quit => self.quit = true,
+            }
+        }
+    }
+  notes: |
+    One `match` dispatches over all variant shapes at once: struct variants
+    destructure named fields, tuple variants bind positionally, and the unit variant
+    matches by name. The bound values move straight into `self`'s fields.
+  source: "Rustlings enums3 · Book §6.2 / §18 (matching enum variants)"
+  tags: [rust, matching, enums, rustlings]
+  tests: |
+    let mut s = State::default();
+    s.process(Message::Resize { width: 10, height: 30 });
+    s.process(Message::Move(Point { x: 1, y: 2 }));
+    s.process(Message::Echo("hi".to_string()));
+    s.process(Message::ChangeColor(255, 0, 255));
+    s.process(Message::Quit);
+    assert_eq!((s.width, s.height), (10, 30));
+    assert_eq!((s.position.x, s.position.y), (1, 2));
+    assert_eq!(s.message, "hi");
+    assert_eq!(s.color, (255, 0, 255));
+    assert!(s.quit);

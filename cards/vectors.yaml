@@ -464,3 +464,48 @@
     sort, dedup via a `HashSet` instead.
   source: "std Vec::dedup"
   tags: [rust, vec, concept]
+
+- instruction: |
+    Define `enum Cell { Int(i64), Text(String), Float(f64) }` so one `Vec` can hold
+    mixed kinds of value, then write `sum_ints(row: &[Cell]) -> i64` summing only the
+    `Int` cells.
+    Example: [Int(3), Text("x"), Int(4)] -> 7.
+  starter: |
+    enum Cell {
+        Int(i64),
+        Text(String),
+        Float(f64),
+    }
+
+    fn sum_ints(row: &[Cell]) -> i64 {
+
+    }
+  solution: |
+    enum Cell {
+        Int(i64),
+        Text(String),
+        Float(f64),
+    }
+
+    fn sum_ints(row: &[Cell]) -> i64 {
+        row.iter()
+            .filter_map(|cell| match cell {
+                Cell::Int(n) => Some(*n),
+                _ => None,
+            })
+            .sum()
+    }
+  notes: |
+    A `Vec` is homogeneous, so to store different types together you wrap them in one
+    enum — every element is a `Cell`, and you `match` to recover the specific kind.
+    `filter_map` keeps only the `Int` payloads.
+  source: "Rust Book §8.1 (using an enum to store multiple types)"
+  tags: [rust, vec, enums]
+  tests: |
+    let row = vec![
+        Cell::Int(3),
+        Cell::Text("x".to_string()),
+        Cell::Int(4),
+        Cell::Float(1.5),
+    ];
+    assert_eq!(sum_ints(&row), 7);

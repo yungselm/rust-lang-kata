@@ -461,9 +461,150 @@
     clippy care?
   answer: |
     `unwrap_or(x)` takes an already-evaluated value (eager). `unwrap_or_else(f)`
-    calls the closure only on `None`/`Err` (lazy). Use `_else` when the fallback
-    is expensive, allocates, or needs the error. clippy flags an eager call with
-    an expensive arg (`or_fun_call`) and a lazy call with a trivial one
-    (`unnecessary_lazy_evaluations`).
-  source: "std Option/Result; clippy"
-  tags: [rust, results, concept]
+    calls the closure only on `None`/`Err` (lazy)
+- instruction: |
+    Define `enum DivisionError { DivideByZero, IntegerOverflow, NotDivisible }` and
+    write `divide(a: i64, b: i64) -> Result<i64, DivisionError>`: Err `DivideByZero`
+    if b is 0; `IntegerOverflow` if a is i64::MIN and b is -1; `NotDivisible` if a is
+    not a multiple of b; otherwise Ok(a / b).
+  starter: |
+    #[derive(Debug, PartialEq, Eq)]
+    enum DivisionError {
+        DivideByZero,
+        IntegerOverflow,
+        NotDivisible,
+    }
+
+    fn divide(a: i64, b: i64) -> Result<i64, DivisionError> {
+
+    }
+  solution: |
+    #[derive(Debug, PartialEq, Eq)]
+    enum DivisionError {
+        DivideByZero,
+        IntegerOverflow,
+        NotDivisible,
+    }
+
+    fn divide(a: i64, b: i64) -> Result<i64, DivisionError> {
+        if b == 0 {
+            return Err(DivisionError::DivideByZero);
+        }
+        if a == i64::MIN && b == -1 {
+            return Err(DivisionError::IntegerOverflow);
+        }
+        if a % b != 0 {
+            return Err(DivisionError::NotDivisible);
+        }
+        Ok(a / b)
+    }
+  notes: |
+    A domain-specific error enum makes each failure a distinct, matchable value (and
+    derives let you compare/inspect them). Guard the overflow case explicitly:
+    `i64::MIN / -1` would otherwise panic.
+  source: "Rustlings iterators3 · Book §9 (custom error types)"
+  tags: [rust, results, errors, rustlings]
+  tests: |
+    assert_eq!(divide(81, 9), Ok(9));
+    assert_eq!(divide(81, 0), Err(DivisionError::DivideByZero));
+    assert_eq!(divide(i64::MIN, -1), Err(DivisionError::IntegerOverflow));
+    assert_eq!(divide(81, 6), Err(DivisionError::NotDivisible));
+
+- instruction: |
+    Given `divide(a, b) -> Result<i64, DivisionError>`, divide [27, 297, 38502, 81]
+    each by 27 and write two collectors: `result_with_list() -> Result<Vec<i64>,
+    DivisionError>` (stop at the first error) and `list_of_results() -> Vec<Result<i64,
+    DivisionError>>` (keep every outcome). Same iterator — only the return type differs.
+  starter: |
+    #[derive(Debug, PartialEq, Eq)]
+    enum DivisionError {
+        DivideByZero,
+        IntegerOverflow,
+        NotDivisible,
+    }
+
+    fn divide(a: i64, b: i64) -> Result<i64, DivisionError> {
+        if b == 0 {
+            return Err(DivisionError::DivideByZero);
+        }
+        if a % b != 0 {
+            return Err(DivisionError::NotDivisible);
+        }
+        Ok(a / b)
+    }
+
+    fn result_with_list() -> Result<Vec<i64>, DivisionError> {
+
+    }
+
+    fn list_of_results() -> Vec<Result<i64, DivisionError>> {
+
+    }
+  solution: |
+    #[derive(Debug, PartialEq, Eq)]
+    enum DivisionError {
+        DivideByZero,
+        IntegerOverflow,
+        NotDivisible,
+    }
+
+    fn divide(a: i64, b: i64) -> Result<i64, DivisionError> {
+        if b == 0 {
+            return Err(DivisionError::DivideByZero);
+        }
+        if a % b != 0 {
+            return Err(DivisionError::NotDivisible);
+        }
+        Ok(a / b)
+    }
+
+    fn result_with_list() -> Result<Vec<i64>, DivisionError> {
+        let numbers = [27, 297, 38502, 81];
+        numbers.into_iter().map(|n| divide(n, 27)).collect()
+    }
+
+    fn list_of_results() -> Vec<Result<i64, DivisionError>> {
+        let numbers = [27, 297, 38502, 81];
+        numbers.into_iter().map(|n| divide(n, 27)).collect()
+    }
+  notes: |
+    `collect()` is driven by the target type: into `Result<Vec<_>, _>` it
+    short-circuits on the first `Err`; into `Vec<Result<_, _>>` it keeps every
+    success and failure. Identical iterator, different collection.
+  source: "Rustlings iterators3 · std FromIterator"
+  tags: [rust, results, iterators, rustlings]
+  tests: |
+    assert_eq!(result_with_list(), Ok(vec![1, 11, 1426, 3]));
+    assert_eq!(
+        list_of_results(),
+        vec![Ok(1), Ok(11), Ok(1426), Ok(3)]
+    );
+
+- instruction: |
+    Write `parse_then_sqrt(s: &str) -> Result<f64, Box<dyn std::error::Error>>`:
+    parse `s` as f64 with `?`; if it's negative return the error "negative input";
+    otherwise return its square root.
+    Example: "16" -> Ok(4.0); "x" -> Err; "-1" -> Err.
+  starter: |
+    fn parse_then_sqrt(s: &str) -> Result<f64, Box<dyn std::error::Error>> {
+
+    }
+  solution: |
+    fn parse_then_sqrt(s: &str) -> Result<f64, Box<dyn std::error::Error>> {
+        let n: f64 = s.parse()?;
+        if n < 0.0 {
+            return Err("negative input".into());
+        }
+        Ok(n.sqrt())
+    }
+  notes: |
+    `Box<dyn Error>` is a trait object holding ANY error type, so `?` can mix
+    different errors in one function: the parse error converts via `From`, and a
+    `&str` becomes a boxed error with `.into()`. Great for app code where you don't
+    need a precise error enum.
+  source: "Rust Book §9.2 / §12 (Box<dyn Error>)"
+  tags: [rust, results, errors]
+  tests: |
+    assert_eq!(parse_then_sqrt("16").unwrap(), 4.0);
+    assert!(parse_then_sqrt("x").is_err());
+    assert!(parse_then_sqrt("-1").is_err());

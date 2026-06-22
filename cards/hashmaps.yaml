@@ -491,6 +491,62 @@
     `or_insert(v)` takes an already-built value (eager). `or_insert_with(f)`
     calls `f` only when absent (lazy) — for costly defaults. `or_default()` is
     the shorthand for `or_insert_with(Default::default)`, which clippy prefers
-    for things like an empty `Vec`.
-  source: "std Entry"
-  tags: [rust, hashmap, concept]
+    for things lik
+- instruction: |
+    Each line of `results` is "team1,team2,goals1,goals2". Write
+    `build_scores_table(results: &str) -> HashMap<&str, TeamScores>` accumulating, for
+    every team across all lines, its total goals_scored and goals_conceded. The
+    `TeamScores` struct (derives `Default`) is given.
+  starter: |
+    use std::collections::HashMap;
+
+    #[derive(Default, Debug, PartialEq)]
+    struct TeamScores {
+        goals_scored: u8,
+        goals_conceded: u8,
+    }
+
+    fn build_scores_table(results: &str) -> HashMap<&str, TeamScores> {
+
+    }
+  solution: |
+    use std::collections::HashMap;
+
+    #[derive(Default, Debug, PartialEq)]
+    struct TeamScores {
+        goals_scored: u8,
+        goals_conceded: u8,
+    }
+
+    fn build_scores_table(results: &str) -> HashMap<&str, TeamScores> {
+        let mut scores: HashMap<&str, TeamScores> = HashMap::new();
+        for line in results.lines() {
+            let mut parts = line.split(',');
+            let team_1 = parts.next().unwrap();
+            let team_2 = parts.next().unwrap();
+            let score_1: u8 = parts.next().unwrap().parse().unwrap();
+            let score_2: u8 = parts.next().unwrap().parse().unwrap();
+
+            let e1 = scores.entry(team_1).or_default();
+            e1.goals_scored += score_1;
+            e1.goals_conceded += score_2;
+
+            let e2 = scores.entry(team_2).or_default();
+            e2.goals_scored += score_2;
+            e2.goals_conceded += score_1;
+        }
+        scores
+    }
+  notes: |
+    `entry(team).or_default()` inserts a zeroed `TeamScores` the first time a team is
+    seen (needs `TeamScores: Default`), then returns `&mut TeamScores` so you can add
+    onto its fields. This "look up, inserting a default, then mutate" is the core
+    accumulation idiom.
+  source: "Rustlings hashmaps3 · std Entry::or_default"
+  tags: [rust, hashmap, rustlings]
+  tests: |
+    let t = build_scores_table("England,France,4,2\nFrance,Italy,3,1");
+    let eng = t.get("England").unwrap();
+    assert_eq!((eng.goals_scored, eng.goals_conceded), (4, 2));
+    let fr = t.get("France").unwrap();
+    assert_eq!((fr.goals_scored, fr.goals_conceded), (5, 5));
