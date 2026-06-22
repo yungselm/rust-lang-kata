@@ -255,8 +255,10 @@
   tags: [rust, matching, structs]
 
 - instruction: |
-    Given an enum with a struct-like variant and a tuple variant, write
-    `describe(e: Event) -> String` matching both.
+    Given `enum Event { Click { x: i32, y: i32 }, Key(char) }`, write
+    `describe(e: Event) -> String`: a `Click` becomes "click at X,Y" and a
+    `Key(c)` becomes "key C".
+    Example: Event::Key('a') -> "key a"; Event::Click { x: 1, y: 2 } -> "click at 1,2".
   starter: |
     enum Event {
         Click { x: i32, y: i32 },
@@ -344,8 +346,9 @@
   tags: [rust, matching, strings]
 
 - instruction: |
-    Write `http_text(code: u32) -> &'static str` by returning a `match`
-    expression directly (no intermediate `let` binding).
+    Write `http_text(code: u32) -> &'static str` mapping a status code to text:
+    200 -> "OK", 404 -> "Not Found", 500 -> "Server Error", anything else ->
+    "Unknown". Example: http_text(404) -> "Not Found".
   starter: |
     fn http_text(code: u32) -> &'static str {
 

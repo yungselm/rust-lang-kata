@@ -239,8 +239,9 @@
   tags: [rust, hashmap]
 
 - instruction: |
-    Write `count_with_default(s: &str) -> HashMap<char, i32>` counting chars
-    using `or_default` instead of `or_insert(0)`.
+    Write `count_with_default(s: &str) -> HashMap<char, i32>` returning how many
+    times each character appears in `s`, using the entry API's `or_default()`.
+    Example: "aab" -> {'a': 2, 'b': 1}.
   starter: |
     use std::collections::HashMap;
 

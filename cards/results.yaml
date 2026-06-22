@@ -37,9 +37,9 @@
   tags: [rust, results, unwrap_or]
 
 - instruction: |
-    Write `parse_or_err_len(s: &str) -> usize`: the parsed usize, or — on failure
-    — the length of the error message. Use the closure form so you can read the
-    error.
+    Write `parse_or_err_len(s: &str) -> usize`: parse `s` as a `usize`; on failure
+    return the length of the parse error's message instead.
+    Example: parse_or_err_len("42") -> 42; parse_or_err_len("x") -> the error length.
   starter: |
     fn parse_or_err_len(s: &str) -> usize {
 
@@ -89,8 +89,9 @@
   tags: [rust, results, map]
 
 - instruction: |
-    Write `parse_msg(s: &str) -> Result<i32, String>`: parse, converting any
-    error into a `String` message with `map_err`.
+    Write `parse_msg(s: &str) -> Result<i32, String>`: parse `s` as i32, and on
+    failure use `map_err` to return the error as the message `"bad: <error>"`.
+    Example: parse_msg("x") -> Err("bad: invalid digit found in string").
   starter: |
     fn parse_msg(s: &str) -> Result<i32, String> {
 
@@ -148,9 +149,10 @@
   tags: [rust, results, ok_or, option]
 
 - instruction: |
-    Write `get_first_owned(v: &[i32]) -> Result<i32, String>` like the previous
-    (the first elemnt or `Err("empty")`) but with an owned `String` error built 
-    lazily via `ok_or_else`.
+    Write `get_first_owned(v: &[i32]) -> Result<i32, String>`: return the first
+    element as `Ok`, or an owned `Err("empty".to_string())` if the slice is empty.
+    Build the error lazily (allocate only when the slice is actually empty).
+    Example: get_first_owned(&[7, 8]) -> Ok(7); get_first_owned(&[]) -> Err("empty").
   starter: |
     fn get_first_owned(v: &[i32]) -> Result<i32, String> {
 
