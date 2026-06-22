@@ -50,9 +50,9 @@ python build.py                 # writes output/CodeCards.apkg
 Import `output/CodeCards.apkg` into Anki (keep "Update notetypes" checked).
 Preview the look without Anki by opening `preview.html` in a browser.
 
-## Current decks (307 cards)
+## Current decks (326 cards)
 
-**Core Rust (157)** — idiomatic patterns to drill to fluency (decks under `Rust::Core::…`):
+**Core Rust (176)** — idiomatic patterns to drill to fluency (decks under `Rust::Core::…`):
 
 | File | Cards | Focus |
 |------|-------|-------|
@@ -61,6 +61,7 @@ Preview the look without Anki by opening `preview.html` in a browser.
 | `results.yaml` | 27 | `?`, unwrap_or family, map/map_err/and_then, ok_or, Option↔Result, map_or(_else), `From` errors |
 | `vectors.yaml` | 28 | build/access/mutate, sort/dedup/retain, slicing, windows/chunks, binary_search, drain; `&[T]` vs `&Vec<T>` |
 | `hashmaps.yaml` | 25 | insert/get, entry API (or_insert/_with/_default/and_modify), iteration, HashSet & set ops |
+| `generics.yaml` | 19 | rewrite a concrete fn to generic: PartialOrd/Copy/Clone/PartialEq/Display/Sum bounds, `where` clauses, `Fn` bound, generic struct; monomorphization |
 | `datastructures.yaml` | 24 | Big-O of Vec/VecDeque/HashMap/BTreeMap, search/sort complexity, when-to-use, amortization |
 
 **NeetCode 150 (150)** — interview problems grouped by pattern, nested under `Rust::Neetcode::…`:

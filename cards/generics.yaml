@@ -1,0 +1,393 @@
+# Generics — rewrite the concrete function shown in the editor into a generic one.
+# The body usually stays the same; you change the signature and add trait bounds.
+# Sources: The Rust Programming Language ch.10 + Rustlings (generics).
+- instruction: |
+    Rewrite this i32-only `largest` into a generic function that returns the
+    largest element of a slice of any comparable, `Copy` type.
+  starter: |
+    fn largest(list: &[i32]) -> i32 {
+        let mut max = list[0];
+        for &item in list {
+            if item > max {
+                max = item;
+            }
+        }
+        max
+    }
+  solution: |
+    fn largest<T: PartialOrd + Copy>(list: &[T]) -> T {
+        let mut max = list[0];
+        for &item in list {
+            if item > max {
+                max = item;
+            }
+        }
+        max
+    }
+  notes: |
+    `>` needs `T: PartialOrd`; copying elements out of the slice (`list[0]`,
+    `&item`) needs `T: Copy`. The body is unchanged — only the signature gains the
+    type parameter and its bounds.
+  source: "Rust Book §10.1 (Generic Data Types) · Rustlings generics"
+  tags: [rust, generics]
+  tests: |
+    assert_eq!(largest(&[1, 5, 3]), 5);
+    assert_eq!(largest(&['y', 'a', 'z']), 'z');
+    assert_eq!(largest(&[1.5, 0.5, 2.5]), 2.5);
+
+- instruction: |
+    Rewrite `max_two` to be generic: return the larger of two values of any
+    ordered type. (Take them by value; no `Copy` needed.)
+  starter: |
+    fn max_two(a: i32, b: i32) -> i32 {
+        if a >= b {
+            a
+        } else {
+            b
+        }
+    }
+  solution: |
+    fn max_two<T: PartialOrd>(a: T, b: T) -> T {
+        if a >= b {
+            a
+        } else {
+            b
+        }
+    }
+  notes: |
+    Only `PartialOrd` is required: we compare then move one value out, so we never
+    need `Copy`/`Clone`. Works for any ordered type (ints, floats, `&str`, ...).
+  source: "Rust Book §10.1 · Rustlings generics"
+  tags: [rust, generics]
+  tests: |
+    assert_eq!(max_two(3, 7), 7);
+    assert_eq!(max_two("apple", "banana"), "banana");
+    assert_eq!(max_two(2.5, 1.5), 2.5);
+
+- instruction: |
+    Rewrite `swap` to be generic over TWO independent type parameters, returning
+    the pair with its elements swapped.
+  starter: |
+    fn swap(pair: (i32, char)) -> (char, i32) {
+        let (a, b) = pair;
+        (b, a)
+    }
+  solution: |
+    fn swap<T, U>(pair: (T, U)) -> (U, T) {
+        let (a, b) = pair;
+        (b, a)
+    }
+  notes: |
+    Two type parameters `<T, U>` let the two elements differ. No bounds are needed
+    — moving values around requires no capabilities.
+  source: "Rust Book §10.1 · Rustlings generics"
+  tags: [rust, generics]
+  tests: |
+    assert_eq!(swap((1, 'a')), ('a', 1));
+    assert_eq!(swap(("x", 2.0)), (2.0, "x"));
+
+- instruction: |
+    Rewrite `wrap` to be generic over any type with NO trait bounds, wrapping its
+    argument in `Some`.
+  starter: |
+    fn wrap(x: i32) -> Option<i32> {
+        Some(x)
+    }
+  solution: |
+    fn wrap<T>(x: T) -> Option<T> {
+        Some(x)
+    }
+  notes: |
+    With an unbounded `T` you can only move/store/return the value (as here). You
+    couldn't compare, print, or clone it without adding a bound.
+  source: "Rust Book §10.1"
+  tags: [rust, generics]
+  tests: |
+    assert_eq!(wrap(5), Some(5));
+    assert_eq!(wrap("hi"), Some("hi"));
+
+- instruction: |
+    Rewrite `first` to be generic: return a clone of the first element as
+    `Option<T>` (None if the slice is empty).
+  starter: |
+    fn first(v: &[i32]) -> Option<i32> {
+        v.first().cloned()
+    }
+  solution: |
+    fn first<T: Clone>(v: &[T]) -> Option<T> {
+        v.first().cloned()
+    }
+  notes: |
+    `slice::first` yields `Option<&T>`; `cloned()` turns it into `Option<T>`, which
+    needs `T: Clone`. (Use `Copy` + `copied()` for trivially-copyable types.)
+  source: "Rust Book §10.1 · Rustlings generics"
+  tags: [rust, generics]
+  tests: |
+    assert_eq!(first(&[1, 2, 3]), Some(1));
+    assert_eq!(first::<i32>(&[]), None);
+    assert_eq!(first(&["a".to_string()]), Some("a".to_string()));
+
+- instruction: |
+    Rewrite `reversed` to be generic: return a new `Vec` with the elements in
+    reverse order.
+  starter: |
+    fn reversed(v: &[i32]) -> Vec<i32> {
+        v.iter().rev().cloned().collect()
+    }
+  solution: |
+    fn reversed<T: Clone>(v: &[T]) -> Vec<T> {
+        v.iter().rev().cloned().collect()
+    }
+  notes: |
+    Building owned values from a borrowed slice needs `T: Clone` (`cloned()`).
+  source: "Rust Book §10.1 · Rustlings generics"
+  tags: [rust, generics]
+  tests: |
+    assert_eq!(reversed(&[1, 2, 3]), vec![3, 2, 1]);
+    assert_eq!(reversed(&['a', 'b']), vec!['b', 'a']);
+
+- instruction: |
+    Rewrite `repeat` to be generic: return a `Vec` containing `x` repeated `n`
+    times.
+  starter: |
+    fn repeat(x: i32, n: usize) -> Vec<i32> {
+        vec![x; n]
+    }
+  solution: |
+    fn repeat<T: Clone>(x: T, n: usize) -> Vec<T> {
+        vec![x; n]
+    }
+  notes: |
+    `vec![x; n]` clones `x` to fill the Vec, so it requires `T: Clone`.
+  source: "Rust Book §10.1 · Rustlings generics"
+  tags: [rust, generics]
+  tests: |
+    assert_eq!(repeat(7, 3), vec![7, 7, 7]);
+    assert_eq!(repeat("a".to_string(), 2), vec!["a".to_string(), "a".to_string()]);
+
+- instruction: |
+    Rewrite `count` to be generic: count how many elements equal `target`. Take
+    `target` by reference.
+  starter: |
+    fn count(v: &[i32], target: &i32) -> usize {
+        v.iter().filter(|&x| x == target).count()
+    }
+  solution: |
+    fn count<T: PartialEq>(v: &[T], target: &T) -> usize {
+        v.iter().filter(|&x| x == target).count()
+    }
+  notes: |
+    Equality needs `T: PartialEq`. Passing `target: &T` avoids requiring `Copy` and
+    works for non-copy types like `String`.
+  source: "Rust Book §10.1 · Rustlings generics"
+  tags: [rust, generics]
+  tests: |
+    assert_eq!(count(&[1, 2, 2, 3, 2], &2), 3);
+    assert_eq!(count(&['a', 'b', 'a'], &'a'), 2);
+
+- instruction: |
+    Rewrite `contains` to be generic: return whether the slice contains a value
+    equal to `x`. Use `any`.
+  starter: |
+    fn contains(v: &[i32], x: &i32) -> bool {
+        v.iter().any(|item| item == x)
+    }
+  solution: |
+    fn contains<T: PartialEq>(v: &[T], x: &T) -> bool {
+        v.iter().any(|item| item == x)
+    }
+  notes: |
+    `any` short-circuits on the first match; `==` requires `T: PartialEq`.
+  source: "Rust Book §10.1 · Rustlings generics"
+  tags: [rust, generics]
+  tests: |
+    assert!(contains(&[1, 2, 3], &2));
+    assert!(!contains(&["a", "b"], &"c"));
+
+- instruction: |
+    Rewrite `sum` to be generic over any type that can be summed (using the
+    standard `Sum` trait).
+  starter: |
+    fn sum(v: &[i32]) -> i32 {
+        v.iter().copied().sum()
+    }
+  solution: |
+    fn sum<T: Copy + std::iter::Sum>(v: &[T]) -> T {
+        v.iter().copied().sum()
+    }
+  notes: |
+    `std::iter::Sum` is the bound that lets `.sum()` produce a `T`; `Copy` lets
+    `copied()` turn `&T` items into `T`. Bounds can be standard-library traits, not
+    just your own.
+  source: "Rust Book §10.2 (Trait Bounds) · std::iter::Sum"
+  tags: [rust, generics]
+  tests: |
+    assert_eq!(sum(&[1, 2, 3]), 6);
+    assert_eq!(sum(&[1.5, 2.5]), 4.0);
+
+- instruction: |
+    Rewrite `join` to be generic over any printable (`Display`) type, joining the
+    elements with `sep`.
+  starter: |
+    fn join(items: &[i32], sep: &str) -> String {
+        items.iter().map(|x| x.to_string()).collect::<Vec<_>>().join(sep)
+    }
+  solution: |
+    fn join<T: std::fmt::Display>(items: &[T], sep: &str) -> String {
+        items.iter().map(|x| x.to_string()).collect::<Vec<_>>().join(sep)
+    }
+  notes: |
+    `Display` is what gives every element a `.to_string()`. The bound documents the
+    one capability the function needs from `T`.
+  source: "Rust Book §10.2 · std::fmt::Display"
+  tags: [rust, generics]
+  tests: |
+    assert_eq!(join(&[1, 2, 3], "-"), "1-2-3");
+    assert_eq!(join(&["a", "b"], ", "), "a, b");
+
+- instruction: |
+    Rewrite `debug_all` to be generic over any `Debug` type, expressing the bound
+    with a `where` clause (not inline).
+  starter: |
+    fn debug_all(v: &[i32]) -> String {
+        v.iter().map(|x| format!("{x:?}")).collect::<Vec<_>>().join(", ")
+    }
+  solution: |
+    fn debug_all<T>(v: &[T]) -> String
+    where
+        T: std::fmt::Debug,
+    {
+        v.iter().map(|x| format!("{x:?}")).collect::<Vec<_>>().join(", ")
+    }
+  notes: |
+    A `where` clause states bounds after the signature — identical in meaning to
+    `<T: Debug>`, but easier to read when bounds are long or numerous.
+  source: "Rust Book §10.2 (where clauses)"
+  tags: [rust, generics]
+  tests: |
+    assert_eq!(debug_all(&[1, 2, 3]), "1, 2, 3");
+    assert_eq!(debug_all(&[Some(1), None]), "Some(1), None");
+
+- instruction: |
+    Rewrite `map_each` so the input and output element types are generic too
+    (currently i32 -> i32), keeping the closure parameter.
+  starter: |
+    fn map_each(v: &[i32], f: impl Fn(&i32) -> i32) -> Vec<i32> {
+        v.iter().map(f).collect()
+    }
+  solution: |
+    fn map_each<T, U, F: Fn(&T) -> U>(v: &[T], f: F) -> Vec<U> {
+        v.iter().map(f).collect()
+    }
+  notes: |
+    The closure's type is itself a generic parameter bounded by the `Fn(&T) -> U`
+    trait. This is how higher-order functions stay zero-cost: `F` is monomorphized
+    to each concrete closure.
+  source: "Rust Book §10 + §13.1 (closures as generic bounds)"
+  tags: [rust, generics, closures]
+  tests: |
+    assert_eq!(map_each(&[1, 2, 3], |x| x * 2), vec![2, 4, 6]);
+    assert_eq!(map_each(&[1, 2], |x| x.to_string()), vec!["1".to_string(), "2".to_string()]);
+
+- instruction: |
+    Rewrite this `Pair` (currently holding two `i32`s) to be a generic struct
+    `Pair<T>`, keeping its `new` constructor and `swap` method.
+  starter: |
+    #[derive(PartialEq, Debug)]
+    struct Pair {
+        first: i32,
+        second: i32,
+    }
+
+    impl Pair {
+        fn new(first: i32, second: i32) -> Self {
+            Pair { first, second }
+        }
+        fn swap(&mut self) {
+            std::mem::swap(&mut self.first, &mut self.second);
+        }
+    }
+  solution: |
+    #[derive(PartialEq, Debug)]
+    struct Pair<T> {
+        first: T,
+        second: T,
+    }
+
+    impl<T> Pair<T> {
+        fn new(first: T, second: T) -> Self {
+            Pair { first, second }
+        }
+        fn swap(&mut self) {
+            std::mem::swap(&mut self.first, &mut self.second);
+        }
+    }
+  notes: |
+    Generic types are declared on the struct (`struct Pair<T>`) AND on the impl
+    block (`impl<T> Pair<T>`). The `impl<T>` introduces the parameter; `Pair<T>`
+    says which type it implements for. No bounds are needed for these methods.
+  source: "Rust Book §10.1 (generic structs & methods)"
+  tags: [rust, generics, structs]
+  tests: |
+    let mut p = Pair::new(1, 2);
+    p.swap();
+    assert_eq!(p, Pair { first: 2, second: 1 });
+    let mut q = Pair::new("a", "b");
+    q.swap();
+    assert_eq!(q, Pair { first: "b", second: "a" });
+
+# --- concept cards ---
+- type: concept
+  question: |
+    Do generics cost anything at runtime in Rust?
+  answer: |
+    No — generics are zero-cost. The compiler MONOMORPHIZES them: it generates a
+    separate concrete copy of the code for each type actually used, so a generic
+    function runs exactly as fast as a hand-written concrete one. The trade-off is
+    compile time and binary size, not speed.
+  source: "Rust Book §10.1 (Performance of Code Using Generics)"
+  tags: [rust, generics, concept]
+
+- type: concept
+  question: |
+    In `fn largest<T>(list: &[T]) -> T`, why won't `if item > max` compile until you
+    add a bound, and which bounds does it need?
+  answer: |
+    A bare `T` has no capabilities, so `>` isn't available. You must require
+    `T: PartialOrd` to compare, and `T: Copy` (or `Clone`) to move elements out of
+    the borrowed slice. Bounds tell the compiler — and the reader — exactly what
+    operations `T` must support.
+  source: "Rust Book §10.1 · Rustlings generics"
+  tags: [rust, generics, concept]
+
+- type: concept
+  question: |
+    What does a `where` clause do, and when is it preferable to inline bounds?
+  answer: |
+    It lists the trait bounds after the signature: `fn f<T>(x: T) -> R where T:
+    Clone + Debug { ... }`. It means the same as `fn f<T: Clone + Debug>(...)` but
+    reads better when there are many or long bounds (especially multiple type
+    parameters).
+  source: "Rust Book §10.2 (where clauses)"
+  tags: [rust, generics, concept]
+
+- type: concept
+  question: |
+    Given `fn f<T>(x: T)` with no trait bounds, what can you actually do with `x`?
+  answer: |
+    Only move it, store it, return it, or drop it. You cannot compare, print,
+    clone, or do arithmetic on it — each of those needs a bound (`PartialOrd`,
+    `Display`, `Clone`, `Add`, ...). An unbounded generic is completely opaque.
+  source: "Rust Book §10.1"
+  tags: [rust, generics, concept]
+
+- type: concept
+  question: |
+    How do you specify a generic type parameter when the compiler can't infer it
+    (e.g. collecting, or calling a generic fn on an empty slice)?
+  answer: |
+    Use the turbofish `::<T>`: e.g. `first::<i32>(&[])`, `"5".parse::<i32>()`, or
+    `it.collect::<Vec<_>>()`. Usually inference handles it; the turbofish is for
+    when there's no value to infer from or several types would fit.
+  source: "Rust Book §10.1 / §13.2 (collect)"
+  tags: [rust, generics, concept]
