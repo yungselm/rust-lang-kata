@@ -472,7 +472,13 @@
   question: |
     What are "default binding modes" (match ergonomics)?
   answer: |
-    When you match a reference against a non-reference pattern, the bindi
+    When you match a reference against a non-reference pattern, the bindings
+    automatically become references — so `match &opt { Some(x) => ... }` gives
+    `x: &T` without writing `ref`. It removes manual `ref`/`&` noise when matching
+    through borrows.
+  source: "book §18.3 (default binding modes)"
+  tags: [rust, matching, concept]
+
 - instruction: |
     A `Message` enum (a struct variant `Resize { width, height }`, a tuple variant
     `Move(Point)`, `Echo(String)`, `ChangeColor(u8, u8, u8)`, and unit `Quit`) plus a

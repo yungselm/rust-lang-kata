@@ -488,10 +488,14 @@
     Difference between `entry(k).or_insert(v)` and `or_insert_with(f)` /
     `or_default()`?
   answer: |
-    `or_insert(v)` takes an already-built value (eager). `or_insert_with(f)`
-    calls `f` only when absent (lazy) — for costly defaults. `or_default()` is
-    the shorthand for `or_insert_with(Default::default)`, which clippy prefers
-    for things lik
+    `or_insert(v)` takes an already-built value, evaluated even if unused (eager).
+    `or_insert_with(f)` calls `f` only when the key is absent (lazy) — use it when
+    the default allocates or is costly. `or_default()` is shorthand for
+    `or_insert_with(Default::default)`, which clippy prefers for an empty `Vec`,
+    `0`, and similar defaults.
+  source: "std Entry (or_insert / or_insert_with / or_default)"
+  tags: [rust, hashmap, concept]
+
 - instruction: |
     Each line of `results` is "team1,team2,goals1,goals2". Write
     `build_scores_table(results: &str) -> HashMap<&str, TeamScores>` accumulating, for

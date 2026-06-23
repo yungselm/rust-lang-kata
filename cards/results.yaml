@@ -461,7 +461,13 @@
     clippy care?
   answer: |
     `unwrap_or(x)` takes an already-evaluated value (eager). `unwrap_or_else(f)`
-    calls the closure only on `None`/`Err` (lazy)
+    calls the closure only on `None`/`Err` (lazy). Use `_else` when the fallback is
+    expensive, allocates, or needs the error. clippy flags an eager call with an
+    expensive argument (`or_fun_call`) and a lazy call with a trivial one
+    (`unnecessary_lazy_evaluations`).
+  source: "std Option/Result; clippy"
+  tags: [rust, results, concept]
+
 - instruction: |
     Define `enum DivisionError { DivideByZero, IntegerOverflow, NotDivisible }` and
     write `divide(a: i64, b: i64) -> Result<i64, DivisionError>`: Err `DivideByZero`
