@@ -643,3 +643,91 @@
   tags: [rust, traits, rustlings]
   tests: |
     assert!(some_func(SomeStruct));
+
+# --- Copy vs Clone (concept) ---
+- type: concept
+  question: |
+    What is the difference between the `Copy` and `Clone` traits?
+  answer: |
+    `Copy` is implicit and always a cheap bitwise copy: a `Copy` value is
+    duplicated automatically on move/assignment and you never call `.copy()`.
+    `Clone` is explicit (you call `.clone()`) and may be expensive (allocate /
+    deep-copy). Every `Copy` type is also `Clone` (Copy requires Clone), but not
+    the other way around.
+  source: "Rust Book §4.1 / §10.2 (Copy & Clone)"
+  tags: [rust, traits, concept]
+
+- type: concept
+  question: |
+    Which kinds of types implement `Copy`?
+  answer: |
+    Cheap, stack-only types: integers, floats, `bool`, `char`, shared references
+    `&T`, raw pointers, and fixed-size arrays `[T; N]` / tuples whose elements are
+    all `Copy`. Anything that owns a heap allocation is NOT `Copy`.
+  source: "Rust Book §4.1 (Stack-Only Data: Copy)"
+  tags: [rust, traits, concept]
+
+- type: concept
+  question: |
+    Which common types own heap data, making them `Clone` but not `Copy`?
+  answer: |
+    `String`, `Vec<T>`, `Box<T>`, the collections (`HashMap`, `HashSet`,
+    `BTreeMap`, `VecDeque`, `BinaryHeap`, ...), and `Rc<T>`/`Arc<T>`. Duplicating
+    them must allocate (or, for Rc/Arc, bump a reference count), so it's explicit
+    via `.clone()` rather than an automatic copy.
+  source: "Rust Book §8 / §15 (owned heap types)"
+  tags: [rust, traits, concept]
+
+- type: concept
+  question: |
+    Why can't a type be both `Copy` and have a `Drop` impl (why does owning heap
+    data rule out `Copy`)?
+  answer: |
+    A `Copy` is a bitwise duplicate, which would create two owners of the same
+    allocation — and both would try to free it when dropped (a double-free). So
+    Rust makes `Copy` and `Drop` mutually exclusive: if dropping a value must free
+    something, the type cannot be `Copy`.
+  source: "Rust Book §4.1 / std::marker::Copy"
+  tags: [rust, traits, concept]
+
+- type: concept
+  question: |
+    On an `Option<&T>` (or an iterator of `&T`), what do `.copied()` and
+    `.cloned()` do, and when do you use each?
+  answer: |
+    Both reach THROUGH the reference to produce owned values: `Option<&T>` ->
+    `Option<T>` (and `Iterator<Item = &T>` -> `Item = T`). `.copied()` requires
+    `T: Copy` (e.g. `&i32` -> `i32`); `.cloned()` requires `T: Clone` (e.g.
+    `&String` -> `String`). Prefer `.copied()` for cheap Copy types, `.cloned()`
+    otherwise.
+  code: |
+    use std::collections::HashMap;
+    let m: HashMap<String, i32> = HashMap::new();
+    let _value: Option<i32> = m.get("k").copied();        // &i32 -> i32  (i32: Copy)
+    let _keys: Vec<String> = m.keys().cloned().collect(); // &String -> String (Clone)
+  source: "std Option::copied/cloned · Iterator::copied/cloned"
+  tags: [rust, traits, concept]
+
+- type: concept
+  question: |
+    Why does `m.get(key).clone()` (where `m: HashMap<String, i32>`) give
+    `Option<&i32>` instead of the `Option<i32>` you wanted?
+  answer: |
+    `get` returns `Option<&i32>`, and `.clone()` clones its RECEIVER — the whole
+    `Option<&i32>` — giving another `Option<&i32>` (it just copies the inner `&i32`,
+    since `&T` is `Copy`). It never dereferences to the `i32`. Use `.copied()` (or
+    `.cloned()`), which reach through the reference to return an owned value.
+  source: "std Option::clone vs copied"
+  tags: [rust, traits, concept]
+
+- type: concept
+  question: |
+    Cloning a `String` deep-copies its buffer. Why is cloning an `Rc<T>` or
+    `Arc<T>` cheap?
+  answer: |
+    `Rc`/`Arc` own a shared heap allocation plus a reference count. `.clone()` only
+    increments the count and returns another handle to the SAME data — O(1), no
+    deep copy. A reminder that `Clone` means "explicit", not necessarily
+    "expensive".
+  source: "Rust Book §15.4 (Rc) / std::sync::Arc"
+  tags: [rust, traits, concept]

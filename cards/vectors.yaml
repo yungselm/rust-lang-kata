@@ -367,8 +367,12 @@
         v.windows(2).map(|w| w[0] + w[1]).collect()
     }
   notes: |
-    `windows(k)` yields OVERLAPPING sub-slices of length k. (Use `chunks(k)` for
-    non-overlapping groups.)
+    `windows(k)` yields OVERLAPPING sub-slices of length k (use `chunks(k)` for
+    non-overlapping groups). Each item is `&[i32]`, so map with `|w|` and index
+    through it (`w[0]`, `w[1]`) — do NOT write `|&w|`. That pattern tries to bind
+    `w: [i32]` BY VALUE, but a bare slice `[i32]` is unsized (`!Sized`) and can't be
+    moved out of the reference. (`|&x|` works on `&i32` only because `i32` is sized
+    and `Copy`; a whole slice is neither.)
   source: "std slice::windows"
   tags: [rust, vec, slices]
 

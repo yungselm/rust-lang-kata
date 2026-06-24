@@ -50,9 +50,9 @@ python build.py                 # writes output/CodeCards.apkg
 Import `output/CodeCards.apkg` into Anki (keep "Update notetypes" checked).
 Preview the look without Anki by opening `preview.html` in a browser.
 
-## Current decks (357 cards)
+## Current decks (364 cards)
 
-**Core Rust (207)** — idiomatic patterns to drill to fluency (decks under `Rust::Core::…`):
+**Core Rust (214)** — idiomatic patterns to drill to fluency (decks under `Rust::Core::…`):
 
 | File | Cards | Focus |
 |------|-------|-------|
@@ -62,7 +62,7 @@ Preview the look without Anki by opening `preview.html` in a browser.
 | `vectors.yaml` | 29 | build/access/mutate, sort/dedup/retain, slicing, windows/chunks, binary_search, drain, enum-in-Vec; `&[T]` vs `&Vec<T>` |
 | `hashmaps.yaml` | 26 | insert/get, entry API (or_insert/_with/_default/and_modify), iteration, accumulate structs, HashSet & set ops |
 | `generics.yaml` | 19 | rewrite a concrete fn to generic: PartialOrd/Copy/Clone/PartialEq/Display/Sum bounds, `where` clauses, `Fn` bound, generic struct; monomorphization |
-| `traits.yaml` | 20 | implement Display/From/Default/PartialEq/Add/Iterator, custom traits, default methods, `derive`, `impl Trait`, `dyn` objects, supertraits, multiple bounds |
+| `traits.yaml` | 27 | implement Display/From/Default/PartialEq/Add/Iterator, custom traits, default methods, `derive`, `impl Trait`, `dyn` objects, supertraits, multiple bounds; Copy vs Clone & `.copied()`/`.cloned()` |
 | `datastructures.yaml` | 24 | Big-O of Vec/VecDeque/HashMap/BTreeMap, search/sort complexity, when-to-use, amortization |
 
 **NeetCode 150 (150)** — interview problems grouped by pattern, nested under `Rust::Neetcode::…`:
