@@ -41,7 +41,7 @@ ASSETS = os.path.join(OUT, "_assets")
 
 CODE_MODEL_ID = 1607392319
 CONCEPT_MODEL_ID = 1607392321
-ASSET_VER = "5"   # bump on any vendor/_cards.js change
+ASSET_VER = "8"   # bump on any vendor/_cards.js change
 
 # ---- shipped deck-options settings -------------------------------------------
 # These apply under BOTH schedulers. The SM-2 fields (initial factor, easy bonus,
@@ -159,7 +159,8 @@ def build_models():
     code = genanki.Model(
         CODE_MODEL_ID, "Code Editor Card",
         fields=[{"name": n} for n in
-                ("Instruction", "StarterCode", "Solution", "Lang", "Notes", "Source")],
+                ("Instruction", "StarterCode", "Solution", "Lang", "Notes", "Source",
+                 "Walkthrough")],
         templates=[{
             "name": "Code Card",
             "qfmt": versionize(read(os.path.join(TPL, "front.html"))),
@@ -330,7 +331,7 @@ def main():
                     fields=[text(c["instruction"].rstrip("\n")),
                             b64(c.get("starter", "")), b64(c.get("solution", "")),
                             c.get("lang", "rust"), text(c.get("notes", "")),
-                            text(c.get("source", ""))],
+                            text(c.get("source", "")), b64(c.get("walkthrough", ""))],
                     guid=genanki.guid_for(stem, "code", c["instruction"]),
                     tags=tags,
                 )

@@ -183,6 +183,40 @@
     Count, then sort by frequency descending. `std::cmp::Reverse` flips the sort
     order without writing a custom comparator. (A bucket sort gives strict O(n).)
     Time O(n log n), Space O(n).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>Return the <b>k values that occur most often</b>. Count how often each value appears, rank the values by that count, then keep the top k — the only real work is <b>counting</b> (a hash map) and <b>ranking</b> (a sort).</p>
+      <div class="vz-flow"><span class="vz-step">all numbers</span><span class="vz-arr">→</span><span class="vz-step">count each value</span><span class="vz-arr">→</span><span class="vz-step">sort by count ↓</span><span class="vz-arr">→</span><span class="vz-step win">keep top k</span></div>
+    </div>
+    ===
+    4-7 | Tally each value into a HashMap (entry(n).or_insert(0) += 1) — one pass, O(n).
+    <div class="vz">
+      <div class="vz-row"><span class="vz-lab">nums</span><span class="vz-cell">1</span><span class="vz-cell">1</span><span class="vz-cell">1</span><span class="vz-cell">2</span><span class="vz-cell">2</span><span class="vz-cell">3</span></div>
+      <div class="vz-lab">counts</div>
+      <div class="vz-bar"><span class="vz-k">1</span><i style="width:108px"></i><span>3</span></div>
+      <div class="vz-bar"><span class="vz-k">2</span><i style="width:72px"></i><span>2</span></div>
+      <div class="vz-bar"><span class="vz-k">3</span><i style="width:36px"></i><span>1</span></div>
+    </div>
+    ===
+    8 | Collect the map into a Vec of (value, count); HashMap order is arbitrary.
+    <div class="vz">
+      <div class="vz-lab">pairs — arbitrary order</div>
+      <div class="vz-row"><span class="vz-chip">3 ×1</span><span class="vz-chip">1 ×3</span><span class="vz-chip">2 ×2</span></div>
+    </div>
+    ===
+    9 | Sort by count descending via Reverse(count) — the dominant O(n log n) step.
+    <div class="vz">
+      <div class="vz-lab">sorted by count, descending</div>
+      <div class="vz-row"><span class="vz-chip">1 ×3</span><span class="vz-chip">2 ×2</span><span class="vz-chip">3 ×1</span></div>
+    </div>
+    ===
+    10 | take(k) keeps the top k pairs, then map(|(n, _)| n) drops the counts -> [1, 2].
+    <div class="vz">
+      <div class="vz-lab">take(2) → values</div>
+      <div class="vz-row"><span class="vz-chip win">1</span><span class="vz-chip win">2</span></div>
+    </div>
   source: "NeetCode 150 · Arrays & Hashing"
   tags: [rust, neetcode, arrays-hashing]
   tests: |
