@@ -41,7 +41,7 @@ ASSETS = os.path.join(OUT, "_assets")
 
 CODE_MODEL_ID = 1607392319
 CONCEPT_MODEL_ID = 1607392321
-ASSET_VER = "4"   # bump on any vendor/_cards.js change
+ASSET_VER = "5"   # bump on any vendor/_cards.js change
 
 # ---- shipped deck-options settings -------------------------------------------
 # These apply under BOTH schedulers. The SM-2 fields (initial factor, easy bonus,

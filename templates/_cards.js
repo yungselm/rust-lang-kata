@@ -73,10 +73,10 @@
 
     var status = document.getElementById("status");
     if (status) {
-      if (rstrip(typed) === rstrip(solution)) {
+      if (wrong === 0) {
         status.textContent = "✓ Correct"; status.className = "status ok";
       } else {
-        status.textContent = wrong + " line" + (wrong === 1 ? "" : "s") + " differ";
+        status.textContent = wrong + (wrong === 1 ? " line differs" : " lines differ");
         status.className = "status bad";
       }
     }
