@@ -76,6 +76,13 @@
     `find` helper walks the path; `search` also checks `is_word`, `starts_with`
     just needs the path to exist.
     Time O(L) per insert/search/starts_with where L = word length, Space O(total chars inserted).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>Store the words in a <b>tree of characters</b>: each node has a child per next letter and an is_word flag. insert walks/creates the path, search walks it and checks is_word, starts_with just needs the path to exist.</p>
+      <div class="vz-flow"><span class="vz-step">node = letter &rarr; child + is_word</span><span class="vz-arr">&rarr;</span><span class="vz-step">insert walks/creates the path</span><span class="vz-arr">&rarr;</span><span class="vz-step">search: path + is_word</span><span class="vz-arr">&rarr;</span><span class="vz-step win">starts_with: path exists</span></div>
+    </div>
   source: "NeetCode 150 · Tries"
   tags: [rust, neetcode, trie]
   tests: |
@@ -164,6 +171,13 @@
     edge; a '.' branches into every child and succeeds if any branch matches the
     rest. Worst case (all dots) the search visits many nodes.
     Time O(L) per add_word where L = word length; search O(L) for a plain word but up to O(number of nodes) with dots, Space O(total chars added).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>Same trie, but the search <b>recurses</b>: a concrete letter follows its single edge, while '.' branches into every child and succeeds if any branch matches the rest.</p>
+      <div class="vz-flow"><span class="vz-step">build a trie</span><span class="vz-arr">&rarr;</span><span class="vz-step">letter &rarr; follow that edge</span><span class="vz-arr">&rarr;</span><span class="vz-step">'.' &rarr; try every child</span><span class="vz-arr">&rarr;</span><span class="vz-step win">any branch matches?</span></div>
+    </div>
   source: "NeetCode 150 · Tries"
   tags: [rust, neetcode, trie]
   tests: |
@@ -267,6 +281,13 @@
     records a hit once and avoids duplicates. Searching all words together (rather
     than one at a time) shares prefixes and prunes dead branches early.
     Time O(m*n*4^L) where m*n = board cells and L = max word length, Space O(total chars in words).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>Put <b>all</b> target words into one trie, then DFS the board descending the trie in lockstep. Marking cells visited prevents reuse, and shared prefixes prune dead branches early.</p>
+      <div class="vz-flow"><span class="vz-step">all words &rarr; one trie</span><span class="vz-arr">&rarr;</span><span class="vz-step">DFS each cell down the trie</span><span class="vz-arr">&rarr;</span><span class="vz-step">mark visited, record hits</span><span class="vz-arr">&rarr;</span><span class="vz-step win">trie prunes dead paths</span></div>
+    </div>
   source: "NeetCode 150 · Tries"
   tags: [rust, neetcode, trie]
   tests: |

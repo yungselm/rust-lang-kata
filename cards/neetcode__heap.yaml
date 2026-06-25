@@ -55,6 +55,13 @@
     the smallest while the size exceeds k. The heap's minimum is then the k-th
     largest.
     Time O(log k), Space O(k).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>Keep only the <b>k largest</b> values in a min-heap; its smallest element is the k-th largest. Each add pushes, then drops the smallest while the size exceeds k.</p>
+      <div class="vz-flow"><span class="vz-step">push value into a min-heap</span><span class="vz-arr">&rarr;</span><span class="vz-step">drop smallest while size &gt; k</span><span class="vz-arr">&rarr;</span><span class="vz-step win">heap's min = k-th largest</span></div>
+    </div>
   source: "NeetCode 150 · Heap / Priority Queue"
   tags: [rust, neetcode, heap]
   tests: |
@@ -95,6 +102,13 @@
     max-heap by default, so popping twice yields the pair to smash; push back the
     difference when they differ.
     Time O(n log n), Space O(n).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>A <b>max-heap</b> hands you the two heaviest stones each round. Smash them, push back the difference if they differ; whatever is left at the end is the answer.</p>
+      <div class="vz-flow"><span class="vz-step">max-heap of weights</span><span class="vz-arr">&rarr;</span><span class="vz-step">pop the two heaviest</span><span class="vz-arr">&rarr;</span><span class="vz-step">push back the difference</span><span class="vz-arr">&rarr;</span><span class="vz-step win">one (or none) remains</span></div>
+    </div>
   source: "NeetCode 150 · Heap / Priority Queue"
   tags: [rust, neetcode, heap]
   tests: |
@@ -134,6 +148,13 @@
     size k evicts the farthest point as we go, leaving the k closest.
     `Reverse` would instead give a sort-and-take; either is fine.
     Time O(n log k), Space O(k).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>Rank by <b>squared distance</b> (no sqrt needed). A max-heap capped at size k keeps evicting the farthest point, so the k closest remain.</p>
+      <div class="vz-flow"><span class="vz-step">squared distance per point</span><span class="vz-arr">&rarr;</span><span class="vz-step">max-heap capped at k</span><span class="vz-arr">&rarr;</span><span class="vz-step">evict the farthest</span><span class="vz-arr">&rarr;</span><span class="vz-step win">k closest remain</span></div>
+    </div>
   source: "NeetCode 150 · Heap / Priority Queue"
   tags: [rust, neetcode, heap]
   tests: |
@@ -175,6 +196,13 @@
     smallest of them is exactly the k-th largest. (Quickselect gives
     average O(n).)
     Time O(n log k), Space O(k).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>A size-k <b>min-heap</b> holds the k largest values; its root is exactly the k-th largest.</p>
+      <div class="vz-flow"><span class="vz-step">push into a min-heap</span><span class="vz-arr">&rarr;</span><span class="vz-step">drop smallest while size &gt; k</span><span class="vz-arr">&rarr;</span><span class="vz-step win">root = k-th largest</span></div>
+    </div>
   source: "NeetCode 150 · Heap / Priority Queue"
   tags: [rust, neetcode, heap]
   tests: |
@@ -213,6 +241,13 @@
     tasks to fill every idle slot, no idling is needed, hence the max with the
     total count.
     Time O(t), Space O(1).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>The <b>most frequent task</b> sets the rhythm: it forces (maxCount&minus;1) gaps of width n+1, finished by the tasks tied for that max. If there are enough other tasks to fill the idle slots, no idling is needed.</p>
+      <div class="vz-flow"><span class="vz-step">count each task</span><span class="vz-arr">&rarr;</span><span class="vz-step">most frequent sets the frame</span><span class="vz-arr">&rarr;</span><span class="vz-step">(maxCount&minus;1)&middot;(n+1) + ties</span><span class="vz-arr">&rarr;</span><span class="vz-step win">max with total tasks</span></div>
+    </div>
   source: "NeetCode 150 · Heap / Priority Queue"
   tags: [rust, neetcode, heap]
   tests: |
@@ -319,6 +354,13 @@
     The feed merges the relevant authors' tweets through a max-heap keyed on that
     timestamp and pops the 10 newest. Follow/unfollow just edit a set per user.
     Time O(t log t), Space O(t).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>Stamp every tweet with a <b>global counter</b> so recency is a total order. A feed merges the relevant authors' tweets through a max-heap and pops the 10 newest.</p>
+      <div class="vz-flow"><span class="vz-step">timestamp every tweet</span><span class="vz-arr">&rarr;</span><span class="vz-step">gather self + followees</span><span class="vz-arr">&rarr;</span><span class="vz-step">max-heap by time</span><span class="vz-arr">&rarr;</span><span class="vz-step win">pop the 10 newest</span></div>
+    </div>
   source: "NeetCode 150 · Heap / Priority Queue"
   tags: [rust, neetcode, heap]
   tests: |
@@ -404,6 +446,13 @@
     keeps the sizes within one, so the median is a heap top (or the average of
     both), making each query a constant-time peek.
     Time O(log n), Space O(n).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>Split the numbers at the median with <b>two heaps</b>: a max-heap for the lower half, a min-heap for the upper. Keep their sizes within one, so the median is a heap top (or the average of the two).</p>
+      <div class="vz-flow"><span class="vz-step">max-heap = lower half</span><span class="vz-arr">&rarr;</span><span class="vz-step">min-heap = upper half</span><span class="vz-arr">&rarr;</span><span class="vz-step">keep sizes balanced</span><span class="vz-arr">&rarr;</span><span class="vz-step win">median = the top(s)</span></div>
+    </div>
   source: "NeetCode 150 · Heap / Priority Queue"
   tags: [rust, neetcode, heap]
   tests: |

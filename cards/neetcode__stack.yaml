@@ -30,6 +30,13 @@
     Push the expected closer when you see an opener; on a closer it must equal the
     top of the stack. An empty stack at the end means everything matched.
     Time O(n), Space O(n).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>Each opener must be closed by its match in <b>reverse order</b> — exactly stack (last-in-first-out) behaviour. Push the expected closer on an opener; every closer must equal the top.</p>
+      <div class="vz-flow"><span class="vz-step">opener → push its closer</span><span class="vz-arr">→</span><span class="vz-step">closer → must equal top</span><span class="vz-arr">→</span><span class="vz-step win">empty at end → valid</span></div>
+    </div>
   source: "NeetCode 150 · Stack"
   tags: [rust, neetcode, stack]
   tests: |
@@ -110,6 +117,13 @@
     Keep a parallel stack whose top is always the running minimum: on each push,
     store min(new value, previous min).
     Time O(1) per operation, Space O(n).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>Carry the running minimum <b>alongside</b> the data: a parallel stack whose top is min(new value, previous min), so get_min is O(1).</p>
+      <div class="vz-flow"><span class="vz-step">push the value</span><span class="vz-arr">→</span><span class="vz-step">also push min(value, prev min)</span><span class="vz-arr">→</span><span class="vz-step win">get_min = top of mins</span></div>
+    </div>
   source: "NeetCode 150 · Stack"
   tags: [rust, neetcode, stack]
   tests: |
@@ -158,6 +172,13 @@
     Push numbers; on an operator pop the two operands (the second popped is the
     left-hand side) and push the result. Rust's `/` already truncates toward zero.
     Time O(n), Space O(n).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>Postfix evaluates with a <b>stack</b>: push numbers, and on an operator pop the two operands (second popped is the left side), apply it, and push the result.</p>
+      <div class="vz-flow"><span class="vz-step">number → push</span><span class="vz-arr">→</span><span class="vz-step">operator → pop two</span><span class="vz-arr">→</span><span class="vz-step">apply, push result</span><span class="vz-arr">→</span><span class="vz-step win">final value = answer</span></div>
+    </div>
   source: "NeetCode 150 · Stack"
   tags: [rust, neetcode, stack]
   tests: |
@@ -204,6 +225,13 @@
     Backtracking: add '(' while opens remain, add ')' only while closes trail
     opens (keeping the prefix valid). The count is the nth Catalan number.
     Time O(4^n / sqrt(n)), Space O(4^n / sqrt(n)).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>Build strings by choosing '(' while <b>opens remain</b> and ')' only while <b>closes trail opens</b> — that keeps every prefix valid. Backtrack over the two choices.</p>
+      <div class="vz-flow"><span class="vz-step">add &#x27;(&#x27; if opens &lt; n</span><span class="vz-arr">→</span><span class="vz-step">add &#x27;)&#x27; if closes &lt; opens</span><span class="vz-arr">→</span><span class="vz-step">full length → record</span><span class="vz-arr">→</span><span class="vz-step win">backtrack</span></div>
+    </div>
   source: "NeetCode 150 · Stack"
   tags: [rust, neetcode, stack]
   tests: |
@@ -250,6 +278,13 @@
     A monotonic stack of indices with decreasing temperatures: when today is
     warmer, pop and record the day gap. Each index is pushed/popped once.
     Time O(n), Space O(n).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>Keep a stack of days still <b>waiting for a warmer one</b> (decreasing temps). When today is warmer, pop each waiting day and record how many days it waited.</p>
+      <div class="vz-flow"><span class="vz-step">stack of cooler days</span><span class="vz-arr">→</span><span class="vz-step">today warmer? pop &amp; record gap</span><span class="vz-arr">→</span><span class="vz-step win">push today</span></div>
+    </div>
   source: "NeetCode 150 · Stack"
   tags: [rust, neetcode, stack]
   tests: |
@@ -292,6 +327,13 @@
     arrival time exceeds the current fleet leader's starts a new fleet; otherwise
     it catches up and merges.
     Time O(n log n), Space O(n).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>Sort cars from <b>nearest the target backwards</b>. A car that would arrive later than the fleet ahead of it starts a new fleet; otherwise it catches up and merges.</p>
+      <div class="vz-flow"><span class="vz-step">sort by position, nearest first</span><span class="vz-arr">→</span><span class="vz-step">compute each arrival time</span><span class="vz-arr">→</span><span class="vz-step">later than leader → new fleet</span><span class="vz-arr">→</span><span class="vz-step win">else merge</span></div>
+    </div>
   source: "NeetCode 150 · Stack"
   tags: [rust, neetcode, stack]
   tests: |
@@ -336,6 +378,13 @@
     arrives, pop taller bars and close their rectangles, extending the new bar's
     start back to the popped position. Leftovers reach the end.
     Time O(n), Space O(n).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>Each bar's rectangle extends until a <b>shorter bar</b> stops it. A monotonic (increasing) stack closes a bar's rectangle the moment a shorter bar appears, stretching the new bar's start back to where it could begin.</p>
+      <div class="vz-flow"><span class="vz-step">increasing stack of bars</span><span class="vz-arr">→</span><span class="vz-step">shorter bar → pop &amp; close rectangle</span><span class="vz-arr">→</span><span class="vz-step">extend start back</span><span class="vz-arr">→</span><span class="vz-step win">track max area</span></div>
+    </div>
   source: "NeetCode 150 · Stack"
   tags: [rust, neetcode, stack]
   tests: |

@@ -29,6 +29,13 @@
     over the upper triangle (j > i) avoid double-swapping; indices are needed
     here because we touch symmetric pairs [i][j]/[j][i].
     Time O(n^2), Space O(1), for an n x n matrix.
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>A clockwise 90&deg; rotation equals <b>transpose</b> (swap [i][j]/[j][i]) then <b>reverse each row</b>, all in place.</p>
+      <div class="vz-flow"><span class="vz-step">transpose the matrix</span><span class="vz-arr">&rarr;</span><span class="vz-step">reverse each row</span><span class="vz-arr">&rarr;</span><span class="vz-step win">= 90&deg; clockwise</span></div>
+    </div>
   source: "NeetCode 150 · Math & Geometry"
   tags: [rust, neetcode, math-geometry]
   tests: |
@@ -86,6 +93,13 @@
     checks before the bottom row and left column prevent re-reading a line when
     the remaining region collapses to a single row or column.
     Time O(rows * cols), Space O(rows * cols) for the output.
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>Walk four <b>shrinking boundaries</b> (top, bottom, left, right), peeling one edge at a time; guard checks stop re-reading a line when the region collapses.</p>
+      <div class="vz-flow"><span class="vz-step">top row &rarr; right column</span><span class="vz-arr">&rarr;</span><span class="vz-step">bottom row &rarr; left column</span><span class="vz-arr">&rarr;</span><span class="vz-step">shrink the boundaries</span><span class="vz-arr">&rarr;</span><span class="vz-step win">repeat until empty</span></div>
+    </div>
   source: "NeetCode 150 · Math & Geometry"
   tags: [rust, neetcode, math-geometry]
   tests: |
@@ -131,6 +145,13 @@
     blanks them. Recording first avoids a freshly written 0 triggering more
     rows/columns. (The O(1)-space trick reuses row 0 / column 0 as the markers.)
     Time O(rows * cols), Space O(rows + cols).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>First pass <b>records</b> which rows and columns contain a 0; second pass blanks them — recording first stops a freshly-written 0 from cascading.</p>
+      <div class="vz-flow"><span class="vz-step">pass 1: mark zero rows/cols</span><span class="vz-arr">&rarr;</span><span class="vz-step">pass 2: blank them</span><span class="vz-arr">&rarr;</span><span class="vz-step win">record-first avoids cascade</span></div>
+    </div>
   source: "NeetCode 150 · Math & Geometry"
   tags: [rust, neetcode, math-geometry]
   tests: |
@@ -180,6 +201,13 @@
     `insert` returns false once a value repeats, ending the loop without reaching
     1. Digit-square sums stay small, so i32 never overflows.
     Time O(log n), Space O(log n).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>Repeatedly replace n by the sum of its digits' squares; it either reaches <b>1</b> or loops forever. A set detects the loop.</p>
+      <div class="vz-flow"><span class="vz-step">sum of digit squares</span><span class="vz-arr">&rarr;</span><span class="vz-step">reaches 1 &rarr; happy</span><span class="vz-arr">&rarr;</span><span class="vz-step win">seen before &rarr; cycle &rarr; no</span></div>
+    </div>
   source: "NeetCode 150 · Math & Geometry"
   tags: [rust, neetcode, math-geometry]
   tests: |
@@ -215,6 +243,13 @@
     The first digit below 9 absorbs the carry and we stop; if none does, the
     number was all 9s and grows one digit longer.
     Time O(n), Space O(n), where n is the digit count.
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>Add from the <b>least-significant</b> end: turn trailing 9s into 0s until a digit below 9 absorbs the carry; if every digit was 9, prepend a 1.</p>
+      <div class="vz-flow"><span class="vz-step">add from the right</span><span class="vz-arr">&rarr;</span><span class="vz-step">9 &rarr; 0, carry on</span><span class="vz-arr">&rarr;</span><span class="vz-step">first &lt;9 absorbs +1</span><span class="vz-arr">&rarr;</span><span class="vz-step win">all 9s &rarr; prepend 1</span></div>
+    </div>
   source: "NeetCode 150 · Math & Geometry"
   tags: [rust, neetcode, math-geometry]
   tests: |
@@ -255,6 +290,13 @@
     the current exponent bit is set. Widening to i64 before taking the magnitude
     avoids overflow on i32::MIN.
     Time O(log n), Space O(1).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>Square-and-multiply: <b>square the base</b> each step and fold it into the result when the current exponent bit is 1 — O(log n).</p>
+      <div class="vz-flow"><span class="vz-step">exponent bit set? &times; base</span><span class="vz-arr">&rarr;</span><span class="vz-step">square the base</span><span class="vz-arr">&rarr;</span><span class="vz-step">shift exponent right</span><span class="vz-arr">&rarr;</span><span class="vz-step win">negative n &rarr; reciprocal</span></div>
+    </div>
   source: "NeetCode 150 · Math & Geometry"
   tags: [rust, neetcode, math-geometry]
   tests: |
@@ -297,6 +339,13 @@
     times digit j of the other lands at position i+j, with the carry pushed to
     i+j+1. Strip leading zeros, then read the digits back high-to-low.
     Time O(m * n), Space O(m + n), where m, n are the input lengths.
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>Schoolbook multiplication on <b>reversed digit vectors</b>: digit i &times; digit j lands at position i+j, carry to i+j+1. Strip leading zeros, read high-to-low.</p>
+      <div class="vz-flow"><span class="vz-step">reverse both digit strings</span><span class="vz-arr">&rarr;</span><span class="vz-step">da&times;db adds to pos i+j</span><span class="vz-arr">&rarr;</span><span class="vz-step">carry to i+j+1</span><span class="vz-arr">&rarr;</span><span class="vz-step win">strip zeros &rarr; read back</span></div>
+    </div>
   source: "NeetCode 150 · Math & Geometry"
   tags: [rust, neetcode, math-geometry]
   tests: |
@@ -368,6 +417,13 @@
     any stored point on a true diagonal (equal |dx| and |dy|, dx != 0) fixes the
     square; multiply the frequencies of the two remaining corners and sum.
     Time O(1) for add and O(n) for count, Space O(n), where n is distinct points.
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>Store points as a <b>coordinate &rarr; count</b> map. For a query corner, any stored point on a true diagonal (|dx|==|dy|&ne;0) fixes a square; multiply the counts of the other two corners and sum.</p>
+      <div class="vz-flow"><span class="vz-step">points &rarr; coordinate counts</span><span class="vz-arr">&rarr;</span><span class="vz-step">find diagonal partners (|dx|==|dy|)</span><span class="vz-arr">&rarr;</span><span class="vz-step">&times; counts of other 2 corners</span><span class="vz-arr">&rarr;</span><span class="vz-step win">sum over all</span></div>
+    </div>
   source: "NeetCode 150 · Math & Geometry"
   tags: [rust, neetcode, math-geometry]
   tests: |

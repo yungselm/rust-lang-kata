@@ -31,6 +31,13 @@
     Filter to alphanumerics and lowercase once, then walk a pointer in from each
     end. Decrementing `j` first keeps the indices valid without underflow on usize.
     Time O(n), Space O(n).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>Reading the same both ways means the <b>ends match all the way inward</b>. Keep only letters and digits, lowercase them, then compare one pointer from each end stepping toward the middle.</p>
+      <div class="vz-flow"><span class="vz-step">keep alphanumerics, lowercase</span><span class="vz-arr">→</span><span class="vz-step">compare the two ends</span><span class="vz-arr">→</span><span class="vz-step">step inward</span><span class="vz-arr">→</span><span class="vz-step win">any mismatch → false</span></div>
+    </div>
   source: "NeetCode 150 · Two Pointers"
   tags: [rust, neetcode, two-pointers]
   tests: |
@@ -70,6 +77,13 @@
     Because the array is sorted, a sum too small means we need a bigger value
     (advance `lo`); too large means a smaller one (retreat `hi`).
     Time O(n), Space O(1).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>Because the array is <b>sorted</b>, a sum that's too small needs a bigger left value and a sum that's too big needs a smaller right value. Squeeze two pointers in from both ends.</p>
+      <div class="vz-flow"><span class="vz-step">lo at start, hi at end</span><span class="vz-arr">→</span><span class="vz-step">sum &lt; target → lo++</span><span class="vz-arr">→</span><span class="vz-step">sum &gt; target → hi−−</span><span class="vz-arr">→</span><span class="vz-step win">sum == target → found</span></div>
+    </div>
   source: "NeetCode 150 · Two Pointers"
   tags: [rust, neetcode, two-pointers]
   tests: |
@@ -125,6 +139,13 @@
     neighbours (for `i`, and after each hit for `lo`/`hi`) suppresses duplicates.
     The extra space is constant beyond the sort.
     Time O(n^2), Space O(1).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>Fix one number and the rest becomes <b>Two-Sum on a sorted array</b>. Sort first, then for each value two-pointer the remainder to hit −value, skipping equal neighbours to avoid duplicate triplets.</p>
+      <div class="vz-flow"><span class="vz-step">sort</span><span class="vz-arr">→</span><span class="vz-step">fix nums[i]</span><span class="vz-arr">→</span><span class="vz-step">two-pointer rest for −nums[i]</span><span class="vz-arr">→</span><span class="vz-step win">skip duplicates</span></div>
+    </div>
   source: "NeetCode 150 · Two Pointers"
   tags: [rust, neetcode, two-pointers]
   tests: |
@@ -166,6 +187,13 @@
     Start at the widest pair and move whichever pointer has the shorter line: the
     width only shrinks, so the only way to beat the current area is a taller line.
     Time O(n), Space O(1).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>Area is <b>width × the shorter wall</b>. Start at the widest pair; moving the taller wall can't help (width only shrinks, height is capped by the shorter), so always move the shorter wall inward.</p>
+      <div class="vz-flow"><span class="vz-step">start widest pair</span><span class="vz-arr">→</span><span class="vz-step">area = shorter × width</span><span class="vz-arr">→</span><span class="vz-step">move the shorter wall in</span><span class="vz-arr">→</span><span class="vz-step win">track best</span></div>
+    </div>
   source: "NeetCode 150 · Two Pointers"
   tags: [rust, neetcode, two-pointers]
   tests: |
@@ -211,6 +239,13 @@
     with the smaller running max: that side's max is then guaranteed to be the
     limiting wall, so the trapped amount there is known.
     Time O(n), Space O(1).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>Water above a bar is <b>min(highest-left, highest-right) − its height</b>. Advance from whichever side has the smaller running max, because that side's wall is the binding limit.</p>
+      <div class="vz-flow"><span class="vz-step">two pointers + running maxes</span><span class="vz-arr">→</span><span class="vz-step">move the smaller-max side</span><span class="vz-arr">→</span><span class="vz-step">add wall − height</span><span class="vz-arr">→</span><span class="vz-step win">sum the water</span></div>
+    </div>
   source: "NeetCode 150 · Two Pointers"
   tags: [rust, neetcode, two-pointers]
   tests: |

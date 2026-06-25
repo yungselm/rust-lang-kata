@@ -26,6 +26,13 @@
     `HashSet::insert` returns false if the value was already present, so a single
     pass detects a duplicate.
     Time O(n), Space O(n).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>Have we already seen this number? Walk through once, remembering every value in a <b>set</b>; the first time a value is already present, it's a duplicate.</p>
+      <div class="vz-flow"><span class="vz-step">scan the numbers</span><span class="vz-arr">&rarr;</span><span class="vz-step">add each to a 'seen' set</span><span class="vz-arr">&rarr;</span><span class="vz-step win">insert fails &rarr; duplicate</span></div>
+    </div>
   source: "NeetCode 150 · Arrays & Hashing"
   tags: [rust, neetcode, arrays-hashing]
   tests: |
@@ -63,6 +70,13 @@
     is REQUIRED: `zip` stops at the shorter string, so without it ("a","ab") would
     only compare the first byte and wrongly return true. Assumes ASCII/bytes (fine
     for the lowercase-letter inputs). Time O(n), Space O(1) (at most 26 keys).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>Anagrams use the <b>same letters the same number of times</b>. Count the letters in each string and check the two tallies are equal.</p>
+      <div class="vz-flow"><span class="vz-step">count letters of s</span><span class="vz-arr">&rarr;</span><span class="vz-step">count letters of t</span><span class="vz-arr">&rarr;</span><span class="vz-step win">tallies equal?</span></div>
+    </div>
   source: "NeetCode 150 · Arrays & Hashing"
   tags: [rust, neetcode, arrays-hashing]
   tests: |
@@ -97,6 +111,13 @@
     One pass: for each number, check whether its complement was already seen.
     The map stores value -> index, giving O(n) instead of the O(n^2) brute force.
     Time O(n), Space O(n).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>For each number we need its partner <b>target &minus; n</b>. Remember the numbers we've passed in a map, so finding the partner is an instant lookup instead of a re-scan.</p>
+      <div class="vz-flow"><span class="vz-step">for each n</span><span class="vz-arr">&rarr;</span><span class="vz-step">seen target &minus; n? (map)</span><span class="vz-arr">&rarr;</span><span class="vz-step win">yes &rarr; the two indices</span></div>
+    </div>
   source: "NeetCode 150 · Arrays & Hashing"
   tags: [rust, neetcode, arrays-hashing]
   tests: |
@@ -135,6 +156,13 @@
     The 26-letter count array is identical for anagrams, so it makes a perfect
     hash key without sorting each word. `into_values` consumes the map.
     Time O(n*k), Space O(n*k).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>Anagrams share the same <b>letter-count signature</b>. Use that 26-letter signature as a map key and drop each word into its bucket.</p>
+      <div class="vz-flow"><span class="vz-step">each word</span><span class="vz-arr">&rarr;</span><span class="vz-step">26-letter count key</span><span class="vz-arr">&rarr;</span><span class="vz-step">bucket by key</span><span class="vz-arr">&rarr;</span><span class="vz-step win">collect the buckets</span></div>
+    </div>
   source: "NeetCode 150 · Arrays & Hashing"
   tags: [rust, neetcode, arrays-hashing]
   tests: |
@@ -187,8 +215,8 @@
     @idea
     <div class="wt-idea-box">
       <div class="vz-lab">Core idea</div>
-      <p>Return the <b>k values that occur most often</b>. Count how often each value appears, rank the values by that count, then keep the top k — the only real work is <b>counting</b> (a hash map) and <b>ranking</b> (a sort).</p>
-      <div class="vz-flow"><span class="vz-step">all numbers</span><span class="vz-arr">→</span><span class="vz-step">count each value</span><span class="vz-arr">→</span><span class="vz-step">sort by count ↓</span><span class="vz-arr">→</span><span class="vz-step win">keep top k</span></div>
+      <p>Return the <b>k values that occur most often</b>. Count how often each value appears, rank the values by that count, then keep the top k &mdash; the only real work is <b>counting</b> (a hash map) and <b>ranking</b> (a sort).</p>
+      <div class="vz-flow"><span class="vz-step">all numbers</span><span class="vz-arr">&rarr;</span><span class="vz-step">count each value</span><span class="vz-arr">&rarr;</span><span class="vz-step">sort by count &darr;</span><span class="vz-arr">&rarr;</span><span class="vz-step win">keep top k</span></div>
     </div>
     ===
     4-7 | Tally each value into a HashMap (entry(n).or_insert(0) += 1) — one pass, O(n).
@@ -268,6 +296,13 @@
     Length-prefix encoding ("4#neet5#code...") is robust to any delimiter inside
     the payload, because you read exactly `len` bytes rather than splitting.
     Time O(n), Space O(n).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>Make decoding unambiguous by <b>length-prefixing</b> each string ("4#neet&hellip;"). You then read exactly that many bytes, so no character inside the data can be mistaken for a delimiter.</p>
+      <div class="vz-flow"><span class="vz-step">each string</span><span class="vz-arr">&rarr;</span><span class="vz-step">write len # string</span><span class="vz-arr">&rarr;</span><span class="vz-step win">decode: read len, take len bytes</span></div>
+    </div>
   source: "NeetCode 150 · Arrays & Hashing"
   tags: [rust, neetcode, arrays-hashing]
   tests: |
@@ -308,6 +343,13 @@
     Two passes: first fill each slot with the product of everything to its LEFT,
     then multiply in the product of everything to its RIGHT (no division).
     Time O(n), Space O(1).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>Each slot is (product of everything to its <b>left</b>) &times; (product of everything to its <b>right</b>). One left-to-right sweep fills the prefixes, one right-to-left sweep multiplies in the suffixes &mdash; no division.</p>
+      <div class="vz-flow"><span class="vz-step">sweep left &rarr; prefix products</span><span class="vz-arr">&rarr;</span><span class="vz-step">sweep right &rarr; &times; suffix products</span><span class="vz-arr">&rarr;</span><span class="vz-step win">each slot = left &times; right</span></div>
+    </div>
   source: "NeetCode 150 · Arrays & Hashing"
   tags: [rust, neetcode, arrays-hashing]
   tests: |
@@ -348,6 +390,13 @@
     Track which digits each row/column/box has seen with 9x9 boolean grids; the
     box index is `(r / 3) * 3 + c / 3`. One pass over the fixed 9x9 grid.
     Time O(rows*cols), Space O(1).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>A digit is illegal only if its <b>row, column, or 3&times;3 box</b> already contains it. Track the digits seen in each row/col/box and reject on the first repeat.</p>
+      <div class="vz-flow"><span class="vz-step">each filled cell</span><span class="vz-arr">&rarr;</span><span class="vz-step">seen in row / col / box?</span><span class="vz-arr">&rarr;</span><span class="vz-step win">repeat &rarr; invalid</span></div>
+    </div>
   source: "NeetCode 150 · Arrays & Hashing"
   tags: [rust, neetcode, arrays-hashing]
   tests: |
@@ -401,6 +450,13 @@
     Only start counting from a run's smallest element (one with no `n - 1` in the
     set). Each element is visited at most twice despite the inner loop.
     Time O(n), Space O(n).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>Put every value in a set, then only start counting a run from its <b>smallest</b> member (one with no n&minus;1 present) and walk upward. That way each run is measured once, giving O(n).</p>
+      <div class="vz-flow"><span class="vz-step">all values in a set</span><span class="vz-arr">&rarr;</span><span class="vz-step">start where n&minus;1 is absent</span><span class="vz-arr">&rarr;</span><span class="vz-step">walk n+1, n+2, &hellip;</span><span class="vz-arr">&rarr;</span><span class="vz-step win">longest run</span></div>
+    </div>
   source: "NeetCode 150 · Arrays & Hashing"
   tags: [rust, neetcode, arrays-hashing]
   tests: |

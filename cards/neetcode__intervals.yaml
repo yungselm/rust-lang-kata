@@ -32,6 +32,13 @@
     interval that overlaps (widening start/end), then append the merged interval and
     the untouched tail in a single pass.
     Time O(n), Space O(n).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>Three sweeps: copy intervals that end before the new one starts, <b>absorb</b> every overlapping interval into one widened interval, then append that merged piece plus the untouched tail.</p>
+      <div class="vz-flow"><span class="vz-step">copy ones ending before</span><span class="vz-arr">&rarr;</span><span class="vz-step">absorb overlaps (widen start/end)</span><span class="vz-arr">&rarr;</span><span class="vz-step win">append merged + the rest</span></div>
+    </div>
   source: "NeetCode 150 · Intervals"
   tags: [rust, neetcode, intervals]
   tests: |
@@ -68,6 +75,13 @@
     merged interval's end, extend that end; otherwise begin a new interval.
     `last_mut` lets us widen in place; the sort dominates the cost.
     Time O(n log n), Space O(n).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>Sort by start, then sweep: if the next interval starts <b>at or before</b> the current end, extend the end; otherwise begin a new interval.</p>
+      <div class="vz-flow"><span class="vz-step">sort by start</span><span class="vz-arr">&rarr;</span><span class="vz-step">next starts &le; last end?</span><span class="vz-arr">&rarr;</span><span class="vz-step">yes &rarr; extend the end</span><span class="vz-arr">&rarr;</span><span class="vz-step win">no &rarr; new interval</span></div>
+    </div>
   source: "NeetCode 150 · Intervals"
   tags: [rust, neetcode, intervals]
   tests: |
@@ -107,6 +121,13 @@
     finishes earliest, since it leaves the most room. Any interval starting before
     the kept one's end must be removed.
     Time O(n log n), Space O(n).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>Greedy activity selection: sort by end time and always keep the interval that <b>finishes earliest</b> (it leaves the most room). Anything starting before the kept one's end must be removed.</p>
+      <div class="vz-flow"><span class="vz-step">sort by end time</span><span class="vz-arr">&rarr;</span><span class="vz-step">keep earliest-finishing</span><span class="vz-arr">&rarr;</span><span class="vz-step">starts before kept end &rarr; remove</span><span class="vz-arr">&rarr;</span><span class="vz-step win">count removals</span></div>
+    </div>
   source: "NeetCode 150 · Intervals"
   tags: [rust, neetcode, intervals]
   tests: |
@@ -137,6 +158,13 @@
     must end no later than the next one begins. `windows(2)` checks each adjacent
     pair.
     Time O(n log n), Space O(n).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>Sort by start; a conflict can only occur between <b>neighbours</b>, so every meeting must end no later than the next one begins.</p>
+      <div class="vz-flow"><span class="vz-step">sort by start</span><span class="vz-arr">&rarr;</span><span class="vz-step">check each adjacent pair</span><span class="vz-arr">&rarr;</span><span class="vz-step">end &le; next start?</span><span class="vz-arr">&rarr;</span><span class="vz-step win">any overlap &rarr; false</span></div>
+    </div>
   source: "NeetCode 150 · Intervals"
   tags: [rust, neetcode, intervals]
   tests: |
@@ -177,6 +205,13 @@
     every room whose meeting has already ended (`ends[j] <= s`), then claim a room.
     The peak concurrency is the answer.
     Time O(n log n), Space O(n).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>Sort start and end times <b>separately</b> and sweep a timeline. Before each start, free every room whose meeting already ended; the peak concurrency is the answer.</p>
+      <div class="vz-flow"><span class="vz-step">sort starts &amp; ends</span><span class="vz-arr">&rarr;</span><span class="vz-step">free rooms that ended</span><span class="vz-arr">&rarr;</span><span class="vz-step">claim a room</span><span class="vz-arr">&rarr;</span><span class="vz-step win">peak concurrency</span></div>
+    </div>
   source: "NeetCode 150 · Intervals"
   tags: [rust, neetcode, intervals]
   tests: |
@@ -235,6 +270,13 @@
     by the current query into a min-heap keyed on size, discard those that already
     ended (`end < q`), and the heap top is the smallest interval still covering q.
     Time O((n + m) log(n + m)), Space O(n + m), where n = intervals, m = queries.
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>Process queries in ascending order. Push every interval that has <b>started</b> into a min-heap keyed by size, drop those that already ended, and the heap top is the smallest interval still covering the query.</p>
+      <div class="vz-flow"><span class="vz-step">sort queries ascending</span><span class="vz-arr">&rarr;</span><span class="vz-step">add started intervals (min-heap by size)</span><span class="vz-arr">&rarr;</span><span class="vz-step">drop ended ones</span><span class="vz-arr">&rarr;</span><span class="vz-step win">heap top = smallest covering</span></div>
+    </div>
   source: "NeetCode 150 · Intervals"
   tags: [rust, neetcode, intervals]
   tests: |

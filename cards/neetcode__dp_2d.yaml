@@ -26,6 +26,13 @@
     Paths to a cell = paths from above + paths from the left. Collapse the 2-D table
     to one row: `row[c] += row[c - 1]` folds the cell above into the cell at left.
     Time O(m * n), Space O(n).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>Paths to a cell = paths from <b>above</b> + paths from the <b>left</b>. Collapse the grid to one row where row[c] += row[c&minus;1] folds 'above' into 'left'.</p>
+      <div class="vz-flow"><span class="vz-step">paths = above + left</span><span class="vz-arr">&rarr;</span><span class="vz-step">collapse to one row</span><span class="vz-arr">&rarr;</span><span class="vz-step">row[c] += row[c&minus;1]</span><span class="vz-arr">&rarr;</span><span class="vz-step win">bottom-right cell</span></div>
+    </div>
   source: "NeetCode 150 · 2-D DP"
   tags: [rust, neetcode, dp]
   tests: |
@@ -65,6 +72,13 @@
     diagonal; otherwise it inherits the better of dropping one char from either
     string. Keep only the previous row for O(n) space.
     Time O(m * n), Space O(n), where m = a.len(), n = b.len().
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>dp[i][j] = LCS of the two prefixes. On a <b>matching</b> char extend the diagonal; otherwise take the better of dropping one char from either string.</p>
+      <div class="vz-flow"><span class="vz-step">dp over prefix pairs</span><span class="vz-arr">&rarr;</span><span class="vz-step">match &rarr; diagonal + 1</span><span class="vz-arr">&rarr;</span><span class="vz-step">else max(drop a, drop b)</span><span class="vz-arr">&rarr;</span><span class="vz-step win">keep one row</span></div>
+    </div>
   source: "NeetCode 150 · 2-D DP"
   tags: [rust, neetcode, dp]
   tests: |
@@ -99,6 +113,13 @@
     Three states each day: holding, just-sold (forces a cooldown next), and resting.
     You may only buy from `rest`, which enforces the one-day wait after selling.
     Time O(n), Space O(1).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>Three <b>states</b> per day — holding, just-sold (forces a cooldown), and resting. You may only buy from 'rest', which enforces the one-day wait after selling.</p>
+      <div class="vz-flow"><span class="vz-step">states: hold / sold / rest</span><span class="vz-arr">&rarr;</span><span class="vz-step">sold = hold + price</span><span class="vz-arr">&rarr;</span><span class="vz-step">buy only from rest</span><span class="vz-arr">&rarr;</span><span class="vz-step win">best of sold/rest</span></div>
+    </div>
   source: "NeetCode 150 · 2-D DP"
   tags: [rust, neetcode, dp]
   tests: |
@@ -132,6 +153,13 @@
     Process coins in the outer loop so each combination is counted once (a fixed
     coin order avoids permutations). dp[a] accumulates ways to make amount a.
     Time O(amount * coins), Space O(amount).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>Count <b>order-free</b> combinations by looping coins on the OUTSIDE; dp[a] += dp[a&minus;c] accumulates ways. A fixed coin order avoids counting permutations.</p>
+      <div class="vz-flow"><span class="vz-step">coins in the outer loop</span><span class="vz-arr">&rarr;</span><span class="vz-step">dp[a] += dp[a&minus;c]</span><span class="vz-arr">&rarr;</span><span class="vz-step">fixed order &rarr; no perms</span><span class="vz-arr">&rarr;</span><span class="vz-step win">dp[amount] = count</span></div>
+    </div>
   source: "NeetCode 150 · 2-D DP"
   tags: [rust, neetcode, dp]
   tests: |
@@ -170,6 +198,13 @@
     Roll a map from running-sum to the number of sign assignments that reach it. Each
     number branches every sum into +n and -n; the answer is the count at `target`.
     Time O(n * S), Space O(S), where S is the span of reachable sums (sum of |nums|).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>Roll a map from <b>running-sum &rarr; number of sign assignments</b> reaching it. Each number branches every sum into +n and &minus;n; read the count at target.</p>
+      <div class="vz-flow"><span class="vz-step">map: sum &rarr; ways</span><span class="vz-arr">&rarr;</span><span class="vz-step">each n branches &plusmn;n</span><span class="vz-arr">&rarr;</span><span class="vz-step">accumulate counts</span><span class="vz-arr">&rarr;</span><span class="vz-step win">count at target</span></div>
+    </div>
   source: "NeetCode 150 · 2-D DP"
   tags: [rust, neetcode, dp]
   tests: |
@@ -214,6 +249,13 @@
     s3. Each cell consumes the matching next char from s1 (above) or s2 (left).
     Collapse to one row: `dp[j]` pre-update is the "from above" value.
     Time O(m * n), Space O(n), where m = s1.len(), n = s2.len().
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>dp[i][j] asks whether s1[..i] and s2[..j] <b>interleave</b> into s3[..i+j]. Each cell consumes the matching next char from s1 (above) or s2 (left).</p>
+      <div class="vz-flow"><span class="vz-step">lengths must add up</span><span class="vz-arr">&rarr;</span><span class="vz-step">dp over prefix pairs</span><span class="vz-arr">&rarr;</span><span class="vz-step">next char from s1 or s2</span><span class="vz-arr">&rarr;</span><span class="vz-step win">dp[m][n] &rarr; answer</span></div>
+    </div>
   source: "NeetCode 150 · 2-D DP"
   tags: [rust, neetcode, dp]
   tests: |
@@ -284,6 +326,13 @@
     The longest path from a cell only depends on strictly larger neighbors, so the
     graph is acyclic — DFS with memoization caches each cell's answer once.
     Time O(rows * cols), Space O(rows * cols).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>Paths only go to strictly <b>larger</b> neighbours, so the graph is acyclic — DFS with memoization caches each cell's best length once.</p>
+      <div class="vz-flow"><span class="vz-step">DFS from each cell</span><span class="vz-arr">&rarr;</span><span class="vz-step">move to larger neighbours</span><span class="vz-arr">&rarr;</span><span class="vz-step">memoize cell results</span><span class="vz-arr">&rarr;</span><span class="vz-step win">longest over all</span></div>
+    </div>
   source: "NeetCode 150 · 2-D DP"
   tags: [rust, neetcode, dp]
   tests: |
@@ -319,6 +368,13 @@
     dp[i][j] counts subsequences of s[..i] equal to t[..j]. Matching the new char
     adds dp[i-1][j-1] ways. Iterate j downward to reuse one row as the prior row.
     Time O(m * n), Space O(n), where m = s.len(), n = t.len().
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>dp[j] counts subsequences of the s seen so far equal to <b>t[..j]</b>; a matching new char adds dp[j&minus;1]. Iterate j downward to reuse one row.</p>
+      <div class="vz-flow"><span class="vz-step">dp[j] = ways to form t[..j]</span><span class="vz-arr">&rarr;</span><span class="vz-step">match &rarr; dp[j] += dp[j&minus;1]</span><span class="vz-arr">&rarr;</span><span class="vz-step">iterate j downward</span><span class="vz-arr">&rarr;</span><span class="vz-step win">dp[len t]</span></div>
+    </div>
   source: "NeetCode 150 · 2-D DP"
   tags: [rust, neetcode, dp]
   tests: |
@@ -359,6 +415,13 @@
     otherwise pay one for the cheapest of substitute (diagonal), delete (above), or
     insert (left). Row i=0/col j=0 are pure insert/delete counts.
     Time O(m * n), Space O(n), where m = word1.len(), n = word2.len().
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>dp[i][j] = edit distance between the prefixes. On a <b>match</b> carry the diagonal; otherwise pay one for the cheapest of substitute, delete, or insert.</p>
+      <div class="vz-flow"><span class="vz-step">dp over prefix pairs</span><span class="vz-arr">&rarr;</span><span class="vz-step">match &rarr; carry diagonal</span><span class="vz-arr">&rarr;</span><span class="vz-step">else 1 + min(sub/del/ins)</span><span class="vz-arr">&rarr;</span><span class="vz-step win">dp[m][n]</span></div>
+    </div>
   source: "NeetCode 150 · 2-D DP"
   tags: [rust, neetcode, dp]
   tests: |
@@ -401,6 +464,13 @@
     still present, giving vals[l]*vals[k]*vals[r], plus the two subintervals. Pad
     with sentinel 1s and fill by increasing interval length (interval DP).
     Time O(n^3), Space O(n^2).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>Choose k as the <b>LAST</b> balloon burst in (l, r): then l and r are still present, giving vals[l]&middot;vals[k]&middot;vals[r] plus the two subintervals. Interval DP over lengths.</p>
+      <div class="vz-flow"><span class="vz-step">pad the ends with 1s</span><span class="vz-arr">&rarr;</span><span class="vz-step">k = last burst in (l, r)</span><span class="vz-arr">&rarr;</span><span class="vz-step">coins = l&middot;k&middot;r + subintervals</span><span class="vz-arr">&rarr;</span><span class="vz-step win">fill by interval length</span></div>
+    </div>
   source: "NeetCode 150 · 2-D DP"
   tags: [rust, neetcode, dp]
   tests: |
@@ -441,6 +511,13 @@
     dp[i][j+2]) or consumes one matching char and stays on the pattern (dp[i+1][j]).
     Fill from the bottom-right so dependencies are already computed.
     Time O(m * n), Space O(m * n), where m = s.len(), n = p.len().
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>dp[i][j] = do the <b>suffixes</b> match. A '*' either skips its pair (zero copies) or consumes one matching char and stays on the pattern; fill from the bottom-right.</p>
+      <div class="vz-flow"><span class="vz-step">dp over suffix pairs</span><span class="vz-arr">&rarr;</span><span class="vz-step">'*' &rarr; skip pair, or consume 1</span><span class="vz-arr">&rarr;</span><span class="vz-step">else match char + advance</span><span class="vz-arr">&rarr;</span><span class="vz-step win">dp[0][0]</span></div>
+    </div>
   source: "NeetCode 150 · 2-D DP"
   tags: [rust, neetcode, dp]
   tests: |

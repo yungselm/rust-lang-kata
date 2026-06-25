@@ -17,6 +17,13 @@
     leaving the lone element. Starting from 0 (the XOR identity) folds the slice
     in one pass with no extra storage.
     Time O(n), Space O(1).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p><b>XOR</b> cancels equal pairs (a^a=0) and ignores order, so XOR-ing the whole array leaves only the lone value.</p>
+      <div class="vz-flow"><span class="vz-step">XOR all the numbers</span><span class="vz-arr">&rarr;</span><span class="vz-step">pairs cancel to 0</span><span class="vz-arr">&rarr;</span><span class="vz-step win">lone value remains</span></div>
+    </div>
   source: "NeetCode 150 · Bit Manipulation"
   tags: [rust, neetcode, bit-manipulation]
   tests: |
@@ -47,6 +54,13 @@
     rather than 32 times. The standard library exposes this directly as
     `n.count_ones()`; here we build it by hand.
     Time O(1), Space O(1).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p><b>n &amp; (n&minus;1)</b> clears the lowest set bit, so looping that runs exactly once per set bit instead of 32 times.</p>
+      <div class="vz-flow"><span class="vz-step">n &amp; (n&minus;1) clears lowest bit</span><span class="vz-arr">&rarr;</span><span class="vz-step">count one per clear</span><span class="vz-arr">&rarr;</span><span class="vz-step win">n == 0 &rarr; done</span></div>
+    </div>
   source: "NeetCode 150 · Bit Manipulation"
   tags: [rust, neetcode, bit-manipulation]
   tests: |
@@ -77,6 +91,13 @@
     add back whatever the lowest bit contributes (i & 1). Each entry is constant
     work.
     Time O(n), Space O(n).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>i has the same set bits as <b>i&gt;&gt;1</b> plus its own lowest bit, so each answer is built from a smaller, already-solved one.</p>
+      <div class="vz-flow"><span class="vz-step">dp over 0..=n</span><span class="vz-arr">&rarr;</span><span class="vz-step">bits(i) = bits(i&gt;&gt;1) + (i&amp;1)</span><span class="vz-arr">&rarr;</span><span class="vz-step win">fill left to right</span></div>
+    </div>
   source: "NeetCode 150 · Bit Manipulation"
   tags: [rust, neetcode, bit-manipulation]
   tests: |
@@ -106,6 +127,13 @@
     which shifts left each step — so the first bit out lands in the top position.
     Exactly 32 iterations cover every bit.
     Time O(1), Space O(1).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>Pull bits off the <b>bottom</b> of n and push them onto the bottom of result, which shifts left each step — so the first bit out lands on top. 32 iterations.</p>
+      <div class="vz-flow"><span class="vz-step">take n's lowest bit</span><span class="vz-arr">&rarr;</span><span class="vz-step">result = (result&lt;&lt;1) | bit</span><span class="vz-arr">&rarr;</span><span class="vz-step">shift n right</span><span class="vz-arr">&rarr;</span><span class="vz-step win">32 times &rarr; reversed</span></div>
+    </div>
   source: "NeetCode 150 · Bit Manipulation"
   tags: [rust, neetcode, bit-manipulation]
   tests: |
@@ -136,6 +164,13 @@
     number cancels with its index, leaving only the missing one. No sum means no
     overflow worries.
     Time O(n), Space O(1).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>XOR every index <b>and</b> every value, plus the final index n; each present number cancels its index, leaving the missing one — no sums, no overflow.</p>
+      <div class="vz-flow"><span class="vz-step">XOR indices 0..=n</span><span class="vz-arr">&rarr;</span><span class="vz-step">XOR all values</span><span class="vz-arr">&rarr;</span><span class="vz-step">pairs cancel</span><span class="vz-arr">&rarr;</span><span class="vz-step win">missing number remains</span></div>
+    </div>
   source: "NeetCode 150 · Bit Manipulation"
   tags: [rust, neetcode, bit-manipulation]
   tests: |
@@ -169,6 +204,13 @@
     Repeat until no carry remains. Rust would panic on overflowing shifts/adds in
     debug, but XOR/AND/`<<` here stay in range, so plain operators suffice.
     Time O(1), Space O(1).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p><b>XOR</b> adds bit-by-bit ignoring carries; <b>(a&amp;b)&lt;&lt;1</b> is the carry. Feed the carry back and repeat until none remains.</p>
+      <div class="vz-flow"><span class="vz-step">sum = a XOR b</span><span class="vz-arr">&rarr;</span><span class="vz-step">carry = (a&amp;b)&lt;&lt;1</span><span class="vz-arr">&rarr;</span><span class="vz-step">feed the carry back</span><span class="vz-arr">&rarr;</span><span class="vz-step win">carry 0 &rarr; answer</span></div>
+    </div>
   source: "NeetCode 150 · Bit Manipulation"
   tags: [rust, neetcode, bit-manipulation]
   tests: |
@@ -207,6 +249,13 @@
     truncates toward zero. `checked_mul`/`checked_add` return None on overflow, so
     a result outside i32's range short-circuits to 0 instead of panicking.
     Time O(1), Space O(1).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>Peel digits with %10 and /10, rebuilding the number reversed; use <b>checked</b> arithmetic so an overflow short-circuits to 0 instead of panicking.</p>
+      <div class="vz-flow"><span class="vz-step">peel a digit with %10</span><span class="vz-arr">&rarr;</span><span class="vz-step">result = result&middot;10 + digit</span><span class="vz-arr">&rarr;</span><span class="vz-step">checked: overflow &rarr; 0</span><span class="vz-arr">&rarr;</span><span class="vz-step win">x == 0 &rarr; done</span></div>
+    </div>
   source: "NeetCode 150 · Bit Manipulation"
   tags: [rust, neetcode, bit-manipulation]
   tests: |

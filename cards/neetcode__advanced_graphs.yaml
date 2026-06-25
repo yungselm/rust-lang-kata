@@ -42,6 +42,13 @@
     airport is stuck, pop it onto the route. Reversing the popped order gives the
     valid path that is lexically smallest.
     Time O(E log E), Space O(E).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>Hierholzer's Eulerian-path walk: keep each airport's destinations sorted and always take the <b>smallest next hop</b>; when stuck, pop the airport onto the route, then reverse it.</p>
+      <div class="vz-flow"><span class="vz-step">destinations sorted per airport</span><span class="vz-arr">&rarr;</span><span class="vz-step">walk the smallest next hop</span><span class="vz-arr">&rarr;</span><span class="vz-step">stuck &rarr; pop onto route</span><span class="vz-arr">&rarr;</span><span class="vz-step win">reverse &rarr; itinerary</span></div>
+    </div>
   source: "NeetCode 150 · Advanced Graphs"
   tags: [rust, neetcode, advanced-graphs]
   tests: |
@@ -110,6 +117,13 @@
     a point not yet in the tree via a min-heap (Reverse on a max-heap). The complete
     graph has n^2 edges.
     Time O(n * n log n), Space O(n * n).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>Prim's MST: grow a tree from one point, each step pulling the <b>cheapest edge</b> (via a min-heap) to a point not yet in the tree.</p>
+      <div class="vz-flow"><span class="vz-step">start tree at one point</span><span class="vz-arr">&rarr;</span><span class="vz-step">min-heap of edge costs</span><span class="vz-arr">&rarr;</span><span class="vz-step">add cheapest edge to a new point</span><span class="vz-arr">&rarr;</span><span class="vz-step win">until all connected</span></div>
+    </div>
   source: "NeetCode 150 · Advanced Graphs"
   tags: [rust, neetcode, advanced-graphs]
   tests: |
@@ -170,6 +184,13 @@
     farthest node is, so the answer is the maximum shortest-distance (or -1 if any
     is unreachable).
     Time O(E log V), Space O(V + E).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>Dijkstra from k: a min-heap pops the <b>closest unsettled node</b> and relaxes its edges. The whole network is informed when the farthest node is — so take the max distance (or &minus;1).</p>
+      <div class="vz-flow"><span class="vz-step">min-heap by distance</span><span class="vz-arr">&rarr;</span><span class="vz-step">pop closest, relax edges</span><span class="vz-arr">&rarr;</span><span class="vz-step">settle each node</span><span class="vz-arr">&rarr;</span><span class="vz-step win">answer = max distance</span></div>
+    </div>
   source: "NeetCode 150 · Advanced Graphs"
   tags: [rust, neetcode, advanced-graphs]
   tests: |
@@ -233,6 +254,13 @@
     it. The min-heap always expands the cell reachable with the lowest water level
     so far, so the first time the goal pops, that level is the answer.
     Time O(n * n log n), Space O(n * n).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>Dijkstra where a path's cost is the <b>maximum elevation</b> along it. The min-heap always expands the cell reachable at the lowest water level, so the first time the goal pops, that's the answer.</p>
+      <div class="vz-flow"><span class="vz-step">min-heap by water level</span><span class="vz-arr">&rarr;</span><span class="vz-step">expand lowest-level cell</span><span class="vz-arr">&rarr;</span><span class="vz-step">cost = max elevation so far</span><span class="vz-arr">&rarr;</span><span class="vz-step win">goal pops &rarr; answer</span></div>
+    </div>
   source: "NeetCode 150 · Advanced Graphs"
   tags: [rust, neetcode, advanced-graphs]
   tests: |
@@ -322,6 +350,13 @@
     order. Note: with multiple roots the order isn't unique, so the test uses input
     with a forced chain.
     Time O(N * L), Space O(N * L).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>Each adjacent word pair gives one ordering edge from their <b>first differing letter</b>. Topologically sort the letter graph (Kahn); a leftover cycle (or a prefix after its longer word) means invalid.</p>
+      <div class="vz-flow"><span class="vz-step">compare adjacent words</span><span class="vz-arr">&rarr;</span><span class="vz-step">first diff &rarr; ordering edge</span><span class="vz-arr">&rarr;</span><span class="vz-step">topological-sort the letters</span><span class="vz-arr">&rarr;</span><span class="vz-step win">cycle &rarr; invalid</span></div>
+    </div>
   source: "NeetCode 150 · Advanced Graphs"
   tags: [rust, neetcode, advanced-graphs]
   tests: |
@@ -370,6 +405,13 @@
     against a SNAPSHOT of distances from the previous round prevents using two edges
     within the same round, correctly capping the hop count.
     Time O(k * E), Space O(V).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>Bellman-Ford bounded to <b>k+1 rounds</b>. Relax against a snapshot of last round's distances, so each round adds at most one more edge — capping the hop count.</p>
+      <div class="vz-flow"><span class="vz-step">k+1 relaxation rounds</span><span class="vz-arr">&rarr;</span><span class="vz-step">relax vs last round's snapshot</span><span class="vz-arr">&rarr;</span><span class="vz-step">&le; 1 new edge per round</span><span class="vz-arr">&rarr;</span><span class="vz-step win">cheapest within k stops</span></div>
+    </div>
   source: "NeetCode 150 · Advanced Graphs"
   tags: [rust, neetcode, advanced-graphs]
   tests: |

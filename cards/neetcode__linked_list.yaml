@@ -35,6 +35,13 @@
     front of the already-reversed `prev`. Moving the boxes around avoids any clones
     and satisfies the borrow checker.
     Time O(n), Space O(1).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>Walk the list flipping each node's <b>next</b> to point backwards. Carry a 'prev' that is the already-reversed front: detach the head, splice it onto prev, advance.</p>
+      <div class="vz-flow"><span class="vz-step">take the head node</span><span class="vz-arr">&rarr;</span><span class="vz-step">point its next at prev</span><span class="vz-arr">&rarr;</span><span class="vz-step">prev = this node</span><span class="vz-arr">&rarr;</span><span class="vz-step win">repeat &rarr; new head</span></div>
+    </div>
   source: "NeetCode 150 · Linked List"
   tags: [rust, neetcode, linked-list]
   tests: |
@@ -105,6 +112,13 @@
     Detach the smaller node, move it onto the tail, advance. When one list empties,
     splice the remainder with `a.or(b)`.
     Time O(n + m), Space O(1).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>Like merging two sorted piles: repeatedly append the <b>smaller</b> current head to a growing tail. A dummy head makes appending uniform; splice the leftover when one list empties.</p>
+      <div class="vz-flow"><span class="vz-step">dummy head + tail</span><span class="vz-arr">&rarr;</span><span class="vz-step">append the smaller head</span><span class="vz-arr">&rarr;</span><span class="vz-step">advance that list</span><span class="vz-arr">&rarr;</span><span class="vz-step win">one empties &rarr; splice rest</span></div>
+    </div>
   source: "NeetCode 150 · Linked List"
   tags: [rust, neetcode, linked-list]
   tests: |
@@ -186,6 +200,13 @@
     into simple indexing, avoiding the borrow-checker pain of reversing the second
     half in place. Relink by folding from the back.
     Time O(n), Space O(n).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>The target order weaves <b>front, back, front, back&hellip;</b>. Owning the nodes in a Vec turns that into simple two-pointer indexing, then relink in the woven order.</p>
+      <div class="vz-flow"><span class="vz-step">collect nodes into a Vec</span><span class="vz-arr">&rarr;</span><span class="vz-step">weave front / back / front &hellip;</span><span class="vz-arr">&rarr;</span><span class="vz-step win">relink in that order</span></div>
+    </div>
   source: "NeetCode 150 · Linked List"
   tags: [rust, neetcode, linked-list]
   tests: |
@@ -263,6 +284,13 @@
     `Vec::remove` drops it cleanly. Relink by folding from the back. O(n); a
     two-pointer (gap of n) version is also O(n) with O(1) space but fiddlier here.
     Time O(n), Space O(n).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>'nth from the end' is just index <b>len &minus; n</b> from the front. Collect the nodes so the length is known, drop that index, and relink.</p>
+      <div class="vz-flow"><span class="vz-step">collect nodes (know len)</span><span class="vz-arr">&rarr;</span><span class="vz-step">drop index len &minus; n</span><span class="vz-arr">&rarr;</span><span class="vz-step win">relink the rest</span></div>
+    </div>
   source: "NeetCode 150 · Linked List"
   tags: [rust, neetcode, linked-list]
   tests: |
@@ -305,6 +333,13 @@
     With real pointers you'd map each original node to its clone (a HashMap pass,
     or the interleave-and-split trick) to translate the random links.
     Time O(n), Space O(n).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>Modeling the random pointers as <b>indices</b> makes a deep copy trivial: copy the (value, index) pairs and the topology is preserved, because positions never move.</p>
+      <div class="vz-flow"><span class="vz-step">nodes as (val, random index)</span><span class="vz-arr">&rarr;</span><span class="vz-step">copy the pairs</span><span class="vz-arr">&rarr;</span><span class="vz-step win">indices stay valid &rarr; same shape</span></div>
+    </div>
   source: "NeetCode 150 · Linked List"
   tags: [rust, neetcode, linked-list]
   tests: |
@@ -374,6 +409,13 @@
     `sum % 10`, keep `sum / 10`. Reverse-order storage means we add from the least
     significant digit first, so no reversal is needed.
     Time O(max(n, m)), Space O(max(n, m)).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>Digits are stored <b>least-significant first</b>, so add left to right like schoolbook addition: sum the two digits plus carry, emit sum%10, keep sum/10.</p>
+      <div class="vz-flow"><span class="vz-step">digit + digit + carry</span><span class="vz-arr">&rarr;</span><span class="vz-step">emit sum % 10</span><span class="vz-arr">&rarr;</span><span class="vz-step">carry = sum / 10</span><span class="vz-arr">&rarr;</span><span class="vz-step win">until both end &amp; no carry</span></div>
+    </div>
   source: "NeetCode 150 · Linked List"
   tags: [rust, neetcode, linked-list]
   tests: |
@@ -425,6 +467,13 @@
     coincide on a node, there is a cycle; if fast reaches the end, there is not.
     Indices model the links because safe `Box` lists can't be cyclic.
     Time O(n), Space O(1).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>Floyd's tortoise &amp; hare: one pointer steps once, the other twice. If there's a cycle they must eventually land on the same node; if the fast one runs off the end, there isn't.</p>
+      <div class="vz-flow"><span class="vz-step">slow +1, fast +2</span><span class="vz-arr">&rarr;</span><span class="vz-step">fast hits end &rarr; no cycle</span><span class="vz-arr">&rarr;</span><span class="vz-step win">slow == fast &rarr; cycle</span></div>
+    </div>
   source: "NeetCode 150 · Linked List"
   tags: [rust, neetcode, linked-list]
   tests: |
@@ -470,6 +519,13 @@
     duplicated value. Phase 1 finds a meeting point with tortoise-and-hare; phase 2
     walks one pointer from the start in lockstep to locate the entrance.
     Time O(n), Space O(1).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>Reading <b>value &rarr; index</b> turns the array into a linked structure whose cycle entrance is the duplicate. Floyd finds a meeting point, then a second walk from the start finds the entrance.</p>
+      <div class="vz-flow"><span class="vz-step">follow i &rarr; nums[i]</span><span class="vz-arr">&rarr;</span><span class="vz-step">tortoise/hare meet</span><span class="vz-arr">&rarr;</span><span class="vz-step">walk from start in lockstep</span><span class="vz-arr">&rarr;</span><span class="vz-step win">meet point = duplicate</span></div>
+    </div>
   source: "NeetCode 150 · Linked List"
   tags: [rust, neetcode, linked-list]
   tests: |
@@ -560,6 +616,13 @@
     The `position`/`remove` scan is O(n); a true O(1) design needs an intrusive
     doubly linked list, which is awkward in safe Rust without an index-arena.
     Time O(n) per get/put (recency scan), Space O(capacity).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>Keep the values in a map and the <b>recency</b> in a queue (front = oldest). Every access moves its key to the back; when over capacity, evict the front.</p>
+      <div class="vz-flow"><span class="vz-step">map: key &rarr; value</span><span class="vz-arr">&rarr;</span><span class="vz-step">queue tracks recency</span><span class="vz-arr">&rarr;</span><span class="vz-step">touch &rarr; move to back</span><span class="vz-arr">&rarr;</span><span class="vz-step win">full &rarr; evict the front</span></div>
+    </div>
   source: "NeetCode 150 · Linked List"
   tags: [rust, neetcode, linked-list]
   tests: |
@@ -657,6 +720,13 @@
     round. That gives O(N log k) total work for N nodes across k lists, beating the
     O(N k) of merging one at a time.
     Time O(N log k), Space O(1).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>Reuse the two-list merge and combine the lists <b>pairwise</b>, halving the count each round &mdash; O(N log k) instead of merging them one at a time.</p>
+      <div class="vz-flow"><span class="vz-step">merge lists in pairs</span><span class="vz-arr">&rarr;</span><span class="vz-step">halve the count each round</span><span class="vz-arr">&rarr;</span><span class="vz-step win">one list remains</span></div>
+    </div>
   source: "NeetCode 150 · Linked List"
   tags: [rust, neetcode, linked-list]
   tests: |
@@ -734,6 +804,13 @@
     slices, dodging the borrow-checker gymnastics of in-place pointer surgery. Only
     complete groups are reversed (`len / k * k`).
     Time O(n), Space O(n).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>Owning the nodes in a Vec reduces k-group reversal to reversing <b>fixed-size slices</b>; reverse only the complete groups (len/k&middot;k) and leave the short remainder.</p>
+      <div class="vz-flow"><span class="vz-step">collect nodes into a Vec</span><span class="vz-arr">&rarr;</span><span class="vz-step">reverse each full k-chunk</span><span class="vz-arr">&rarr;</span><span class="vz-step">leave the short tail</span><span class="vz-arr">&rarr;</span><span class="vz-step win">relink</span></div>
+    </div>
   source: "NeetCode 150 · Linked List"
   tags: [rust, neetcode, linked-list]
   tests: |

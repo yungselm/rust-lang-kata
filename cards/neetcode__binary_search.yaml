@@ -28,6 +28,13 @@
     Half-open range [lo, hi): shrink toward the target by comparing the midpoint.
     Using `lo + (hi - lo) / 2` avoids overflow.
     Time O(log n), Space O(1).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>On a <b>sorted</b> array you can halve the search each step: compare the middle element to the target and throw away the half that cannot contain it.</p>
+      <div class="vz-flow"><span class="vz-step">look at the middle</span><span class="vz-arr">&rarr;</span><span class="vz-step">target smaller &rarr; go left</span><span class="vz-arr">&rarr;</span><span class="vz-step">target larger &rarr; go right</span><span class="vz-arr">&rarr;</span><span class="vz-step win">found, or empty</span></div>
+    </div>
   source: "NeetCode 150 · Binary Search"
   tags: [rust, neetcode, binary-search]
   tests: |
@@ -71,6 +78,13 @@
     Treat the grid as a flat sorted array of length rows*cols and binary-search it;
     map a flat index `i` back with `(i / cols, i % cols)`.
     Time O(log(m*n)), Space O(1).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>The fully-sorted grid behaves like <b>one long sorted array</b>. Binary-search the flat index 0..rows*cols and convert it back with /cols and %cols.</p>
+      <div class="vz-flow"><span class="vz-step">treat grid as one sorted line</span><span class="vz-arr">&rarr;</span><span class="vz-step">binary-search the flat index</span><span class="vz-arr">&rarr;</span><span class="vz-step">map i &rarr; (i/cols, i%cols)</span><span class="vz-arr">&rarr;</span><span class="vz-step win">found?</span></div>
+    </div>
   source: "NeetCode 150 · Binary Search"
   tags: [rust, neetcode, binary-search]
   tests: |
@@ -116,6 +130,13 @@
     in k, so find the smallest k whose total hours fit. `(p + k - 1) / k` is the
     ceiling division.
     Time O(n log(max pile)), Space O(1).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>Hours needed only <b>shrink as the speed grows</b>, so the answer is monotonic. Binary-search the speed and pick the smallest one that still finishes within h hours.</p>
+      <div class="vz-flow"><span class="vz-step">speeds 1 .. max pile</span><span class="vz-arr">&rarr;</span><span class="vz-step">mid speed: hours &le; h?</span><span class="vz-arr">&rarr;</span><span class="vz-step">yes &rarr; try slower</span><span class="vz-arr">&rarr;</span><span class="vz-step win">smallest feasible speed</span></div>
+    </div>
   source: "NeetCode 150 · Binary Search"
   tags: [rust, neetcode, binary-search]
   tests: |
@@ -150,6 +171,13 @@
     If the midpoint exceeds the right end, the minimum lies strictly to its right;
     otherwise it's at mid or left. The range collapses onto the pivot.
     Time O(log n), Space O(1).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>The rotation point is the one place the order breaks. Compare the middle to the right end: if mid is bigger the minimum lies to its right, otherwise it's mid or left.</p>
+      <div class="vz-flow"><span class="vz-step">mid vs right end</span><span class="vz-arr">&rarr;</span><span class="vz-step">mid &gt; right &rarr; go right</span><span class="vz-arr">&rarr;</span><span class="vz-step">else &rarr; mid or left</span><span class="vz-arr">&rarr;</span><span class="vz-step win">range collapses on the min</span></div>
+    </div>
   source: "NeetCode 150 · Binary Search"
   tags: [rust, neetcode, binary-search]
   tests: |
@@ -195,6 +223,13 @@
     nums[mid], then check whether the target falls inside that sorted half to pick
     a side.
     Time O(log n), Space O(1).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>Even rotated, at least one half [lo,mid] or [mid,hi] is still sorted. Work out which, check whether the target falls inside that sorted half, and recurse into the right side.</p>
+      <div class="vz-flow"><span class="vz-step">find the sorted half</span><span class="vz-arr">&rarr;</span><span class="vz-step">target inside it?</span><span class="vz-arr">&rarr;</span><span class="vz-step">yes &rarr; search there</span><span class="vz-arr">&rarr;</span><span class="vz-step win">else &rarr; the other half</span></div>
+    </div>
   source: "NeetCode 150 · Binary Search"
   tags: [rust, neetcode, binary-search]
   tests: |
@@ -262,6 +297,13 @@
     `partition_point` finds where timestamps stop being <= the query; the entry
     just before it is the answer.
     Time O(log n) per get, O(1) amortized per set, Space O(n) total.
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>Each key keeps its <b>(timestamp, value) pairs in increasing time order</b>, so a get is a binary search for the greatest timestamp &le; the query.</p>
+      <div class="vz-flow"><span class="vz-step">key &rarr; list sorted by time</span><span class="vz-arr">&rarr;</span><span class="vz-step">binary-search &le; query</span><span class="vz-arr">&rarr;</span><span class="vz-step win">take the entry just before</span></div>
+    </div>
   source: "NeetCode 150 · Binary Search"
   tags: [rust, neetcode, binary-search]
   tests: |
@@ -313,6 +355,13 @@
     two middles for an even total). This is O(m + n); the textbook O(log(m + n))
     partition search is faster but far more error-prone.
     Time O(m + n), Space O(m + n).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>Merge the two sorted slices into one (like merge-sort's merge step) and read the middle &mdash; averaging the two middles when the combined length is even.</p>
+      <div class="vz-flow"><span class="vz-step">merge both sorted slices</span><span class="vz-arr">&rarr;</span><span class="vz-step">one sorted sequence</span><span class="vz-arr">&rarr;</span><span class="vz-step win">read middle (or avg of two)</span></div>
+    </div>
   source: "NeetCode 150 · Binary Search"
   tags: [rust, neetcode, binary-search]
   tests: |

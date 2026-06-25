@@ -22,6 +22,13 @@
     The number of ways to reach step i is ways(i-1) + ways(i-2): the Fibonacci
     recurrence. Two rolling variables (constant extra space).
     Time O(n), Space O(1).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>Ways to reach step i = ways(i&minus;1) + ways(i&minus;2) — the <b>Fibonacci</b> recurrence; two rolling variables suffice.</p>
+      <div class="vz-flow"><span class="vz-step">ways(i) = ways(i&minus;1)+ways(i&minus;2)</span><span class="vz-arr">&rarr;</span><span class="vz-step">roll two variables</span><span class="vz-arr">&rarr;</span><span class="vz-step win">up to n</span></div>
+    </div>
   source: "NeetCode 150 · 1-D DP"
   tags: [rust, neetcode, dp]
   tests: |
@@ -53,6 +60,13 @@
     `cur` is the min cost to stand on the current stair; reaching it costs `c` plus
     the cheaper of the two prior stairs. The top is reachable from the last two.
     Time O(n), Space O(1).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>Cheapest way to stand on a stair = its own cost + the <b>cheaper of the two stairs below</b> it; the top is reachable from the last two.</p>
+      <div class="vz-flow"><span class="vz-step">cost to reach a stair</span><span class="vz-arr">&rarr;</span><span class="vz-step">+ cheaper of two below</span><span class="vz-arr">&rarr;</span><span class="vz-step">roll forward</span><span class="vz-arr">&rarr;</span><span class="vz-step win">top from last two</span></div>
+    </div>
   source: "NeetCode 150 · 1-D DP"
   tags: [rust, neetcode, dp]
   tests: |
@@ -82,6 +96,13 @@
     Track the best totals ending with the previous house robbed (`take`) or not
     (`skip`). Robbing the current house requires the prior to be skipped.
     Time O(n), Space O(1).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>Track two running bests: best ending with this house <b>robbed</b> (skip + n) or <b>not</b> (max of prev). Robbing now requires the previous to be skipped.</p>
+      <div class="vz-flow"><span class="vz-step">take = skip + n</span><span class="vz-arr">&rarr;</span><span class="vz-step">skip = max(prev take/skip)</span><span class="vz-arr">&rarr;</span><span class="vz-step">roll along the row</span><span class="vz-arr">&rarr;</span><span class="vz-step win">max at the end</span></div>
+    </div>
   source: "NeetCode 150 · 1-D DP"
   tags: [rust, neetcode, dp]
   tests: |
@@ -118,6 +139,13 @@
     Either the first house is robbed or the last is, never both. Run the linear
     solver on the array minus the last element and minus the first, take the max.
     Time O(n), Space O(1).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>The <b>circle</b> means the first and last house can't both be robbed. Run the linear robber on the array without the last, and without the first; take the max.</p>
+      <div class="vz-flow"><span class="vz-step">circle: not both ends</span><span class="vz-arr">&rarr;</span><span class="vz-step">rob houses[1..]</span><span class="vz-arr">&rarr;</span><span class="vz-step">rob houses[..n&minus;1]</span><span class="vz-arr">&rarr;</span><span class="vz-step win">take the max</span></div>
+    </div>
   source: "NeetCode 150 · 1-D DP"
   tags: [rust, neetcode, dp]
   tests: |
@@ -165,6 +193,13 @@
     Every palindrome has a center: a character (odd length) or a gap between two
     (even). Expand outward from each of the 2n-1 centers.
     Time O(n^2), Space O(1).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>Every palindrome has a <b>center</b> (a char, or a gap between two). Expand outward from each of the 2n&minus;1 centers, keeping the longest.</p>
+      <div class="vz-flow"><span class="vz-step">try each of 2n&minus;1 centers</span><span class="vz-arr">&rarr;</span><span class="vz-step">expand while symmetric</span><span class="vz-arr">&rarr;</span><span class="vz-step win">track the longest span</span></div>
+    </div>
   source: "NeetCode 150 · 1-D DP"
   tags: [rust, neetcode, dp]
   tests: |
@@ -206,6 +241,13 @@
     Same expand-around-center idea as the longest-palindrome problem, but count
     every palindrome found instead of tracking the maximum.
     Time O(n^2), Space O(1).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>Same expand-around-center idea, but <b>count</b> every palindrome found instead of tracking the longest.</p>
+      <div class="vz-flow"><span class="vz-step">each of 2n&minus;1 centers</span><span class="vz-arr">&rarr;</span><span class="vz-step">expand while symmetric</span><span class="vz-arr">&rarr;</span><span class="vz-step win">count each match</span></div>
+    </div>
   source: "NeetCode 150 · 1-D DP"
   tags: [rust, neetcode, dp]
   tests: |
@@ -247,6 +289,13 @@
     Decode from the right: a non-zero digit continues with one fewer char; a pair
     forming 10..=26 continues with two fewer. Two rolling counts suffice.
     Time O(n), Space O(1).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>Decode from the right: a non-zero digit continues with <b>one</b> fewer char; a pair forming 10..=26 continues with <b>two</b> fewer. Two rolling counts.</p>
+      <div class="vz-flow"><span class="vz-step">scan right to left</span><span class="vz-arr">&rarr;</span><span class="vz-step">non-zero digit &rarr; + ways(i+1)</span><span class="vz-arr">&rarr;</span><span class="vz-step">pair 10..26 &rarr; + ways(i+2)</span><span class="vz-arr">&rarr;</span><span class="vz-step win">roll two counts</span></div>
+    </div>
   source: "NeetCode 150 · 1-D DP"
   tags: [rust, neetcode, dp]
   tests: |
@@ -287,6 +336,13 @@
     Bottom-up: dp[a] is the fewest coins for amount a, built from dp[a - c] + 1 for
     each coin c. Initialize to a sentinel above any real answer to mark "unreachable".
     Time O(amount * coins), Space O(amount).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>Bottom-up: fewest coins for amount a = min over coins of (coins for a&minus;c) + 1. Seed a sentinel above any real answer to mark 'unreachable'.</p>
+      <div class="vz-flow"><span class="vz-step">dp[0] = 0</span><span class="vz-arr">&rarr;</span><span class="vz-step">dp[a] = min(dp[a&minus;c]) + 1</span><span class="vz-arr">&rarr;</span><span class="vz-step">fill 1..=amount</span><span class="vz-arr">&rarr;</span><span class="vz-step win">sentinel &rarr; &minus;1</span></div>
+    </div>
   source: "NeetCode 150 · 1-D DP"
   tags: [rust, neetcode, dp]
   tests: |
@@ -320,6 +376,13 @@
     A negative number swaps the roles of the running max and min product, so track
     both. Each ending position either extends the previous run or starts fresh.
     Time O(n), Space O(1).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>A <b>negative</b> flips the roles of the running max and min product, so track both; each position extends the run or restarts.</p>
+      <div class="vz-flow"><span class="vz-step">track cur max &amp; min</span><span class="vz-arr">&rarr;</span><span class="vz-step">negative &rarr; swap them</span><span class="vz-arr">&rarr;</span><span class="vz-step">extend or restart at n</span><span class="vz-arr">&rarr;</span><span class="vz-step win">keep the best max</span></div>
+    </div>
   source: "NeetCode 150 · 1-D DP"
   tags: [rust, neetcode, dp]
   tests: |
@@ -360,6 +423,13 @@
     dp[i] means the prefix of length i is segmentable. It holds when some split
     point `start` is segmentable and the remaining slice is a dictionary word.
     Time O(n^2) substrings times O(n) per slice hash, so O(n^3) worst case, Space O(n).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>dp[i] means the <b>prefix of length i</b> is segmentable; it holds when some split point is segmentable and the remaining slice is a dictionary word.</p>
+      <div class="vz-flow"><span class="vz-step">dp[0] = true</span><span class="vz-arr">&rarr;</span><span class="vz-step">for each end, try each split</span><span class="vz-arr">&rarr;</span><span class="vz-step">dp[start] &amp; slice in dict?</span><span class="vz-arr">&rarr;</span><span class="vz-step win">dp[n] &rarr; answer</span></div>
+    </div>
   source: "NeetCode 150 · 1-D DP"
   tags: [rust, neetcode, dp]
   tests: |
@@ -401,6 +471,13 @@
     subsequence of length k+1. Binary search keeps each insertion logarithmic. On
     an exact match we skip (strictly increasing).
     Time O(n log n), Space O(n).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>Patience sorting: <b>tails[k]</b> is the smallest possible tail of an increasing subsequence of length k+1; binary-search each value into place. len(tails) is the answer.</p>
+      <div class="vz-flow"><span class="vz-step">keep a 'tails' array</span><span class="vz-arr">&rarr;</span><span class="vz-step">binary-search each value</span><span class="vz-arr">&rarr;</span><span class="vz-step">replace or extend tails</span><span class="vz-arr">&rarr;</span><span class="vz-step win">len(tails) = LIS</span></div>
+    </div>
   source: "NeetCode 150 · 1-D DP"
   tags: [rust, neetcode, dp]
   tests: |
@@ -437,6 +514,13 @@
     Equal halves exist iff some subset sums to total/2 (so the total must be even).
     It's a 0/1 subset-sum: iterate amounts downward so each number is used once.
     Time O(n * sum), Space O(sum), where sum is total/2.
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>Equal halves exist iff some subset sums to <b>total/2</b> (so the total must be even) — a 0/1 subset-sum; iterate amounts downward so each number is used once.</p>
+      <div class="vz-flow"><span class="vz-step">total odd &rarr; false</span><span class="vz-arr">&rarr;</span><span class="vz-step">target = total/2</span><span class="vz-arr">&rarr;</span><span class="vz-step">subset-sum dp (iterate down)</span><span class="vz-arr">&rarr;</span><span class="vz-step win">dp[target]?</span></div>
+    </div>
   source: "NeetCode 150 · 1-D DP"
   tags: [rust, neetcode, dp]
   tests: |

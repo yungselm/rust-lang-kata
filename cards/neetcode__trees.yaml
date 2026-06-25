@@ -37,6 +37,13 @@
     Take ownership, recurse on each subtree, then store them back swapped. Working
     by value lets us move boxes around without clones.
     Time O(n), Space O(h).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>Mirror the tree: at every node <b>swap its two children</b>, recursing into each side.</p>
+      <div class="vz-flow"><span class="vz-step">at each node</span><span class="vz-arr">&rarr;</span><span class="vz-step">invert left &amp; right subtrees</span><span class="vz-arr">&rarr;</span><span class="vz-step win">swap the two children</span></div>
+    </div>
   source: "NeetCode 150 · Trees"
   tags: [rust, neetcode, trees]
   tests: |
@@ -88,6 +95,13 @@
     Depth of a node is one plus the deeper of its two children; an empty tree has
     depth 0. Borrowing with `&Option<Box<...>>` avoids any cloning.
     Time O(n), Space O(h).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>A node's depth is <b>1 + the deeper of its two subtrees</b>; an empty tree is 0. Recurse.</p>
+      <div class="vz-flow"><span class="vz-step">empty &rarr; 0</span><span class="vz-arr">&rarr;</span><span class="vz-step">depth = 1 + max(left, right)</span><span class="vz-arr">&rarr;</span><span class="vz-step win">recurse down</span></div>
+    </div>
   source: "NeetCode 150 · Trees"
   tags: [rust, neetcode, trees]
   tests: |
@@ -151,6 +165,13 @@
     (in edges); the answer is the max over all nodes. One post-order pass returns
     both height and best-so-far.
     Time O(n), Space O(h).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>The longest path that <b>bends at a node</b> is leftHeight + rightHeight (in edges). One post-order pass returns each subtree's height while tracking the best diameter seen.</p>
+      <div class="vz-flow"><span class="vz-step">post-order: subtree heights</span><span class="vz-arr">&rarr;</span><span class="vz-step">bend = left h + right h</span><span class="vz-arr">&rarr;</span><span class="vz-step win">track the max over all nodes</span></div>
+    </div>
   source: "NeetCode 150 · Trees"
   tags: [rust, neetcode, trees]
   tests: |
@@ -215,6 +236,13 @@
     A bottom-up height function that returns the sentinel -1 the moment it sees an
     imbalance lets us short-circuit, versus recomputing heights at every node.
     Time O(n), Space O(h).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>Compute heights bottom-up, but return a sentinel <b>&minus;1</b> the instant a subtree is unbalanced so the whole check short-circuits.</p>
+      <div class="vz-flow"><span class="vz-step">height of each subtree</span><span class="vz-arr">&rarr;</span><span class="vz-step">|left &minus; right| &gt; 1 &rarr; &minus;1</span><span class="vz-arr">&rarr;</span><span class="vz-step">propagate &minus;1 upward</span><span class="vz-arr">&rarr;</span><span class="vz-step win">never &minus;1 &rarr; balanced</span></div>
+    </div>
   source: "NeetCode 150 · Trees"
   tags: [rust, neetcode, trees]
   tests: |
@@ -280,6 +308,13 @@
     requires equal values and equal subtrees, and a mismatch in presence is not.
     (`#[derive(PartialEq)]` would also work via `p == q`.)
     Time O(n), Space O(h).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>Compare the two trees <b>node-for-node</b>: both empty is equal; both present needs equal values and equal subtrees; anything else differs.</p>
+      <div class="vz-flow"><span class="vz-step">compare the pair of nodes</span><span class="vz-arr">&rarr;</span><span class="vz-step">both empty &rarr; equal</span><span class="vz-arr">&rarr;</span><span class="vz-step">values + subtrees equal?</span><span class="vz-arr">&rarr;</span><span class="vz-step win">mismatch &rarr; false</span></div>
+    </div>
   source: "NeetCode 150 · Trees"
   tags: [rust, neetcode, trees]
   tests: |
@@ -347,6 +382,13 @@
     only matches an empty `sub`; in the worst case every node triggers a full
     subtree comparison.
     Time O(n * m), Space O(h).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>At each node of root, either the subtree rooted <b>here</b> equals sub, or sub lives in one of the children. Reuse a whole-tree equality check.</p>
+      <div class="vz-flow"><span class="vz-step">at each root node</span><span class="vz-arr">&rarr;</span><span class="vz-step">this subtree == sub?</span><span class="vz-arr">&rarr;</span><span class="vz-step win">else check the children</span></div>
+    </div>
   source: "NeetCode 150 · Trees"
   tags: [rust, neetcode, trees]
   tests: |
@@ -416,6 +458,13 @@
     the first node where they diverge (or one equals it) is the split point and
     thus the LCA. No recursion needed.
     Time O(h), Space O(1).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>Use the BST order: if both targets are smaller go left, if both larger go right; the <b>first node where they split</b> (or equals one) is the lowest common ancestor.</p>
+      <div class="vz-flow"><span class="vz-step">both &lt; node &rarr; go left</span><span class="vz-arr">&rarr;</span><span class="vz-step">both &gt; node &rarr; go right</span><span class="vz-arr">&rarr;</span><span class="vz-step win">they split &rarr; that's the LCA</span></div>
+    </div>
   source: "NeetCode 150 · Trees"
   tags: [rust, neetcode, trees]
   tests: |
@@ -492,6 +541,13 @@
     Classic BFS: snapshot the queue length to know how many nodes are on the
     current level, then drain exactly that many before moving down.
     Time O(n), Space O(n).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>BFS with a queue; <b>snapshot the queue size</b> to know how many nodes are on the current level, drain exactly that many, then descend.</p>
+      <div class="vz-flow"><span class="vz-step">queue starts with root</span><span class="vz-arr">&rarr;</span><span class="vz-step">process one level (queue size)</span><span class="vz-arr">&rarr;</span><span class="vz-step">enqueue children</span><span class="vz-arr">&rarr;</span><span class="vz-step win">collect per level</span></div>
+    </div>
   source: "NeetCode 150 · Trees"
   tags: [rust, neetcode, trees]
   tests: |
@@ -564,6 +620,13 @@
     BFS level by level; the last node dequeued on each level is the one seen from
     the right. Enqueueing left-then-right keeps that ordering.
     Time O(n), Space O(n).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>BFS level by level; the <b>last node dequeued on each level</b> is the one visible from the right.</p>
+      <div class="vz-flow"><span class="vz-step">BFS each level</span><span class="vz-arr">&rarr;</span><span class="vz-step">take the last node per level</span><span class="vz-arr">&rarr;</span><span class="vz-step win">collect &rarr; right-side view</span></div>
+    </div>
   source: "NeetCode 150 · Trees"
   tags: [rust, neetcode, trees]
   tests: |
@@ -630,6 +693,13 @@
     when it is at least that running max. Start the threshold at the root's own
     value so the root always counts.
     Time O(n), Space O(h).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>Carry the <b>maximum value seen on the path</b> from the root downward; a node is 'good' when it is at least that running max.</p>
+      <div class="vz-flow"><span class="vz-step">pass max-so-far down</span><span class="vz-arr">&rarr;</span><span class="vz-step">node &ge; max &rarr; good</span><span class="vz-arr">&rarr;</span><span class="vz-step">update max, recurse</span><span class="vz-arr">&rarr;</span><span class="vz-step win">count the good ones</span></div>
+    </div>
   source: "NeetCode 150 · Trees"
   tags: [rust, neetcode, trees]
   tests: |
@@ -696,6 +766,13 @@
     upper bound to the node's value, descending right tightens the lower bound.
     `Option<i32>` bounds avoid overflow at i32::MIN/MAX.
     Time O(n), Space O(h).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>Each node must fall inside an open <b>(lo, hi)</b> range. Going left tightens the upper bound to the node's value, going right tightens the lower bound.</p>
+      <div class="vz-flow"><span class="vz-step">node inside (lo, hi)?</span><span class="vz-arr">&rarr;</span><span class="vz-step">go left &rarr; hi = node</span><span class="vz-arr">&rarr;</span><span class="vz-step">go right &rarr; lo = node</span><span class="vz-arr">&rarr;</span><span class="vz-step win">any violation &rarr; false</span></div>
+    </div>
   source: "NeetCode 150 · Trees"
   tags: [rust, neetcode, trees]
   tests: |
@@ -759,6 +836,13 @@
     visited node is the answer. A mutable counter lets us short-circuit as soon as
     it reaches zero.
     Time O(h + k), Space O(h).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>An <b>in-order</b> traversal of a BST visits values in sorted order, so the k-th node visited is the answer; stop as soon as a counter reaches k.</p>
+      <div class="vz-flow"><span class="vz-step">in-order walk (sorted)</span><span class="vz-arr">&rarr;</span><span class="vz-step">count visited nodes</span><span class="vz-arr">&rarr;</span><span class="vz-step win">k-th visited &rarr; answer</span></div>
+    </div>
   source: "NeetCode 150 · Trees"
   tags: [rust, neetcode, trees]
   tests: |
@@ -818,6 +902,13 @@
     splits the remaining nodes into the left and right subtrees, whose sizes then
     slice the preorder array. Recursion rebuilds each side.
     Time O(n^2), Space O(n).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>Preorder's first value is the <b>root</b>; its position in the inorder array splits the left and right subtrees, which in turn slice the preorder array. Recurse.</p>
+      <div class="vz-flow"><span class="vz-step">preorder[0] = root</span><span class="vz-arr">&rarr;</span><span class="vz-step">find it in inorder &rarr; split</span><span class="vz-arr">&rarr;</span><span class="vz-step">slice both arrays</span><span class="vz-arr">&rarr;</span><span class="vz-step win">recurse each side</span></div>
+    </div>
   source: "NeetCode 150 · Trees"
   tags: [rust, neetcode, trees]
   tests: |
@@ -883,6 +974,13 @@
     contributions to 0), while we separately track the best "bent" path that uses
     both children. The global best is the answer.
     Time O(n), Space O(h).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>Each node returns its best <b>downward</b> path (negative contributions clamped to 0), while we separately track the best 'bent' path that joins both children. The global best is the answer.</p>
+      <div class="vz-flow"><span class="vz-step">best downward path per node</span><span class="vz-arr">&rarr;</span><span class="vz-step">clamp negatives to 0</span><span class="vz-arr">&rarr;</span><span class="vz-step">bend = val + left + right</span><span class="vz-arr">&rarr;</span><span class="vz-step win">track the global best</span></div>
+    </div>
   source: "NeetCode 150 · Trees"
   tags: [rust, neetcode, trees]
   tests: |
@@ -964,6 +1062,13 @@
     tree. Deserializing consumes the comma-split tokens in the same preorder, so
     each call reconstructs a node then its left and right subtrees.
     Time O(n), Space O(n).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>Preorder with an explicit <b>'#'</b> for null children uniquely encodes the tree. Deserializing consumes the same token stream in preorder, rebuilding node, then left, then right.</p>
+      <div class="vz-flow"><span class="vz-step">preorder, # for null</span><span class="vz-arr">&rarr;</span><span class="vz-step">join into a string</span><span class="vz-arr">&rarr;</span><span class="vz-step">read tokens back in order</span><span class="vz-arr">&rarr;</span><span class="vz-step win">rebuild node, left, right</span></div>
+    </div>
   source: "NeetCode 150 · Trees"
   tags: [rust, neetcode, trees]
   tests: |

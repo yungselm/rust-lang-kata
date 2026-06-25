@@ -47,6 +47,13 @@
     Scan for an unvisited land cell, then flood-fill (DFS) it to '0' so the whole
     island is consumed once; each new flood marks one more island.
     Time O(rows * cols), Space O(rows * cols).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>Scan for an unvisited land cell, then <b>flood-fill</b> (DFS) the whole island to water so it's counted once. Each fresh flood is one more island.</p>
+      <div class="vz-flow"><span class="vz-step">scan for a '1'</span><span class="vz-arr">&rarr;</span><span class="vz-step">flood-fill the island to '0'</span><span class="vz-arr">&rarr;</span><span class="vz-step">+1 island</span><span class="vz-arr">&rarr;</span><span class="vz-step win">keep scanning</span></div>
+    </div>
   source: "NeetCode 150 · Graphs"
   tags: [rust, neetcode, graphs]
   tests: |
@@ -114,6 +121,13 @@
     Same flood-fill as counting islands, but the DFS returns the size of the
     component (1 plus its neighbours) and we keep the running maximum.
     Time O(rows * cols), Space O(rows * cols).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>Same flood-fill, but the DFS <b>returns the component's size</b> (1 + its neighbours); track the running maximum.</p>
+      <div class="vz-flow"><span class="vz-step">flood-fill each island</span><span class="vz-arr">&rarr;</span><span class="vz-step">DFS returns its size</span><span class="vz-arr">&rarr;</span><span class="vz-step win">track the maximum</span></div>
+    </div>
   source: "NeetCode 150 · Graphs"
   tags: [rust, neetcode, graphs]
   tests: |
@@ -142,6 +156,13 @@
     version would BFS/DFS building old-node -> new-node mappings; here the indices
     already give that mapping, so the structure is preserved by construction.
     Time O(V + E), Space O(V + E).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>With the graph as an <b>adjacency list</b>, a deep copy is just a fresh owned copy of every neighbour list — indices already encode the structure.</p>
+      <div class="vz-flow"><span class="vz-step">graph as adjacency list</span><span class="vz-arr">&rarr;</span><span class="vz-step">copy every neighbour list</span><span class="vz-arr">&rarr;</span><span class="vz-step win">indices preserve the shape</span></div>
+    </div>
   source: "NeetCode 150 · Graphs"
   tags: [rust, neetcode, graphs]
   tests: |
@@ -203,6 +224,13 @@
     BFS expands in layers, the first time a room is reached is via its nearest gate,
     so each empty cell is set exactly once.
     Time O(rows * cols), Space O(rows * cols).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>Multi-source BFS: seed the queue with <b>every gate</b> at distance 0. BFS expands in layers, so each room is first reached via its nearest gate.</p>
+      <div class="vz-flow"><span class="vz-step">queue all gates (dist 0)</span><span class="vz-arr">&rarr;</span><span class="vz-step">BFS outward in layers</span><span class="vz-arr">&rarr;</span><span class="vz-step">first reach = nearest gate</span><span class="vz-arr">&rarr;</span><span class="vz-step win">fill each room once</span></div>
+    </div>
   source: "NeetCode 150 · Graphs"
   tags: [rust, neetcode, graphs]
   tests: |
@@ -290,6 +318,13 @@
     queue before incrementing the clock. Track the fresh count; if any remain when
     the queue empties they are unreachable, so return -1.
     Time O(rows * cols), Space O(rows * cols).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>Multi-source BFS where each layer is <b>one minute</b>: drain the whole current queue before ticking the clock. Track the fresh count; leftovers mean &minus;1.</p>
+      <div class="vz-flow"><span class="vz-step">queue all rotten (minute 0)</span><span class="vz-arr">&rarr;</span><span class="vz-step">rot neighbours layer by layer</span><span class="vz-arr">&rarr;</span><span class="vz-step">tick after each layer</span><span class="vz-arr">&rarr;</span><span class="vz-step win">fresh left &rarr; &minus;1</span></div>
+    </div>
   source: "NeetCode 150 · Graphs"
   tags: [rust, neetcode, graphs]
   tests: |
@@ -362,6 +397,13 @@
     climbing to equal-or-higher neighbours (the reverse of water flow). A cell
     reaches an ocean iff that ocean's flood marked it; the answer is the overlap.
     Time O(rows * cols), Space O(rows * cols).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>Instead of testing every cell, flood <b>inward from each ocean's border</b>, climbing to equal-or-higher neighbours. A cell reaches both oceans iff both floods marked it.</p>
+      <div class="vz-flow"><span class="vz-step">flood inward from each ocean</span><span class="vz-arr">&rarr;</span><span class="vz-step">climb to &ge; neighbours</span><span class="vz-arr">&rarr;</span><span class="vz-step">mark reachable cells</span><span class="vz-arr">&rarr;</span><span class="vz-step win">overlap = answer</span></div>
+    </div>
   source: "NeetCode 150 · Graphs"
   tags: [rust, neetcode, graphs]
   tests: |
@@ -443,6 +485,13 @@
     border O. Flood those to a temporary 'S', then sweep once — 'S' becomes 'O',
     everything else becomes 'X'.
     Time O(rows * cols), Space O(rows * cols).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>Invert it: the O's that <b>survive</b> are those reachable from a border O. Flood those to a temporary mark, then sweep — temp &rarr; O, every other O &rarr; X.</p>
+      <div class="vz-flow"><span class="vz-step">flood border O's to a temp</span><span class="vz-arr">&rarr;</span><span class="vz-step">sweep the board</span><span class="vz-arr">&rarr;</span><span class="vz-step">temp &rarr; O</span><span class="vz-arr">&rarr;</span><span class="vz-step win">other O &rarr; X</span></div>
+    </div>
   source: "NeetCode 150 · Graphs"
   tags: [rust, neetcode, graphs]
   tests: |
@@ -498,6 +547,13 @@
     If a cycle exists, those courses never reach indegree 0, so fewer than
     `num_courses` are processed.
     Time O(V + E), Space O(V + E).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>Topological sort (Kahn's): repeatedly remove a course with <b>no remaining prerequisites</b>. A cycle leaves some courses stuck, so fewer than all get processed.</p>
+      <div class="vz-flow"><span class="vz-step">build prereq graph + indegrees</span><span class="vz-arr">&rarr;</span><span class="vz-step">take indegree-0 courses</span><span class="vz-arr">&rarr;</span><span class="vz-step">decrement their neighbours</span><span class="vz-arr">&rarr;</span><span class="vz-step win">all taken? &rarr; true</span></div>
+    </div>
   source: "NeetCode 150 · Graphs"
   tags: [rust, neetcode, graphs]
   tests: |
@@ -550,6 +606,13 @@
     sequence is a valid order; if a cycle blocks some courses the result is shorter
     than `num_courses`, so we return empty.
     Time O(V + E), Space O(V + E).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>Same Kahn's topo-sort, but <b>emit</b> each course as it reaches indegree 0; that sequence is a valid order (empty if a cycle blocks some).</p>
+      <div class="vz-flow"><span class="vz-step">indegree-0 into a queue</span><span class="vz-arr">&rarr;</span><span class="vz-step">emit, decrement neighbours</span><span class="vz-arr">&rarr;</span><span class="vz-step">new zeros enqueue</span><span class="vz-arr">&rarr;</span><span class="vz-step win">all emitted &rarr; order</span></div>
+    </div>
   source: "NeetCode 150 · Graphs"
   tags: [rust, neetcode, graphs]
   tests: |
@@ -602,6 +665,13 @@
     first, then union-find: if an edge joins two already-connected nodes there is a
     cycle. n-1 edges plus no cycle implies connected.
     Time O(V + E), Space O(V + E).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>A tree on n nodes has exactly <b>n&minus;1 edges and no cycle</b>. Check the count, then union-find: an edge joining two already-connected nodes is a cycle.</p>
+      <div class="vz-flow"><span class="vz-step">edges == n&minus;1?</span><span class="vz-arr">&rarr;</span><span class="vz-step">union each edge's endpoints</span><span class="vz-arr">&rarr;</span><span class="vz-step">already connected &rarr; cycle</span><span class="vz-arr">&rarr;</span><span class="vz-step win">no cycle &rarr; tree</span></div>
+    </div>
   source: "NeetCode 150 · Graphs"
   tags: [rust, neetcode, graphs]
   tests: |
@@ -651,6 +721,13 @@
     Start with n singletons; every edge that unites two different sets reduces the
     component count by one. Path compression keeps find near O(1).
     Time O(V + E), Space O(V + E).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>Start with <b>n singletons</b>; every edge that unites two different sets drops the component count by one.</p>
+      <div class="vz-flow"><span class="vz-step">n singletons</span><span class="vz-arr">&rarr;</span><span class="vz-step">union each edge</span><span class="vz-arr">&rarr;</span><span class="vz-step">united two sets &rarr; count &minus; 1</span><span class="vz-arr">&rarr;</span><span class="vz-step win">remaining count</span></div>
+    </div>
   source: "NeetCode 150 · Graphs"
   tags: [rust, neetcode, graphs]
   tests: |
@@ -701,6 +778,13 @@
     same set closes the cycle, and since there is exactly one extra edge that is the
     one to remove. Nodes are 1-indexed, so size the parent array 0..=n.
     Time O(V + E), Space O(V + E).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>Union nodes edge by edge; the <b>first edge whose endpoints are already connected</b> closes the cycle — that's the one to remove.</p>
+      <div class="vz-flow"><span class="vz-step">union edges in order</span><span class="vz-arr">&rarr;</span><span class="vz-step">endpoints already joined?</span><span class="vz-arr">&rarr;</span><span class="vz-step">that edge closes a cycle</span><span class="vz-arr">&rarr;</span><span class="vz-step win">return it</span></div>
+    </div>
   source: "NeetCode 150 · Graphs"
   tags: [rust, neetcode, graphs]
   tests: |
@@ -766,6 +850,13 @@
     neighbours by trying each of 26 letters at every position, consuming words from
     a "not yet visited" set so each is enqueued once. Level count = path length.
     Time O(N * L * L), Space O(N * L).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>BFS over the implicit graph where words <b>one letter apart</b> are adjacent. Generate neighbours by trying each of 26 letters at every position, consuming each from an unvisited set. Levels = path length.</p>
+      <div class="vz-flow"><span class="vz-step">BFS from the begin word</span><span class="vz-arr">&rarr;</span><span class="vz-step">swap each letter a&ndash;z</span><span class="vz-arr">&rarr;</span><span class="vz-step">new word in the set? enqueue</span><span class="vz-arr">&rarr;</span><span class="vz-step win">level count = length</span></div>
+    </div>
   source: "NeetCode 150 · Graphs"
   tags: [rust, neetcode, graphs]
   tests: |
