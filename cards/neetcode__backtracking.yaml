@@ -36,6 +36,12 @@
       <p>Each element is either <b>in or out</b>. Walk an include/exclude tree, recording the path at every node — that enumerates all 2^n subsets.</p>
       <div class="vz-flow"><span class="vz-step">at each element: include or skip</span><span class="vz-arr">&rarr;</span><span class="vz-step">record the path at every node</span><span class="vz-arr">&rarr;</span><span class="vz-step">recurse on later elements</span><span class="vz-arr">&rarr;</span><span class="vz-step win">all 2^n subsets</span></div>
     </div>
+    ===
+    9 | Record the current subset at every node.
+    ===
+    10-11 | Try extending with each later element.
+    ===
+    12-15 | Recurse, then pop to undo (backtrack).
   source: "NeetCode 150 · Backtracking"
   tags: [rust, neetcode, backtracking]
   tests: |
@@ -108,6 +114,12 @@
       <p>Build combinations summing to target, <b>reusing</b> candidates. Recurse with the same index (reuse allowed) and a non-decreasing index to avoid permuted duplicates; stop when the remainder hits 0.</p>
       <div class="vz-flow"><span class="vz-step">pick a candidate &le; remaining</span><span class="vz-arr">&rarr;</span><span class="vz-step">recurse (same index &rarr; reuse)</span><span class="vz-arr">&rarr;</span><span class="vz-step">remaining == 0 &rarr; record</span><span class="vz-arr">&rarr;</span><span class="vz-step win">backtrack</span></div>
     </div>
+    ===
+    15-18 | Hit the target -> record this combination.
+    ===
+    19-20 | Try each candidate from the current index.
+    ===
+    21-27 | Skip ones too big; recurse with the SAME index to allow reuse.
   source: "NeetCode 150 · Backtracking"
   tags: [rust, neetcode, backtracking]
   tests: |
@@ -164,6 +176,12 @@
       <p>Build orderings <b>in place</b> by swapping each remaining element into the current position, recursing, then swapping back.</p>
       <div class="vz-flow"><span class="vz-step">swap an element into slot k</span><span class="vz-arr">&rarr;</span><span class="vz-step">recurse on k+1</span><span class="vz-arr">&rarr;</span><span class="vz-step">swap back to restore</span><span class="vz-arr">&rarr;</span><span class="vz-step win">k == n &rarr; record</span></div>
     </div>
+    ===
+    9-12 | A full-length arrangement is one permutation.
+    ===
+    13 | Swap each remaining element into position k...
+    ===
+    14-18 | ...recurse, then swap back to restore order.
   source: "NeetCode 150 · Backtracking"
   tags: [rust, neetcode, backtracking]
   tests: |
@@ -224,6 +242,12 @@
       <p>Sort so duplicates are adjacent, then within one recursion level <b>skip a value equal to its predecessor</b> — that picks each multiset once, with no duplicate subsets.</p>
       <div class="vz-flow"><span class="vz-step">sort the input</span><span class="vz-arr">&rarr;</span><span class="vz-step">skip dup at same level</span><span class="vz-arr">&rarr;</span><span class="vz-step">include/exclude recurse</span><span class="vz-arr">&rarr;</span><span class="vz-step win">unique subsets</span></div>
     </div>
+    ===
+    3-10 | Sort so equal values are adjacent.
+    ===
+    11-12 | Record each subset.
+    ===
+    13-20 | Skip a duplicate value at the same level -> no duplicate subsets.
   source: "NeetCode 150 · Backtracking"
   tags: [rust, neetcode, backtracking]
   tests: |
@@ -299,6 +323,16 @@
       <p>Sort, use each element <b>once</b> (advance i+1), and skip duplicate values at the same level. Sorted order lets you break as soon as a candidate exceeds the remainder.</p>
       <div class="vz-flow"><span class="vz-step">sort</span><span class="vz-arr">&rarr;</span><span class="vz-step">each used once (i+1)</span><span class="vz-arr">&rarr;</span><span class="vz-step">skip dup at same level</span><span class="vz-arr">&rarr;</span><span class="vz-step win">remaining == 0 &rarr; record</span></div>
     </div>
+    ===
+    3-16 | Sort the candidates.
+    ===
+    17-21 | Target reached -> record it.
+    ===
+    22-25 | Skip duplicate values at the same level.
+    ===
+    26-29 | Sorted, so once a candidate is too big we can stop.
+    ===
+    30-33 | Advance i+1 so each element is used once.
   source: "NeetCode 150 · Backtracking"
   tags: [rust, neetcode, backtracking]
   tests: |
@@ -373,6 +407,16 @@
       <p>DFS from every cell, matching the word <b>letter by letter</b>. Temporarily blank a visited cell so the path can't reuse it, then restore it on backtrack.</p>
       <div class="vz-flow"><span class="vz-step">DFS from each cell</span><span class="vz-arr">&rarr;</span><span class="vz-step">match the next letter</span><span class="vz-arr">&rarr;</span><span class="vz-step">blank the visited cell</span><span class="vz-arr">&rarr;</span><span class="vz-step win">restore on backtrack</span></div>
     </div>
+    ===
+    8-18 | Try starting the search from every cell.
+    ===
+    19-21 | Current cell must match the next letter.
+    ===
+    22-25 | Matched the whole word -> success.
+    ===
+    26-30 | Blank the cell so the path can't reuse it.
+    ===
+    31-33 | Restore it on backtrack.
   source: "NeetCode 150 · Backtracking"
   tags: [rust, neetcode, backtracking]
   tests: |
@@ -441,6 +485,12 @@
       <p>At each position try every <b>prefix</b>; if it is a palindrome, commit it and recurse from its end. Reaching the string's end yields one valid split.</p>
       <div class="vz-flow"><span class="vz-step">try each prefix start..end</span><span class="vz-arr">&rarr;</span><span class="vz-step">palindrome? commit it</span><span class="vz-arr">&rarr;</span><span class="vz-step">recurse from its end</span><span class="vz-arr">&rarr;</span><span class="vz-step win">reached end &rarr; record</span></div>
     </div>
+    ===
+    23-26 | Reached the end -> one valid partition.
+    ===
+    27 | Try every prefix from the current position.
+    ===
+    28-34 | If the prefix is a palindrome, commit it and recurse from its end.
   source: "NeetCode 150 · Backtracking"
   tags: [rust, neetcode, backtracking]
   tests: |
@@ -498,6 +548,14 @@
       <p>Iterative <b>product</b>: keep all combinations built so far and extend each one with every letter of the next digit.</p>
       <div class="vz-flow"><span class="vz-step">start with one empty string</span><span class="vz-arr">&rarr;</span><span class="vz-step">for each digit's letters</span><span class="vz-arr">&rarr;</span><span class="vz-step">extend every combo so far</span><span class="vz-arr">&rarr;</span><span class="vz-step win">all products</span></div>
     </div>
+    ===
+    6 | Start with one empty combination.
+    ===
+    7-9 | For each digit, take its letters.
+    ===
+    10-16 | Extend every existing combination with each letter.
+    ===
+    17-20 | The product grows digit by digit.
   source: "NeetCode 150 · Backtracking"
   tags: [rust, neetcode, backtracking]
   tests: |
@@ -567,6 +625,16 @@
       <p>Place <b>one queen per row</b>; a square is safe iff its column and both diagonals are unused. Diagonals are keyed by row+col and row&minus;col, so attack checks are O(1) flag lookups.</p>
       <div class="vz-flow"><span class="vz-step">one queen per row</span><span class="vz-arr">&rarr;</span><span class="vz-step">column / both diagonals free?</span><span class="vz-arr">&rarr;</span><span class="vz-step">place, recurse, un-place</span><span class="vz-arr">&rarr;</span><span class="vz-step win">row == n &rarr; count one</span></div>
     </div>
+    ===
+    2-17 | Track used columns and both diagonals.
+    ===
+    18-22 | A queen placed in every row -> one solution.
+    ===
+    23-24 | Diagonals are keyed by row+col and row-col.
+    ===
+    25-30 | Skip squares under attack (O(1) check).
+    ===
+    31-36 | Place, recurse to the next row, then un-place.
   source: "NeetCode 150 · Backtracking"
   tags: [rust, neetcode, backtracking]
   tests: |

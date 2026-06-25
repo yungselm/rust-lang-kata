@@ -49,6 +49,14 @@
       <p>Hierholzer's Eulerian-path walk: keep each airport's destinations sorted and always take the <b>smallest next hop</b>; when stuck, pop the airport onto the route, then reverse it.</p>
       <div class="vz-flow"><span class="vz-step">destinations sorted per airport</span><span class="vz-arr">&rarr;</span><span class="vz-step">walk the smallest next hop</span><span class="vz-arr">&rarr;</span><span class="vz-step">stuck &rarr; pop onto route</span><span class="vz-arr">&rarr;</span><span class="vz-step win">reverse &rarr; itinerary</span></div>
     </div>
+    ===
+    8-12 | Sort each airport's destinations (descending, so pop = smallest).
+    ===
+    13-14 | Hierholzer walk starting at JFK.
+    ===
+    15-20 | Take the smallest next hop; when stuck, pop onto the route.
+    ===
+    21-23 | Reverse to get the itinerary.
   source: "NeetCode 150 · Advanced Graphs"
   tags: [rust, neetcode, advanced-graphs]
   tests: |
@@ -124,6 +132,16 @@
       <p>Prim's MST: grow a tree from one point, each step pulling the <b>cheapest edge</b> (via a min-heap) to a point not yet in the tree.</p>
       <div class="vz-flow"><span class="vz-step">start tree at one point</span><span class="vz-arr">&rarr;</span><span class="vz-step">min-heap of edge costs</span><span class="vz-arr">&rarr;</span><span class="vz-step">add cheapest edge to a new point</span><span class="vz-arr">&rarr;</span><span class="vz-step win">until all connected</span></div>
     </div>
+    ===
+    11-14 | Prim's MST: start the tree at point 0.
+    ===
+    15 | Pull the cheapest edge to a new point.
+    ===
+    16-21 | Skip points already in the tree.
+    ===
+    22-28 | Offer edges to all points not yet connected.
+    ===
+    29-30 | Sum of the chosen edge costs.
   source: "NeetCode 150 · Advanced Graphs"
   tags: [rust, neetcode, advanced-graphs]
   tests: |
@@ -191,6 +209,14 @@
       <p>Dijkstra from k: a min-heap pops the <b>closest unsettled node</b> and relaxes its edges. The whole network is informed when the farthest node is — so take the max distance (or &minus;1).</p>
       <div class="vz-flow"><span class="vz-step">min-heap by distance</span><span class="vz-arr">&rarr;</span><span class="vz-step">pop closest, relax edges</span><span class="vz-arr">&rarr;</span><span class="vz-step">settle each node</span><span class="vz-arr">&rarr;</span><span class="vz-step win">answer = max distance</span></div>
     </div>
+    ===
+    10-12 | Dijkstra from k: distances start infinite, source at 0.
+    ===
+    13-17 | Pop the closest unsettled node.
+    ===
+    18-23 | Relax its outgoing edges.
+    ===
+    24-30 | All reached when the farthest is -> take the max (or -1).
   source: "NeetCode 150 · Advanced Graphs"
   tags: [rust, neetcode, advanced-graphs]
   tests: |
@@ -261,6 +287,12 @@
       <p>Dijkstra where a path's cost is the <b>maximum elevation</b> along it. The min-heap always expands the cell reachable at the lowest water level, so the first time the goal pops, that's the answer.</p>
       <div class="vz-flow"><span class="vz-step">min-heap by water level</span><span class="vz-arr">&rarr;</span><span class="vz-step">expand lowest-level cell</span><span class="vz-arr">&rarr;</span><span class="vz-step">cost = max elevation so far</span><span class="vz-arr">&rarr;</span><span class="vz-step win">goal pops &rarr; answer</span></div>
     </div>
+    ===
+    8-10 | Min-heap keyed by water level needed; start top-left.
+    ===
+    11-16 | First time the goal pops, that level is the answer.
+    ===
+    17-34 | A move's cost is the max of the path so far and the new cell.
   source: "NeetCode 150 · Advanced Graphs"
   tags: [rust, neetcode, advanced-graphs]
   tests: |
@@ -357,6 +389,16 @@
       <p>Each adjacent word pair gives one ordering edge from their <b>first differing letter</b>. Topologically sort the letter graph (Kahn); a leftover cycle (or a prefix after its longer word) means invalid.</p>
       <div class="vz-flow"><span class="vz-step">compare adjacent words</span><span class="vz-arr">&rarr;</span><span class="vz-step">first diff &rarr; ordering edge</span><span class="vz-arr">&rarr;</span><span class="vz-step">topological-sort the letters</span><span class="vz-arr">&rarr;</span><span class="vz-step win">cycle &rarr; invalid</span></div>
     </div>
+    ===
+    6-17 | Register every letter as a node.
+    ===
+    18-28 | Each adjacent word pair gives one edge from the first differing letter.
+    ===
+    29-32 | A longer word before its own prefix is invalid.
+    ===
+    33-48 | Topological sort (Kahn) from the indegree-0 letters.
+    ===
+    49-54 | All letters ordered -> result; a leftover cycle -> empty.
   source: "NeetCode 150 · Advanced Graphs"
   tags: [rust, neetcode, advanced-graphs]
   tests: |
@@ -412,6 +454,14 @@
       <p>Bellman-Ford bounded to <b>k+1 rounds</b>. Relax against a snapshot of last round's distances, so each round adds at most one more edge — capping the hop count.</p>
       <div class="vz-flow"><span class="vz-step">k+1 relaxation rounds</span><span class="vz-arr">&rarr;</span><span class="vz-step">relax vs last round's snapshot</span><span class="vz-arr">&rarr;</span><span class="vz-step">&le; 1 new edge per round</span><span class="vz-arr">&rarr;</span><span class="vz-step win">cheapest within k stops</span></div>
     </div>
+    ===
+    3 | Bellman-Ford: source distance 0, the rest infinite.
+    ===
+    4 | Do k+1 rounds (at most k stops = k+1 edges).
+    ===
+    5-12 | Relax against last round's snapshot so each round adds one edge.
+    ===
+    13-18 | Cheapest price within k stops, or -1.
   source: "NeetCode 150 · Advanced Graphs"
   tags: [rust, neetcode, advanced-graphs]
   tests: |

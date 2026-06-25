@@ -37,6 +37,14 @@
       <p>Each opener must be closed by its match in <b>reverse order</b> — exactly stack (last-in-first-out) behaviour. Push the expected closer on an opener; every closer must equal the top.</p>
       <div class="vz-flow"><span class="vz-step">opener → push its closer</span><span class="vz-arr">→</span><span class="vz-step">closer → must equal top</span><span class="vz-arr">→</span><span class="vz-step win">empty at end → valid</span></div>
     </div>
+    ===
+    2-4 | Stack of expected closing brackets.
+    ===
+    5-8 | On an opener, push the closer we expect.
+    ===
+    9-14 | On a closer, it must match the top of the stack.
+    ===
+    15-16 | Valid iff nothing is left open.
   source: "NeetCode 150 · Stack"
   tags: [rust, neetcode, stack]
   tests: |
@@ -124,6 +132,14 @@
       <p>Carry the running minimum <b>alongside</b> the data: a parallel stack whose top is min(new value, previous min), so get_min is O(1).</p>
       <div class="vz-flow"><span class="vz-step">push the value</span><span class="vz-arr">→</span><span class="vz-step">also push min(value, prev min)</span><span class="vz-arr">→</span><span class="vz-step win">get_min = top of mins</span></div>
     </div>
+    ===
+    14 | push: store the value and the running minimum together.
+    ===
+    15-22 | That minimum is min(new value, previous min).
+    ===
+    23-31 | pop: remove from both the value and min stacks.
+    ===
+    32-35 | get_min / top: just peek the relevant stack -- all O(1).
   source: "NeetCode 150 · Stack"
   tags: [rust, neetcode, stack]
   tests: |
@@ -179,6 +195,16 @@
       <p>Postfix evaluates with a <b>stack</b>: push numbers, and on an operator pop the two operands (second popped is the left side), apply it, and push the result.</p>
       <div class="vz-flow"><span class="vz-step">number → push</span><span class="vz-arr">→</span><span class="vz-step">operator → pop two</span><span class="vz-arr">→</span><span class="vz-step">apply, push result</span><span class="vz-arr">→</span><span class="vz-step win">final value = answer</span></div>
     </div>
+    ===
+    2-5 | A stack of operands.
+    ===
+    6-7 | On an operator, pop the two operands (b is the right-hand side).
+    ===
+    8-14 | Apply the operator and push the result.
+    ===
+    15-17 | A plain number is just pushed.
+    ===
+    18-19 | The final value on the stack is the answer.
   source: "NeetCode 150 · Stack"
   tags: [rust, neetcode, stack]
   tests: |
@@ -232,6 +258,14 @@
       <p>Build strings by choosing '(' while <b>opens remain</b> and ')' only while <b>closes trail opens</b> — that keeps every prefix valid. Backtrack over the two choices.</p>
       <div class="vz-flow"><span class="vz-step">add &#x27;(&#x27; if opens &lt; n</span><span class="vz-arr">→</span><span class="vz-step">add &#x27;)&#x27; if closes &lt; opens</span><span class="vz-arr">→</span><span class="vz-step">full length → record</span><span class="vz-arr">→</span><span class="vz-step win">backtrack</span></div>
     </div>
+    ===
+    4-8 | Build strings recursively, starting empty.
+    ===
+    9-12 | A full-length string is one valid combination.
+    ===
+    13-17 | Add '(' while opens remain.
+    ===
+    18-23 | Add ')' only while closes trail opens (keeps it valid).
   source: "NeetCode 150 · Stack"
   tags: [rust, neetcode, stack]
   tests: |
@@ -285,6 +319,16 @@
       <p>Keep a stack of days still <b>waiting for a warmer one</b> (decreasing temps). When today is warmer, pop each waiting day and record how many days it waited.</p>
       <div class="vz-flow"><span class="vz-step">stack of cooler days</span><span class="vz-arr">→</span><span class="vz-step">today warmer? pop &amp; record gap</span><span class="vz-arr">→</span><span class="vz-step win">push today</span></div>
     </div>
+    ===
+    3 | Stack of days still waiting for a warmer one (decreasing temps).
+    ===
+    4-5 | Scan each day.
+    ===
+    6-12 | Today is warmer -> pop waiting days and record how long they waited.
+    ===
+    13-14 | Today now waits too.
+    ===
+    15-16 | Days-to-warmer for each day.
   source: "NeetCode 150 · Stack"
   tags: [rust, neetcode, stack]
   tests: |
@@ -334,6 +378,14 @@
       <p>Sort cars from <b>nearest the target backwards</b>. A car that would arrive later than the fleet ahead of it starts a new fleet; otherwise it catches up and merges.</p>
       <div class="vz-flow"><span class="vz-step">sort by position, nearest first</span><span class="vz-arr">→</span><span class="vz-step">compute each arrival time</span><span class="vz-arr">→</span><span class="vz-step">later than leader → new fleet</span><span class="vz-arr">→</span><span class="vz-step win">else merge</span></div>
     </div>
+    ===
+    4-7 | Sort cars from nearest the target backwards.
+    ===
+    8 | Compute each car's arrival time.
+    ===
+    9 | Arrives later than the fleet ahead -> new fleet; else it merges.
+    ===
+    10-15 | Number of fleets.
   source: "NeetCode 150 · Stack"
   tags: [rust, neetcode, stack]
   tests: |
@@ -385,6 +437,16 @@
       <p>Each bar's rectangle extends until a <b>shorter bar</b> stops it. A monotonic (increasing) stack closes a bar's rectangle the moment a shorter bar appears, stretching the new bar's start back to where it could begin.</p>
       <div class="vz-flow"><span class="vz-step">increasing stack of bars</span><span class="vz-arr">→</span><span class="vz-step">shorter bar → pop &amp; close rectangle</span><span class="vz-arr">→</span><span class="vz-step">extend start back</span><span class="vz-arr">→</span><span class="vz-step win">track max area</span></div>
     </div>
+    ===
+    2-5 | Increasing stack of (start index, height).
+    ===
+    6-9 | A shorter bar arrives -> pop taller bars and close their rectangles.
+    ===
+    10-17 | Extend the new bar's start back to where the popped bar began.
+    ===
+    18 | Bars left on the stack reach the end.
+    ===
+    19-22 | Largest rectangle area.
   source: "NeetCode 150 · Stack"
   tags: [rust, neetcode, stack]
   tests: |

@@ -54,6 +54,12 @@
       <p>Scan for an unvisited land cell, then <b>flood-fill</b> (DFS) the whole island to water so it's counted once. Each fresh flood is one more island.</p>
       <div class="vz-flow"><span class="vz-step">scan for a '1'</span><span class="vz-arr">&rarr;</span><span class="vz-step">flood-fill the island to '0'</span><span class="vz-arr">&rarr;</span><span class="vz-step">+1 island</span><span class="vz-arr">&rarr;</span><span class="vz-step win">keep scanning</span></div>
     </div>
+    ===
+    7-8 | Find an unvisited land cell -> a new island.
+    ===
+    9-19 | Flood-fill the whole island to water so it's counted once.
+    ===
+    20-33 | sink: mark land visited, then spread to 4 neighbours.
   source: "NeetCode 150 · Graphs"
   tags: [rust, neetcode, graphs]
   tests: |
@@ -128,6 +134,12 @@
       <p>Same flood-fill, but the DFS <b>returns the component's size</b> (1 + its neighbours); track the running maximum.</p>
       <div class="vz-flow"><span class="vz-step">flood-fill each island</span><span class="vz-arr">&rarr;</span><span class="vz-step">DFS returns its size</span><span class="vz-arr">&rarr;</span><span class="vz-step win">track the maximum</span></div>
     </div>
+    ===
+    8-18 | Flood-fill each island, tracking the largest.
+    ===
+    19 | area: mark visited...
+    ===
+    20-34 | ...count this cell plus all connected neighbours.
   source: "NeetCode 150 · Graphs"
   tags: [rust, neetcode, graphs]
   tests: |
@@ -163,6 +175,8 @@
       <p>With the graph as an <b>adjacency list</b>, a deep copy is just a fresh owned copy of every neighbour list — indices already encode the structure.</p>
       <div class="vz-flow"><span class="vz-step">graph as adjacency list</span><span class="vz-arr">&rarr;</span><span class="vz-step">copy every neighbour list</span><span class="vz-arr">&rarr;</span><span class="vz-step win">indices preserve the shape</span></div>
     </div>
+    ===
+    2-3 | As an adjacency list, a deep copy is just an owned copy of the neighbour lists.
   source: "NeetCode 150 · Graphs"
   tags: [rust, neetcode, graphs]
   tests: |
@@ -231,6 +245,12 @@
       <p>Multi-source BFS: seed the queue with <b>every gate</b> at distance 0. BFS expands in layers, so each room is first reached via its nearest gate.</p>
       <div class="vz-flow"><span class="vz-step">queue all gates (dist 0)</span><span class="vz-arr">&rarr;</span><span class="vz-step">BFS outward in layers</span><span class="vz-arr">&rarr;</span><span class="vz-step">first reach = nearest gate</span><span class="vz-arr">&rarr;</span><span class="vz-step win">fill each room once</span></div>
     </div>
+    ===
+    9-13 | Seed the BFS queue with every gate (distance 0).
+    ===
+    14-16 | BFS outward in layers.
+    ===
+    17-35 | First time a room is reached is via its nearest gate.
   source: "NeetCode 150 · Graphs"
   tags: [rust, neetcode, graphs]
   tests: |
@@ -325,6 +345,14 @@
       <p>Multi-source BFS where each layer is <b>one minute</b>: drain the whole current queue before ticking the clock. Track the fresh count; leftovers mean &minus;1.</p>
       <div class="vz-flow"><span class="vz-step">queue all rotten (minute 0)</span><span class="vz-arr">&rarr;</span><span class="vz-step">rot neighbours layer by layer</span><span class="vz-arr">&rarr;</span><span class="vz-step">tick after each layer</span><span class="vz-arr">&rarr;</span><span class="vz-step win">fresh left &rarr; &minus;1</span></div>
     </div>
+    ===
+    11-17 | Queue all rotten oranges; count the fresh ones.
+    ===
+    18 | Each loop is one minute...
+    ===
+    19-42 | ...drain the whole current layer, rotting fresh neighbours.
+    ===
+    43-48 | All rotted -> minutes; leftovers -> -1.
   source: "NeetCode 150 · Graphs"
   tags: [rust, neetcode, graphs]
   tests: |
@@ -404,6 +432,12 @@
       <p>Instead of testing every cell, flood <b>inward from each ocean's border</b>, climbing to equal-or-higher neighbours. A cell reaches both oceans iff both floods marked it.</p>
       <div class="vz-flow"><span class="vz-step">flood inward from each ocean</span><span class="vz-arr">&rarr;</span><span class="vz-step">climb to &ge; neighbours</span><span class="vz-arr">&rarr;</span><span class="vz-step">mark reachable cells</span><span class="vz-arr">&rarr;</span><span class="vz-step win">overlap = answer</span></div>
     </div>
+    ===
+    10-19 | Flood inward from each ocean's border.
+    ===
+    20-27 | Cells reached by both oceans are the answer.
+    ===
+    28-46 | flow: climb to equal-or-higher neighbours (reverse of water flow).
   source: "NeetCode 150 · Graphs"
   tags: [rust, neetcode, graphs]
   tests: |
@@ -492,6 +526,12 @@
       <p>Invert it: the O's that <b>survive</b> are those reachable from a border O. Flood those to a temporary mark, then sweep — temp &rarr; O, every other O &rarr; X.</p>
       <div class="vz-flow"><span class="vz-step">flood border O's to a temp</span><span class="vz-arr">&rarr;</span><span class="vz-step">sweep the board</span><span class="vz-arr">&rarr;</span><span class="vz-step">temp &rarr; O</span><span class="vz-arr">&rarr;</span><span class="vz-step win">other O &rarr; X</span></div>
     </div>
+    ===
+    7-16 | Flood every border-connected 'O' to a temporary 'S'.
+    ===
+    17-24 | Then sweep: 'S' -> 'O' (survivors), every other 'O' -> 'X'.
+    ===
+    25-42 | mark: DFS the connected region of border O's.
   source: "NeetCode 150 · Graphs"
   tags: [rust, neetcode, graphs]
   tests: |
@@ -554,6 +594,14 @@
       <p>Topological sort (Kahn's): repeatedly remove a course with <b>no remaining prerequisites</b>. A cycle leaves some courses stuck, so fewer than all get processed.</p>
       <div class="vz-flow"><span class="vz-step">build prereq graph + indegrees</span><span class="vz-arr">&rarr;</span><span class="vz-step">take indegree-0 courses</span><span class="vz-arr">&rarr;</span><span class="vz-step">decrement their neighbours</span><span class="vz-arr">&rarr;</span><span class="vz-step win">all taken? &rarr; true</span></div>
     </div>
+    ===
+    4-7 | Build the prerequisite graph and indegrees.
+    ===
+    8-9 | Start with courses that have no prerequisites.
+    ===
+    10-18 | Remove them, decrementing dependents (Kahn's).
+    ===
+    19-20 | All taken -> no cycle -> true.
   source: "NeetCode 150 · Graphs"
   tags: [rust, neetcode, graphs]
   tests: |
@@ -613,6 +661,14 @@
       <p>Same Kahn's topo-sort, but <b>emit</b> each course as it reaches indegree 0; that sequence is a valid order (empty if a cycle blocks some).</p>
       <div class="vz-flow"><span class="vz-step">indegree-0 into a queue</span><span class="vz-arr">&rarr;</span><span class="vz-step">emit, decrement neighbours</span><span class="vz-arr">&rarr;</span><span class="vz-step">new zeros enqueue</span><span class="vz-arr">&rarr;</span><span class="vz-step win">all emitted &rarr; order</span></div>
     </div>
+    ===
+    6-9 | Build the graph and indegrees.
+    ===
+    10-13 | Queue the indegree-0 courses.
+    ===
+    14-21 | Emit each as it's freed, decrementing dependents.
+    ===
+    22-27 | All emitted -> a valid order; else a cycle -> empty.
   source: "NeetCode 150 · Graphs"
   tags: [rust, neetcode, graphs]
   tests: |
@@ -672,6 +728,14 @@
       <p>A tree on n nodes has exactly <b>n&minus;1 edges and no cycle</b>. Check the count, then union-find: an edge joining two already-connected nodes is a cycle.</p>
       <div class="vz-flow"><span class="vz-step">edges == n&minus;1?</span><span class="vz-arr">&rarr;</span><span class="vz-step">union each edge's endpoints</span><span class="vz-arr">&rarr;</span><span class="vz-step">already connected &rarr; cycle</span><span class="vz-arr">&rarr;</span><span class="vz-step win">no cycle &rarr; tree</span></div>
     </div>
+    ===
+    2-4 | A tree on n nodes has exactly n-1 edges.
+    ===
+    5-8 | Union-find: each node starts its own set.
+    ===
+    9-13 | An edge joining two already-connected nodes is a cycle.
+    ===
+    14-29 | n-1 edges and no cycle -> it's a tree.
   source: "NeetCode 150 · Graphs"
   tags: [rust, neetcode, graphs]
   tests: |
@@ -728,6 +792,12 @@
       <p>Start with <b>n singletons</b>; every edge that unites two different sets drops the component count by one.</p>
       <div class="vz-flow"><span class="vz-step">n singletons</span><span class="vz-arr">&rarr;</span><span class="vz-step">union each edge</span><span class="vz-arr">&rarr;</span><span class="vz-step">united two sets &rarr; count &minus; 1</span><span class="vz-arr">&rarr;</span><span class="vz-step win">remaining count</span></div>
     </div>
+    ===
+    3-6 | Start with n separate components.
+    ===
+    7-11 | Each edge uniting two sets drops the count by one.
+    ===
+    12-27 | What remains is the component count.
   source: "NeetCode 150 · Graphs"
   tags: [rust, neetcode, graphs]
   tests: |
@@ -785,6 +855,12 @@
       <p>Union nodes edge by edge; the <b>first edge whose endpoints are already connected</b> closes the cycle — that's the one to remove.</p>
       <div class="vz-flow"><span class="vz-step">union edges in order</span><span class="vz-arr">&rarr;</span><span class="vz-step">endpoints already joined?</span><span class="vz-arr">&rarr;</span><span class="vz-step">that edge closes a cycle</span><span class="vz-arr">&rarr;</span><span class="vz-step win">return it</span></div>
     </div>
+    ===
+    3-6 | Union-find over the 1-indexed nodes.
+    ===
+    7 | The first edge whose endpoints are already connected closes the cycle.
+    ===
+    8-27 | That edge is the redundant one.
   source: "NeetCode 150 · Graphs"
   tags: [rust, neetcode, graphs]
   tests: |
@@ -857,6 +933,14 @@
       <p>BFS over the implicit graph where words <b>one letter apart</b> are adjacent. Generate neighbours by trying each of 26 letters at every position, consuming each from an unvisited set. Levels = path length.</p>
       <div class="vz-flow"><span class="vz-step">BFS from the begin word</span><span class="vz-arr">&rarr;</span><span class="vz-step">swap each letter a&ndash;z</span><span class="vz-arr">&rarr;</span><span class="vz-step">new word in the set? enqueue</span><span class="vz-arr">&rarr;</span><span class="vz-step win">level count = length</span></div>
     </div>
+    ===
+    4-12 | BFS over words; 'unused' is the not-yet-visited set.
+    ===
+    13-14 | Process one BFS level (= one transformation step).
+    ===
+    15-20 | Reached the target -> return the level count.
+    ===
+    21-37 | Neighbours = words one letter different, taken from the set.
   source: "NeetCode 150 · Graphs"
   tags: [rust, neetcode, graphs]
   tests: |

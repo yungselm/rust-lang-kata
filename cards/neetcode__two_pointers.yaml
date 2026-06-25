@@ -38,6 +38,16 @@
       <p>Reading the same both ways means the <b>ends match all the way inward</b>. Keep only letters and digits, lowercase them, then compare one pointer from each end stepping toward the middle.</p>
       <div class="vz-flow"><span class="vz-step">keep alphanumerics, lowercase</span><span class="vz-arr">→</span><span class="vz-step">compare the two ends</span><span class="vz-arr">→</span><span class="vz-step">step inward</span><span class="vz-arr">→</span><span class="vz-step win">any mismatch → false</span></div>
     </div>
+    ===
+    2-6 | Keep only letters/digits and lowercase them.
+    ===
+    7-8 | A pointer at each end.
+    ===
+    9-10 | Walk inward comparing the two ends.
+    ===
+    11-15 | Any mismatch => not a palindrome.
+    ===
+    16-17 | All pairs matched.
   source: "NeetCode 150 · Two Pointers"
   tags: [rust, neetcode, two-pointers]
   tests: |
@@ -84,6 +94,16 @@
       <p>Because the array is <b>sorted</b>, a sum that's too small needs a bigger left value and a sum that's too big needs a smaller right value. Squeeze two pointers in from both ends.</p>
       <div class="vz-flow"><span class="vz-step">lo at start, hi at end</span><span class="vz-arr">→</span><span class="vz-step">sum &lt; target → lo++</span><span class="vz-arr">→</span><span class="vz-step">sum &gt; target → hi−−</span><span class="vz-arr">→</span><span class="vz-step win">sum == target → found</span></div>
     </div>
+    ===
+    5-7 | Start a pointer at each end of the sorted slice.
+    ===
+    8-9 | Sum the two ends.
+    ===
+    10 | Match -> return the pair.
+    ===
+    11-14 | Too small -> move lo up; too big -> move hi down.
+    ===
+    15-16 | Pointers crossed with no match.
   source: "NeetCode 150 · Two Pointers"
   tags: [rust, neetcode, two-pointers]
   tests: |
@@ -146,6 +166,18 @@
       <p>Fix one number and the rest becomes <b>Two-Sum on a sorted array</b>. Sort first, then for each value two-pointer the remainder to hit −value, skipping equal neighbours to avoid duplicate triplets.</p>
       <div class="vz-flow"><span class="vz-step">sort</span><span class="vz-arr">→</span><span class="vz-step">fix nums[i]</span><span class="vz-arr">→</span><span class="vz-step">two-pointer rest for −nums[i]</span><span class="vz-arr">→</span><span class="vz-step win">skip duplicates</span></div>
     </div>
+    ===
+    3-5 | Sort so we can two-pointer and skip duplicates.
+    ===
+    6 | Fix the first number of the triplet.
+    ===
+    7-9 | Skip a repeated first number to avoid duplicate triplets.
+    ===
+    10-17 | Two-pointer the rest looking for sum 0.
+    ===
+    18-30 | On a hit, record it, then skip duplicate lo/hi values.
+    ===
+    31-32 | All unique zero-sum triplets.
   source: "NeetCode 150 · Two Pointers"
   tags: [rust, neetcode, two-pointers]
   tests: |
@@ -194,6 +226,16 @@
       <p>Area is <b>width × the shorter wall</b>. Start at the widest pair; moving the taller wall can't help (width only shrinks, height is capped by the shorter), so always move the shorter wall inward.</p>
       <div class="vz-flow"><span class="vz-step">start widest pair</span><span class="vz-arr">→</span><span class="vz-step">area = shorter × width</span><span class="vz-arr">→</span><span class="vz-step">move the shorter wall in</span><span class="vz-arr">→</span><span class="vz-step win">track best</span></div>
     </div>
+    ===
+    5-8 | Start at the widest pair of lines.
+    ===
+    9 | Area is the shorter wall x the width.
+    ===
+    10 | Keep the best area.
+    ===
+    11-16 | Move the shorter wall inward -- the only way to do better.
+    ===
+    17-18 | Largest area found.
   source: "NeetCode 150 · Two Pointers"
   tags: [rust, neetcode, two-pointers]
   tests: |
@@ -246,6 +288,16 @@
       <p>Water above a bar is <b>min(highest-left, highest-right) − its height</b>. Advance from whichever side has the smaller running max, because that side's wall is the binding limit.</p>
       <div class="vz-flow"><span class="vz-step">two pointers + running maxes</span><span class="vz-arr">→</span><span class="vz-step">move the smaller-max side</span><span class="vz-arr">→</span><span class="vz-step">add wall − height</span><span class="vz-arr">→</span><span class="vz-step win">sum the water</span></div>
     </div>
+    ===
+    7-9 | Track the tallest wall seen from each side.
+    ===
+    10 | Advance from the side with the smaller running max.
+    ===
+    11-16 | Left is the limit: step right, update its max, add trapped water.
+    ===
+    17 | Otherwise the right side is the limit -- mirror it.
+    ===
+    18-22 | Total trapped water.
   source: "NeetCode 150 · Two Pointers"
   tags: [rust, neetcode, two-pointers]
   tests: |

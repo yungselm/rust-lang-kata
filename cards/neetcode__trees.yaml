@@ -44,6 +44,12 @@
       <p>Mirror the tree: at every node <b>swap its two children</b>, recursing into each side.</p>
       <div class="vz-flow"><span class="vz-step">at each node</span><span class="vz-arr">&rarr;</span><span class="vz-step">invert left &amp; right subtrees</span><span class="vz-arr">&rarr;</span><span class="vz-step win">swap the two children</span></div>
     </div>
+    ===
+    9 | For each node (None stays None)...
+    ===
+    10-11 | ...recurse into both subtrees...
+    ===
+    12-16 | ...and store them back swapped.
   source: "NeetCode 150 · Trees"
   tags: [rust, neetcode, trees]
   tests: |
@@ -102,6 +108,10 @@
       <p>A node's depth is <b>1 + the deeper of its two subtrees</b>; an empty tree is 0. Recurse.</p>
       <div class="vz-flow"><span class="vz-step">empty &rarr; 0</span><span class="vz-arr">&rarr;</span><span class="vz-step">depth = 1 + max(left, right)</span><span class="vz-arr">&rarr;</span><span class="vz-step win">recurse down</span></div>
     </div>
+    ===
+    10 | Empty tree has depth 0.
+    ===
+    11-13 | Otherwise 1 + the deeper of the two subtrees.
   source: "NeetCode 150 · Trees"
   tags: [rust, neetcode, trees]
   tests: |
@@ -172,6 +182,16 @@
       <p>The longest path that <b>bends at a node</b> is leftHeight + rightHeight (in edges). One post-order pass returns each subtree's height while tracking the best diameter seen.</p>
       <div class="vz-flow"><span class="vz-step">post-order: subtree heights</span><span class="vz-arr">&rarr;</span><span class="vz-step">bend = left h + right h</span><span class="vz-arr">&rarr;</span><span class="vz-step win">track the max over all nodes</span></div>
     </div>
+    ===
+    10-13 | DFS returns (height, best diameter) for a subtree.
+    ===
+    14-15 | Recurse into both children.
+    ===
+    16 | Height is 1 + the taller child.
+    ===
+    17-21 | Best path bending here = left height + right height.
+    ===
+    22-23 | Answer is the best diameter overall.
   source: "NeetCode 150 · Trees"
   tags: [rust, neetcode, trees]
   tests: |
@@ -243,6 +263,14 @@
       <p>Compute heights bottom-up, but return a sentinel <b>&minus;1</b> the instant a subtree is unbalanced so the whole check short-circuits.</p>
       <div class="vz-flow"><span class="vz-step">height of each subtree</span><span class="vz-arr">&rarr;</span><span class="vz-step">|left &minus; right| &gt; 1 &rarr; &minus;1</span><span class="vz-arr">&rarr;</span><span class="vz-step">propagate &minus;1 upward</span><span class="vz-arr">&rarr;</span><span class="vz-step win">never &minus;1 &rarr; balanced</span></div>
     </div>
+    ===
+    10-13 | Return the height, or -1 if any subtree is unbalanced.
+    ===
+    14-15 | Get both child heights.
+    ===
+    16-23 | Propagate -1 if a child is unbalanced or they differ by >1.
+    ===
+    24-25 | Balanced iff we never hit -1.
   source: "NeetCode 150 · Trees"
   tags: [rust, neetcode, trees]
   tests: |
@@ -315,6 +343,12 @@
       <p>Compare the two trees <b>node-for-node</b>: both empty is equal; both present needs equal values and equal subtrees; anything else differs.</p>
       <div class="vz-flow"><span class="vz-step">compare the pair of nodes</span><span class="vz-arr">&rarr;</span><span class="vz-step">both empty &rarr; equal</span><span class="vz-arr">&rarr;</span><span class="vz-step">values + subtrees equal?</span><span class="vz-arr">&rarr;</span><span class="vz-step win">mismatch &rarr; false</span></div>
     </div>
+    ===
+    13 | Both empty -> equal.
+    ===
+    14-18 | Both present -> equal values and equal subtrees.
+    ===
+    19-21 | One present, one empty -> different.
   source: "NeetCode 150 · Trees"
   tags: [rust, neetcode, trees]
   tests: |
@@ -389,6 +423,10 @@
       <p>At each node of root, either the subtree rooted <b>here</b> equals sub, or sub lives in one of the children. Reuse a whole-tree equality check.</p>
       <div class="vz-flow"><span class="vz-step">at each root node</span><span class="vz-arr">&rarr;</span><span class="vz-step">this subtree == sub?</span><span class="vz-arr">&rarr;</span><span class="vz-step win">else check the children</span></div>
     </div>
+    ===
+    13-14 | An empty root matches only an empty sub.
+    ===
+    15-20 | Either the subtree here equals sub, or sub lives in a child.
   source: "NeetCode 150 · Trees"
   tags: [rust, neetcode, trees]
   tests: |
@@ -465,6 +503,14 @@
       <p>Use the BST order: if both targets are smaller go left, if both larger go right; the <b>first node where they split</b> (or equals one) is the lowest common ancestor.</p>
       <div class="vz-flow"><span class="vz-step">both &lt; node &rarr; go left</span><span class="vz-arr">&rarr;</span><span class="vz-step">both &gt; node &rarr; go right</span><span class="vz-arr">&rarr;</span><span class="vz-step win">they split &rarr; that's the LCA</span></div>
     </div>
+    ===
+    13-14 | Walk down from the root.
+    ===
+    15-16 | Both smaller -> go left.
+    ===
+    17-18 | Both larger -> go right.
+    ===
+    19-24 | They split here (or one equals) -> this is the LCA.
   source: "NeetCode 150 · Trees"
   tags: [rust, neetcode, trees]
   tests: |
@@ -548,6 +594,14 @@
       <p>BFS with a queue; <b>snapshot the queue size</b> to know how many nodes are on the current level, drain exactly that many, then descend.</p>
       <div class="vz-flow"><span class="vz-step">queue starts with root</span><span class="vz-arr">&rarr;</span><span class="vz-step">process one level (queue size)</span><span class="vz-arr">&rarr;</span><span class="vz-step">enqueue children</span><span class="vz-arr">&rarr;</span><span class="vz-step win">collect per level</span></div>
     </div>
+    ===
+    12-17 | BFS queue, seeded with the root.
+    ===
+    18-19 | Drain exactly the nodes on the current level.
+    ===
+    20-27 | Collect this level's values, enqueue children.
+    ===
+    28-31 | One row per depth.
   source: "NeetCode 150 · Trees"
   tags: [rust, neetcode, trees]
   tests: |
@@ -627,6 +681,14 @@
       <p>BFS level by level; the <b>last node dequeued on each level</b> is the one visible from the right.</p>
       <div class="vz-flow"><span class="vz-step">BFS each level</span><span class="vz-arr">&rarr;</span><span class="vz-step">take the last node per level</span><span class="vz-arr">&rarr;</span><span class="vz-step win">collect &rarr; right-side view</span></div>
     </div>
+    ===
+    12-16 | BFS level by level.
+    ===
+    17-19 | Number of nodes on this level.
+    ===
+    20 | The last node dequeued on each level is visible from the right.
+    ===
+    21-32 | The right-side view.
   source: "NeetCode 150 · Trees"
   tags: [rust, neetcode, trees]
   tests: |
@@ -700,6 +762,14 @@
       <p>Carry the <b>maximum value seen on the path</b> from the root downward; a node is 'good' when it is at least that running max.</p>
       <div class="vz-flow"><span class="vz-step">pass max-so-far down</span><span class="vz-arr">&rarr;</span><span class="vz-step">node &ge; max &rarr; good</span><span class="vz-arr">&rarr;</span><span class="vz-step">update max, recurse</span><span class="vz-arr">&rarr;</span><span class="vz-step win">count the good ones</span></div>
     </div>
+    ===
+    9-12 | Carry the max value seen on the path down.
+    ===
+    13 | This node is 'good' if it's >= that running max.
+    ===
+    14-20 | Update the max and recurse into both children.
+    ===
+    21-23 | Start the threshold at the root's own value.
   source: "NeetCode 150 · Trees"
   tags: [rust, neetcode, trees]
   tests: |
@@ -773,6 +843,14 @@
       <p>Each node must fall inside an open <b>(lo, hi)</b> range. Going left tightens the upper bound to the node's value, going right tightens the lower bound.</p>
       <div class="vz-flow"><span class="vz-step">node inside (lo, hi)?</span><span class="vz-arr">&rarr;</span><span class="vz-step">go left &rarr; hi = node</span><span class="vz-arr">&rarr;</span><span class="vz-step">go right &rarr; lo = node</span><span class="vz-arr">&rarr;</span><span class="vz-step win">any violation &rarr; false</span></div>
     </div>
+    ===
+    9-12 | Each node must lie inside an open (lo, hi) range.
+    ===
+    13-15 | Out of range -> not a BST.
+    ===
+    16-19 | Left tightens the upper bound; right tightens the lower.
+    ===
+    20-21 | Start with an unbounded range.
   source: "NeetCode 150 · Trees"
   tags: [rust, neetcode, trees]
   tests: |
@@ -843,6 +921,14 @@
       <p>An <b>in-order</b> traversal of a BST visits values in sorted order, so the k-th node visited is the answer; stop as soon as a counter reaches k.</p>
       <div class="vz-flow"><span class="vz-step">in-order walk (sorted)</span><span class="vz-arr">&rarr;</span><span class="vz-step">count visited nodes</span><span class="vz-arr">&rarr;</span><span class="vz-step win">k-th visited &rarr; answer</span></div>
     </div>
+    ===
+    10-11 | An in-order traversal visits values in sorted order.
+    ===
+    12-14 | Recurse left first.
+    ===
+    15-21 | Count each visited node; at zero we've found the k-th.
+    ===
+    22-23 | Start with remaining = k.
   source: "NeetCode 150 · Trees"
   tags: [rust, neetcode, trees]
   tests: |
@@ -909,6 +995,12 @@
       <p>Preorder's first value is the <b>root</b>; its position in the inorder array splits the left and right subtrees, which in turn slice the preorder array. Recurse.</p>
       <div class="vz-flow"><span class="vz-step">preorder[0] = root</span><span class="vz-arr">&rarr;</span><span class="vz-step">find it in inorder &rarr; split</span><span class="vz-arr">&rarr;</span><span class="vz-step">slice both arrays</span><span class="vz-arr">&rarr;</span><span class="vz-step win">recurse each side</span></div>
     </div>
+    ===
+    12 | Preorder's first value is the root.
+    ===
+    13-15 | Find it in inorder -> splits left vs right subtrees.
+    ===
+    16-19 | Subtree sizes slice preorder; recurse on each side.
   source: "NeetCode 150 · Trees"
   tags: [rust, neetcode, trees]
   tests: |
@@ -981,6 +1073,14 @@
       <p>Each node returns its best <b>downward</b> path (negative contributions clamped to 0), while we separately track the best 'bent' path that joins both children. The global best is the answer.</p>
       <div class="vz-flow"><span class="vz-step">best downward path per node</span><span class="vz-arr">&rarr;</span><span class="vz-step">clamp negatives to 0</span><span class="vz-arr">&rarr;</span><span class="vz-step">bend = val + left + right</span><span class="vz-arr">&rarr;</span><span class="vz-step win">track the global best</span></div>
     </div>
+    ===
+    15-16 | Best downward path from each child (negatives clamped to 0).
+    ===
+    17 | Path bending here uses both children -> update the global best.
+    ===
+    18-22 | Return the better single branch to the parent.
+    ===
+    23-25 | best ends up holding the answer.
   source: "NeetCode 150 · Trees"
   tags: [rust, neetcode, trees]
   tests: |
@@ -1069,6 +1169,14 @@
       <p>Preorder with an explicit <b>'#'</b> for null children uniquely encodes the tree. Deserializing consumes the same token stream in preorder, rebuilding node, then left, then right.</p>
       <div class="vz-flow"><span class="vz-step">preorder, # for null</span><span class="vz-arr">&rarr;</span><span class="vz-step">join into a string</span><span class="vz-arr">&rarr;</span><span class="vz-step">read tokens back in order</span><span class="vz-arr">&rarr;</span><span class="vz-step win">rebuild node, left, right</span></div>
     </div>
+    ===
+    11-20 | Serialize: preorder, writing '#' for null children.
+    ===
+    21-25 | Join into a comma-separated string.
+    ===
+    26-29 | Deserialize: read tokens back in the same preorder.
+    ===
+    30-37 | '#' is null; otherwise rebuild node, then left, then right.
   source: "NeetCode 150 · Trees"
   tags: [rust, neetcode, trees]
   tests: |

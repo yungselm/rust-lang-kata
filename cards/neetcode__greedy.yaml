@@ -30,6 +30,12 @@
       <p>Kadane's: the best sum <b>ending here</b> is either this element alone or it extended onto the previous run, whichever is larger. Track the running best.</p>
       <div class="vz-flow"><span class="vz-step">best sum ending here</span><span class="vz-arr">&rarr;</span><span class="vz-step">extend run, or restart at n</span><span class="vz-arr">&rarr;</span><span class="vz-step win">keep the maximum</span></div>
     </div>
+    ===
+    2-4 | best = answer so far; cur = best sum ending here.
+    ===
+    5 | Extend the run or restart at n, whichever is larger.
+    ===
+    6-9 | Track the running maximum.
   source: "NeetCode 150 · Greedy"
   tags: [rust, neetcode, greedy]
   tests: |
@@ -69,6 +75,14 @@
       <p>Track the <b>farthest index reachable</b> so far; if the scan ever passes that frontier there's a gap and the end is unreachable.</p>
       <div class="vz-flow"><span class="vz-step">track farthest reach</span><span class="vz-arr">&rarr;</span><span class="vz-step">index past reach &rarr; gap</span><span class="vz-arr">&rarr;</span><span class="vz-step">else extend the reach</span><span class="vz-arr">&rarr;</span><span class="vz-step win">end reachable?</span></div>
     </div>
+    ===
+    2-3 | Track the farthest index reachable so far.
+    ===
+    4-6 | If we're past the frontier, there's a gap -> unreachable.
+    ===
+    7-8 | Otherwise extend the reach.
+    ===
+    9-10 | Reached the end.
   source: "NeetCode 150 · Greedy"
   tags: [rust, neetcode, greedy]
   tests: |
@@ -111,6 +125,14 @@
       <p>BFS by jump <b>levels</b>: scan within the current jump's reach tracking the farthest; when you hit its boundary, commit one more jump and extend.</p>
       <div class="vz-flow"><span class="vz-step">scan within current reach</span><span class="vz-arr">&rarr;</span><span class="vz-step">track the farthest</span><span class="vz-arr">&rarr;</span><span class="vz-step">hit boundary &rarr; +1 jump</span><span class="vz-arr">&rarr;</span><span class="vz-step win">extend to farthest</span></div>
     </div>
+    ===
+    3-6 | cur_end is the boundary of the current jump's reach.
+    ===
+    7 | Track the farthest reachable within this jump.
+    ===
+    8-12 | Hit the boundary -> take one more jump, extend to farthest.
+    ===
+    13-14 | Minimum jumps.
   source: "NeetCode 150 · Greedy"
   tags: [rust, neetcode, greedy]
   tests: |
@@ -159,6 +181,12 @@
       <p>A loop is possible iff <b>total gas &ge; total cost</b>. If the tank ever goes negative at i, no start in start..=i works, so jump the candidate start to i+1.</p>
       <div class="vz-flow"><span class="vz-step">track tank &amp; total diff</span><span class="vz-arr">&rarr;</span><span class="vz-step">tank &lt; 0 &rarr; restart at i+1</span><span class="vz-arr">&rarr;</span><span class="vz-step">total &ge; 0?</span><span class="vz-arr">&rarr;</span><span class="vz-step win">that start works</span></div>
     </div>
+    ===
+    6-8 | Net fuel gained/lost at each station.
+    ===
+    9-13 | Tank goes negative -> no start up to here works; restart at i+1.
+    ===
+    14-19 | A loop is possible iff total gas >= total cost.
   source: "NeetCode 150 · Greedy"
   tags: [rust, neetcode, greedy]
   tests: |
@@ -215,6 +243,14 @@
       <p>A sorted map (BTreeMap) means the <b>smallest remaining card</b> must begin a group. Remove its copies plus the next group_size&minus;1 consecutive values, and repeat.</p>
       <div class="vz-flow"><span class="vz-step">count cards (sorted map)</span><span class="vz-arr">&rarr;</span><span class="vz-step">smallest card starts a group</span><span class="vz-arr">&rarr;</span><span class="vz-step">remove the consecutive run</span><span class="vz-arr">&rarr;</span><span class="vz-step win">missing any &rarr; false</span></div>
     </div>
+    ===
+    5-7 | Size must divide evenly into groups.
+    ===
+    8-11 | Sorted card counts.
+    ===
+    12 | The smallest remaining card must start a group.
+    ===
+    13-26 | Remove n of each consecutive value; missing any -> false.
   source: "NeetCode 150 · Greedy"
   tags: [rust, neetcode, greedy]
   tests: |
@@ -258,6 +294,12 @@
       <p>Ignore any triplet with a component <b>over</b> the target (it would spoil the max). Among the rest, just check each target component is matched exactly by some triplet.</p>
       <div class="vz-flow"><span class="vz-step">drop triplets exceeding target</span><span class="vz-arr">&rarr;</span><span class="vz-step">track components matched exactly</span><span class="vz-arr">&rarr;</span><span class="vz-step">all three matched?</span><span class="vz-arr">&rarr;</span><span class="vz-step win">&rarr; true</span></div>
     </div>
+    ===
+    4-5 | Ignore triplets with any component over the target.
+    ===
+    6-11 | Among the rest, mark which components are hit exactly.
+    ===
+    12-13 | All three matched -> target is reachable.
   source: "NeetCode 150 · Greedy"
   tags: [rust, neetcode, greedy]
   tests: |
@@ -311,6 +353,12 @@
       <p>Record each letter's <b>last occurrence</b>; sweep, extending the current part's end to the furthest last-seen letter inside it. When the scan meets that end, close the part.</p>
       <div class="vz-flow"><span class="vz-step">last index of each letter</span><span class="vz-arr">&rarr;</span><span class="vz-step">extend end to furthest seen</span><span class="vz-arr">&rarr;</span><span class="vz-step">scan reaches end &rarr; cut</span><span class="vz-arr">&rarr;</span><span class="vz-step win">part sizes</span></div>
     </div>
+    ===
+    5-10 | Record each letter's last occurrence.
+    ===
+    11 | Extend the part's end to the furthest last-seen letter inside it.
+    ===
+    12-18 | When the scan reaches that end, cut a part here.
   source: "NeetCode 150 · Greedy"
   tags: [rust, neetcode, greedy]
   tests: |
@@ -367,6 +415,14 @@
       <p>Track the <b>range</b> [low, high] of possible open-paren counts: '*' as ')'/empty lowers low, as '(' raises high. If high &lt; 0 there are too many ')'; valid iff 0 is reachable.</p>
       <div class="vz-flow"><span class="vz-step">track low/high open count</span><span class="vz-arr">&rarr;</span><span class="vz-step">'*' widens the range</span><span class="vz-arr">&rarr;</span><span class="vz-step">high &lt; 0 &rarr; invalid</span><span class="vz-arr">&rarr;</span><span class="vz-step win">low == 0 at end &rarr; valid</span></div>
     </div>
+    ===
+    2-13 | Track the range [low, high] of possible open-paren counts.
+    ===
+    14-18 | '*' could be ')'/empty (lowers low) or '(' (raises high).
+    ===
+    19-23 | If even the max drops below 0, too many ')'.
+    ===
+    24-25 | Valid iff 0 open parens is reachable.
   source: "NeetCode 150 · Greedy"
   tags: [rust, neetcode, greedy]
   tests: |

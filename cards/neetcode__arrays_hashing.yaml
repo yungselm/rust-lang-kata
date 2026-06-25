@@ -33,6 +33,14 @@
       <p>Have we already seen this number? Walk through once, remembering every value in a <b>set</b>; the first time a value is already present, it's a duplicate.</p>
       <div class="vz-flow"><span class="vz-step">scan the numbers</span><span class="vz-arr">&rarr;</span><span class="vz-step">add each to a 'seen' set</span><span class="vz-arr">&rarr;</span><span class="vz-step win">insert fails &rarr; duplicate</span></div>
     </div>
+    ===
+    4 | Make an empty set to remember values we've seen.
+    ===
+    5 | Walk the slice once.
+    ===
+    6-9 | insert returns false if n was already present -> a duplicate.
+    ===
+    10-11 | No insert ever failed, so there are no duplicates.
   source: "NeetCode 150 · Arrays & Hashing"
   tags: [rust, neetcode, arrays-hashing]
   tests: |
@@ -77,6 +85,14 @@
       <p>Anagrams use the <b>same letters the same number of times</b>. Count the letters in each string and check the two tallies are equal.</p>
       <div class="vz-flow"><span class="vz-step">count letters of s</span><span class="vz-arr">&rarr;</span><span class="vz-step">count letters of t</span><span class="vz-arr">&rarr;</span><span class="vz-step win">tallies equal?</span></div>
     </div>
+    ===
+    4-6 | Different lengths can't be anagrams (also keeps zip honest).
+    ===
+    7-8 | Two tally maps, one per string.
+    ===
+    9-12 | Walk both strings together, counting each byte.
+    ===
+    13-14 | Equal tallies => same letters the same number of times.
   source: "NeetCode 150 · Arrays & Hashing"
   tags: [rust, neetcode, arrays-hashing]
   tests: |
@@ -118,6 +134,16 @@
       <p>For each number we need its partner <b>target &minus; n</b>. Remember the numbers we've passed in a map, so finding the partner is an instant lookup instead of a re-scan.</p>
       <div class="vz-flow"><span class="vz-step">for each n</span><span class="vz-arr">&rarr;</span><span class="vz-step">seen target &minus; n? (map)</span><span class="vz-arr">&rarr;</span><span class="vz-step win">yes &rarr; the two indices</span></div>
     </div>
+    ===
+    4 | A map from value -> the index where we saw it.
+    ===
+    5 | Scan each number with its index.
+    ===
+    6-8 | Was the complement target - n already seen? Return both indices.
+    ===
+    9-10 | Otherwise remember this number and move on.
+    ===
+    11-12 | No pair summed to target.
   source: "NeetCode 150 · Arrays & Hashing"
   tags: [rust, neetcode, arrays-hashing]
   tests: |
@@ -163,6 +189,16 @@
       <p>Anagrams share the same <b>letter-count signature</b>. Use that 26-letter signature as a map key and drop each word into its bucket.</p>
       <div class="vz-flow"><span class="vz-step">each word</span><span class="vz-arr">&rarr;</span><span class="vz-step">26-letter count key</span><span class="vz-arr">&rarr;</span><span class="vz-step">bucket by key</span><span class="vz-arr">&rarr;</span><span class="vz-step win">collect the buckets</span></div>
     </div>
+    ===
+    4 | Map a 26-letter count signature -> all words with it.
+    ===
+    5 | For each word...
+    ===
+    6-9 | ...build its letter-count signature.
+    ===
+    10-11 | Drop the word into the bucket for that signature.
+    ===
+    12-13 | The buckets are the anagram groups.
   source: "NeetCode 150 · Arrays & Hashing"
   tags: [rust, neetcode, arrays-hashing]
   tests: |
@@ -303,6 +339,16 @@
       <p>Make decoding unambiguous by <b>length-prefixing</b> each string ("4#neet&hellip;"). You then read exactly that many bytes, so no character inside the data can be mistaken for a delimiter.</p>
       <div class="vz-flow"><span class="vz-step">each string</span><span class="vz-arr">&rarr;</span><span class="vz-step">write len # string</span><span class="vz-arr">&rarr;</span><span class="vz-step win">decode: read len, take len bytes</span></div>
     </div>
+    ===
+    4-11 | Encode: write each string's length, then '#', then its bytes.
+    ===
+    12-16 | Decode: scan the buffer from the start.
+    ===
+    17-19 | Read digits up to the '#' to recover the length.
+    ===
+    20-21 | Parse that length.
+    ===
+    22-26 | Take exactly len bytes -- robust to any '#' inside the data.
   source: "NeetCode 150 · Arrays & Hashing"
   tags: [rust, neetcode, arrays-hashing]
   tests: |
@@ -350,6 +396,16 @@
       <p>Each slot is (product of everything to its <b>left</b>) &times; (product of everything to its <b>right</b>). One left-to-right sweep fills the prefixes, one right-to-left sweep multiplies in the suffixes &mdash; no division.</p>
       <div class="vz-flow"><span class="vz-step">sweep left &rarr; prefix products</span><span class="vz-arr">&rarr;</span><span class="vz-step">sweep right &rarr; &times; suffix products</span><span class="vz-arr">&rarr;</span><span class="vz-step win">each slot = left &times; right</span></div>
     </div>
+    ===
+    2-3 | Output starts all 1s; prefix tracks the product so far.
+    ===
+    4-7 | Left sweep: each slot gets the product of everything to its left.
+    ===
+    8 | Now sweep from the right.
+    ===
+    9-12 | Multiply in the product of everything to the right.
+    ===
+    13-14 | Each slot = left product x right product, no division.
   source: "NeetCode 150 · Arrays & Hashing"
   tags: [rust, neetcode, arrays-hashing]
   tests: |
@@ -397,6 +453,20 @@
       <p>A digit is illegal only if its <b>row, column, or 3&times;3 box</b> already contains it. Track the digits seen in each row/col/box and reject on the first repeat.</p>
       <div class="vz-flow"><span class="vz-step">each filled cell</span><span class="vz-arr">&rarr;</span><span class="vz-step">seen in row / col / box?</span><span class="vz-arr">&rarr;</span><span class="vz-step win">repeat &rarr; invalid</span></div>
     </div>
+    ===
+    2-4 | Seen-flags for each row, column, and 3x3 box.
+    ===
+    5-6 | Scan every cell.
+    ===
+    7-10 | Skip empty cells.
+    ===
+    11 | Compute which 3x3 box this cell is in.
+    ===
+    12-14 | Already seen in its row/col/box? Invalid.
+    ===
+    15 | Otherwise mark the digit seen in all three.
+    ===
+    16-21 | No conflicts found.
   source: "NeetCode 150 · Arrays & Hashing"
   tags: [rust, neetcode, arrays-hashing]
   tests: |
@@ -457,6 +527,16 @@
       <p>Put every value in a set, then only start counting a run from its <b>smallest</b> member (one with no n&minus;1 present) and walk upward. That way each run is measured once, giving O(n).</p>
       <div class="vz-flow"><span class="vz-step">all values in a set</span><span class="vz-arr">&rarr;</span><span class="vz-step">start where n&minus;1 is absent</span><span class="vz-arr">&rarr;</span><span class="vz-step">walk n+1, n+2, &hellip;</span><span class="vz-arr">&rarr;</span><span class="vz-step win">longest run</span></div>
     </div>
+    ===
+    4-5 | Put every value in a set for O(1) membership.
+    ===
+    6 | Consider each value...
+    ===
+    7-9 | ...but only start a run at its smallest member (no n-1 present).
+    ===
+    10-13 | Walk upward counting consecutive values.
+    ===
+    14-18 | Keep the longest run.
   source: "NeetCode 150 · Arrays & Hashing"
   tags: [rust, neetcode, arrays-hashing]
   tests: |

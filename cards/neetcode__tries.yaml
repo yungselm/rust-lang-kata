@@ -83,6 +83,14 @@
       <p>Store the words in a <b>tree of characters</b>: each node has a child per next letter and an is_word flag. insert walks/creates the path, search walks it and checks is_word, starts_with just needs the path to exist.</p>
       <div class="vz-flow"><span class="vz-step">node = letter &rarr; child + is_word</span><span class="vz-arr">&rarr;</span><span class="vz-step">insert walks/creates the path</span><span class="vz-arr">&rarr;</span><span class="vz-step">search: path + is_word</span><span class="vz-arr">&rarr;</span><span class="vz-step win">starts_with: path exists</span></div>
     </div>
+    ===
+    14-21 | insert: walk/create a node per character, then mark the end as a word.
+    ===
+    22-29 | find: follow the path for a string, or None if it breaks.
+    ===
+    30-33 | search: the path exists AND its end is a word.
+    ===
+    34-37 | starts_with: the path just needs to exist.
   source: "NeetCode 150 · Tries"
   tags: [rust, neetcode, trie]
   tests: |
@@ -178,6 +186,14 @@
       <p>Same trie, but the search <b>recurses</b>: a concrete letter follows its single edge, while '.' branches into every child and succeeds if any branch matches the rest.</p>
       <div class="vz-flow"><span class="vz-step">build a trie</span><span class="vz-arr">&rarr;</span><span class="vz-step">letter &rarr; follow that edge</span><span class="vz-arr">&rarr;</span><span class="vz-step">'.' &rarr; try every child</span><span class="vz-arr">&rarr;</span><span class="vz-step win">any branch matches?</span></div>
     </div>
+    ===
+    14-25 | add_word: the same trie insert as before.
+    ===
+    26-30 | Recursive search over the characters.
+    ===
+    31-34 | A '.' tries every child and succeeds if any branch matches the rest.
+    ===
+    35-41 | A concrete letter follows its single edge.
   source: "NeetCode 150 · Tries"
   tags: [rust, neetcode, trie]
   tests: |
@@ -288,6 +304,16 @@
       <p>Put <b>all</b> target words into one trie, then DFS the board descending the trie in lockstep. Marking cells visited prevents reuse, and shared prefixes prune dead branches early.</p>
       <div class="vz-flow"><span class="vz-step">all words &rarr; one trie</span><span class="vz-arr">&rarr;</span><span class="vz-step">DFS each cell down the trie</span><span class="vz-arr">&rarr;</span><span class="vz-step">mark visited, record hits</span><span class="vz-arr">&rarr;</span><span class="vz-step win">trie prunes dead paths</span></div>
     </div>
+    ===
+    11-27 | Build a trie of all the target words.
+    ===
+    28-46 | DFS from every board cell.
+    ===
+    47-49 | Descend the trie in step with the board; bail if no matching edge.
+    ===
+    50-52 | Hitting a word-end records it once.
+    ===
+    53-69 | Mark the cell visited during recursion, then restore it.
   source: "NeetCode 150 · Tries"
   tags: [rust, neetcode, trie]
   tests: |

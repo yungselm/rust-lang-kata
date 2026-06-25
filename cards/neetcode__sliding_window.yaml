@@ -30,6 +30,16 @@
       <p>Profit is today's price minus the <b>cheapest day before it</b>. Track the minimum price seen so far and the best gap against it in a single pass.</p>
       <div class="vz-flow"><span class="vz-step">track min price so far</span><span class="vz-arr">→</span><span class="vz-step">profit = price − min</span><span class="vz-arr">→</span><span class="vz-step win">keep the best</span></div>
     </div>
+    ===
+    2-3 | Track the cheapest price seen so far.
+    ===
+    4 | Scan each day's price.
+    ===
+    5 | Update the running minimum (best day to have bought).
+    ===
+    6-7 | Best profit = today's price - that minimum.
+    ===
+    8-9 | Maximum profit.
   source: "NeetCode 150 · Sliding Window"
   tags: [rust, neetcode, sliding-window]
   tests: |
@@ -79,6 +89,16 @@
       <p>Grow a window of <b>distinct characters</b>; when a character repeats, jump the window's start to just past its previous position. Remembering each char's last index makes the jump O(1).</p>
       <div class="vz-flow"><span class="vz-step">expand window to the right</span><span class="vz-arr">→</span><span class="vz-step">repeat inside? jump start past it</span><span class="vz-arr">→</span><span class="vz-step win">track the longest</span></div>
     </div>
+    ===
+    4-6 | Remember each char's last index; track the window start.
+    ===
+    7 | Expand the window one char at a time.
+    ===
+    8-13 | If c repeats inside the window, jump start past its last position.
+    ===
+    14-15 | Record the longest window.
+    ===
+    16-17 | Answer.
   source: "NeetCode 150 · Sliding Window"
   tags: [rust, neetcode, sliding-window]
   tests: |
@@ -127,6 +147,16 @@
       <p>A window is valid when (its length − count of its most common char) ≤ k, i.e. the <b>rest can all be replaced</b>. Grow the window and shrink from the left only when that breaks.</p>
       <div class="vz-flow"><span class="vz-step">expand window</span><span class="vz-arr">→</span><span class="vz-step">len − maxcount ≤ k?</span><span class="vz-arr">→</span><span class="vz-step">breaks → shrink left</span><span class="vz-arr">→</span><span class="vz-step win">track the longest</span></div>
     </div>
+    ===
+    3-6 | Count letters in the window; track the most frequent.
+    ===
+    7-9 | Grow the window to the right.
+    ===
+    10 | max_count = count of the window's most common letter.
+    ===
+    11-14 | If more than k others would need replacing, shrink from the left.
+    ===
+    15-18 | Track the longest valid window.
   source: "NeetCode 150 · Sliding Window"
   tags: [rust, neetcode, sliding-window]
   tests: |
@@ -182,6 +212,16 @@
       <p>A permutation is just a <b>matching letter histogram</b>. Slide a fixed-size window across s2 and compare its 26-letter count array to s1's.</p>
       <div class="vz-flow"><span class="vz-step">s1 → letter counts</span><span class="vz-arr">→</span><span class="vz-step">fixed window over s2</span><span class="vz-arr">→</span><span class="vz-step">add new byte, drop old</span><span class="vz-arr">→</span><span class="vz-step win">counts match → true</span></div>
     </div>
+    ===
+    10-13 | Build s1's letter histogram (the target).
+    ===
+    14-17 | Slide a fixed-size window of length s1.len() across s2.
+    ===
+    18-19 | Add the new byte, drop the one that fell off the back.
+    ===
+    20-23 | Histograms match => a permutation is present.
+    ===
+    24-25 | No window matched.
   source: "NeetCode 150 · Sliding Window"
   tags: [rust, neetcode, sliding-window]
   tests: |
@@ -254,6 +294,18 @@
       <p>Expand the window until it <b>covers every letter of t</b> (with multiplicity), then contract from the left to shrink it, recording the smallest valid span seen.</p>
       <div class="vz-flow"><span class="vz-step">expand until it covers t</span><span class="vz-arr">→</span><span class="vz-step">contract from the left</span><span class="vz-arr">→</span><span class="vz-step win">record the smallest span</span></div>
     </div>
+    ===
+    7-16 | Count the letters t requires.
+    ===
+    17-19 | Expand the window to the right.
+    ===
+    20-22 | Track how many required letters are fully satisfied.
+    ===
+    23 | Once all are covered, contract from the left to shrink it.
+    ===
+    24-36 | Record the smallest covering window so far.
+    ===
+    37-40 | Return the best window (or empty).
   source: "NeetCode 150 · Sliding Window"
   tags: [rust, neetcode, sliding-window]
   tests: |
@@ -315,6 +367,16 @@
       <p>Keep a deque of indices whose values <b>strictly decrease</b>, so its front is always the window's max. Pop smaller values off the back before pushing, and drop indices that slid out of range off the front.</p>
       <div class="vz-flow"><span class="vz-step">deque of decreasing values</span><span class="vz-arr">→</span><span class="vz-step">pop smaller off the back</span><span class="vz-arr">→</span><span class="vz-step">drop out-of-window front</span><span class="vz-arr">→</span><span class="vz-step win">front = window max</span></div>
     </div>
+    ===
+    7-8 | A deque of indices whose values strictly decrease (front = max).
+    ===
+    9 | Process each element.
+    ===
+    10-18 | Pop smaller values off the back before pushing.
+    ===
+    19-22 | Drop the front if it slid out of the window.
+    ===
+    23-28 | Once a full window exists, record its max (the front).
   source: "NeetCode 150 · Sliding Window"
   tags: [rust, neetcode, sliding-window]
   tests: |

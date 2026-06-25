@@ -33,6 +33,12 @@
       <p>Paths to a cell = paths from <b>above</b> + paths from the <b>left</b>. Collapse the grid to one row where row[c] += row[c&minus;1] folds 'above' into 'left'.</p>
       <div class="vz-flow"><span class="vz-step">paths = above + left</span><span class="vz-arr">&rarr;</span><span class="vz-step">collapse to one row</span><span class="vz-arr">&rarr;</span><span class="vz-step">row[c] += row[c&minus;1]</span><span class="vz-arr">&rarr;</span><span class="vz-step win">bottom-right cell</span></div>
     </div>
+    ===
+    5-7 | One row of the DP table (top row = all 1s).
+    ===
+    8-10 | Paths = from above (row[c]) + from left (row[c-1]).
+    ===
+    11-12 | Bottom-right cell.
   source: "NeetCode 150 · 2-D DP"
   tags: [rust, neetcode, dp]
   tests: |
@@ -79,6 +85,12 @@
       <p>dp[i][j] = LCS of the two prefixes. On a <b>matching</b> char extend the diagonal; otherwise take the better of dropping one char from either string.</p>
       <div class="vz-flow"><span class="vz-step">dp over prefix pairs</span><span class="vz-arr">&rarr;</span><span class="vz-step">match &rarr; diagonal + 1</span><span class="vz-arr">&rarr;</span><span class="vz-step">else max(drop a, drop b)</span><span class="vz-arr">&rarr;</span><span class="vz-step win">keep one row</span></div>
     </div>
+    ===
+    5-7 | DP over prefix pairs, one row at a time.
+    ===
+    8-15 | Match -> diagonal + 1; else max of dropping one char from either.
+    ===
+    16-17 | LCS length.
   source: "NeetCode 150 · 2-D DP"
   tags: [rust, neetcode, dp]
   tests: |
@@ -120,6 +132,14 @@
       <p>Three <b>states</b> per day — holding, just-sold (forces a cooldown), and resting. You may only buy from 'rest', which enforces the one-day wait after selling.</p>
       <div class="vz-flow"><span class="vz-step">states: hold / sold / rest</span><span class="vz-arr">&rarr;</span><span class="vz-step">sold = hold + price</span><span class="vz-arr">&rarr;</span><span class="vz-step">buy only from rest</span><span class="vz-arr">&rarr;</span><span class="vz-step win">best of sold/rest</span></div>
     </div>
+    ===
+    3-7 | Three states: holding, just-sold, resting.
+    ===
+    8 | Sell today (forces a cooldown tomorrow).
+    ===
+    9-11 | You may only buy from 'rest' -> enforces the wait.
+    ===
+    12-13 | Best ending not holding a share.
   source: "NeetCode 150 · 2-D DP"
   tags: [rust, neetcode, dp]
   tests: |
@@ -160,6 +180,12 @@
       <p>Count <b>order-free</b> combinations by looping coins on the OUTSIDE; dp[a] += dp[a&minus;c] accumulates ways. A fixed coin order avoids counting permutations.</p>
       <div class="vz-flow"><span class="vz-step">coins in the outer loop</span><span class="vz-arr">&rarr;</span><span class="vz-step">dp[a] += dp[a&minus;c]</span><span class="vz-arr">&rarr;</span><span class="vz-step">fixed order &rarr; no perms</span><span class="vz-arr">&rarr;</span><span class="vz-step win">dp[amount] = count</span></div>
     </div>
+    ===
+    5-7 | Loop coins on the OUTSIDE -> counts combinations, not permutations.
+    ===
+    8-10 | Accumulate ways to make each amount.
+    ===
+    11-12 | Number of combinations.
   source: "NeetCode 150 · 2-D DP"
   tags: [rust, neetcode, dp]
   tests: |
@@ -205,6 +231,12 @@
       <p>Roll a map from <b>running-sum &rarr; number of sign assignments</b> reaching it. Each number branches every sum into +n and &minus;n; read the count at target.</p>
       <div class="vz-flow"><span class="vz-step">map: sum &rarr; ways</span><span class="vz-arr">&rarr;</span><span class="vz-step">each n branches &plusmn;n</span><span class="vz-arr">&rarr;</span><span class="vz-step">accumulate counts</span><span class="vz-arr">&rarr;</span><span class="vz-step win">count at target</span></div>
     </div>
+    ===
+    5-7 | Map running-sum -> number of sign choices reaching it.
+    ===
+    8-13 | Each number branches every sum into +n and -n.
+    ===
+    14-15 | Count of assignments hitting target.
   source: "NeetCode 150 · 2-D DP"
   tags: [rust, neetcode, dp]
   tests: |
@@ -256,6 +288,14 @@
       <p>dp[i][j] asks whether s1[..i] and s2[..j] <b>interleave</b> into s3[..i+j]. Each cell consumes the matching next char from s1 (above) or s2 (left).</p>
       <div class="vz-flow"><span class="vz-step">lengths must add up</span><span class="vz-arr">&rarr;</span><span class="vz-step">dp over prefix pairs</span><span class="vz-arr">&rarr;</span><span class="vz-step">next char from s1 or s2</span><span class="vz-arr">&rarr;</span><span class="vz-step win">dp[m][n] &rarr; answer</span></div>
     </div>
+    ===
+    4-9 | Lengths must add up.
+    ===
+    10-15 | Seed the first row (using only s2).
+    ===
+    16-20 | Take the next char from s1 (above) or s2 (left).
+    ===
+    21-22 | Can the whole thing interleave?
   source: "NeetCode 150 · 2-D DP"
   tags: [rust, neetcode, dp]
   tests: |
@@ -333,6 +373,14 @@
       <p>Paths only go to strictly <b>larger</b> neighbours, so the graph is acyclic — DFS with memoization caches each cell's best length once.</p>
       <div class="vz-flow"><span class="vz-step">DFS from each cell</span><span class="vz-arr">&rarr;</span><span class="vz-step">move to larger neighbours</span><span class="vz-arr">&rarr;</span><span class="vz-step">memoize cell results</span><span class="vz-arr">&rarr;</span><span class="vz-step win">longest over all</span></div>
     </div>
+    ===
+    7-14 | Memoize each cell's longest path.
+    ===
+    15-21 | Reuse a cached answer.
+    ===
+    22-44 | Only move to strictly larger neighbours (acyclic).
+    ===
+    45-49 | Best over all starting cells.
   source: "NeetCode 150 · 2-D DP"
   tags: [rust, neetcode, dp]
   tests: |
@@ -375,6 +423,14 @@
       <p>dp[j] counts subsequences of the s seen so far equal to <b>t[..j]</b>; a matching new char adds dp[j&minus;1]. Iterate j downward to reuse one row.</p>
       <div class="vz-flow"><span class="vz-step">dp[j] = ways to form t[..j]</span><span class="vz-arr">&rarr;</span><span class="vz-step">match &rarr; dp[j] += dp[j&minus;1]</span><span class="vz-arr">&rarr;</span><span class="vz-step">iterate j downward</span><span class="vz-arr">&rarr;</span><span class="vz-step win">dp[len t]</span></div>
     </div>
+    ===
+    5-6 | dp[j] = ways to form t[..j] from s seen so far.
+    ===
+    7-8 | Scan each char of s.
+    ===
+    9-13 | A match adds dp[j-1]; iterate j downward to reuse one row.
+    ===
+    14-15 | Distinct subsequences equal to t.
   source: "NeetCode 150 · 2-D DP"
   tags: [rust, neetcode, dp]
   tests: |
@@ -422,6 +478,14 @@
       <p>dp[i][j] = edit distance between the prefixes. On a <b>match</b> carry the diagonal; otherwise pay one for the cheapest of substitute, delete, or insert.</p>
       <div class="vz-flow"><span class="vz-step">dp over prefix pairs</span><span class="vz-arr">&rarr;</span><span class="vz-step">match &rarr; carry diagonal</span><span class="vz-arr">&rarr;</span><span class="vz-step">else 1 + min(sub/del/ins)</span><span class="vz-arr">&rarr;</span><span class="vz-step win">dp[m][n]</span></div>
     </div>
+    ===
+    4-6 | Row 0 = cost of pure inserts.
+    ===
+    7-8 | Column 0 = cost of pure deletes.
+    ===
+    9-16 | Match -> carry the diagonal; else 1 + min(sub/delete/insert).
+    ===
+    17-18 | Edit distance.
   source: "NeetCode 150 · 2-D DP"
   tags: [rust, neetcode, dp]
   tests: |
@@ -471,6 +535,16 @@
       <p>Choose k as the <b>LAST</b> balloon burst in (l, r): then l and r are still present, giving vals[l]&middot;vals[k]&middot;vals[r] plus the two subintervals. Interval DP over lengths.</p>
       <div class="vz-flow"><span class="vz-step">pad the ends with 1s</span><span class="vz-arr">&rarr;</span><span class="vz-step">k = last burst in (l, r)</span><span class="vz-arr">&rarr;</span><span class="vz-step">coins = l&middot;k&middot;r + subintervals</span><span class="vz-arr">&rarr;</span><span class="vz-step win">fill by interval length</span></div>
     </div>
+    ===
+    2-7 | Pad both ends with 1 (out-of-range neighbours).
+    ===
+    8-11 | Interval DP by increasing interval length.
+    ===
+    12 | Pick k as the LAST balloon burst in (l, r).
+    ===
+    13-18 | l and r are still present: vals[l]*vals[k]*vals[r] + subintervals.
+    ===
+    19-20 | Max coins over the whole range.
   source: "NeetCode 150 · 2-D DP"
   tags: [rust, neetcode, dp]
   tests: |
@@ -518,6 +592,16 @@
       <p>dp[i][j] = do the <b>suffixes</b> match. A '*' either skips its pair (zero copies) or consumes one matching char and stays on the pattern; fill from the bottom-right.</p>
       <div class="vz-flow"><span class="vz-step">dp over suffix pairs</span><span class="vz-arr">&rarr;</span><span class="vz-step">'*' &rarr; skip pair, or consume 1</span><span class="vz-arr">&rarr;</span><span class="vz-step">else match char + advance</span><span class="vz-arr">&rarr;</span><span class="vz-step win">dp[0][0]</span></div>
     </div>
+    ===
+    6-8 | dp[i][j] = do suffixes s[i..] and p[j..] match; fill bottom-right first.
+    ===
+    9 | Does the current char match (or '.')?
+    ===
+    10-12 | '*': skip the pair (zero copies) OR consume one char and stay.
+    ===
+    13-16 | No star: match this char and advance both.
+    ===
+    17-18 | Whole-string match?
   source: "NeetCode 150 · 2-D DP"
   tags: [rust, neetcode, dp]
   tests: |

@@ -36,6 +36,12 @@
       <p>A clockwise 90&deg; rotation equals <b>transpose</b> (swap [i][j]/[j][i]) then <b>reverse each row</b>, all in place.</p>
       <div class="vz-flow"><span class="vz-step">transpose the matrix</span><span class="vz-arr">&rarr;</span><span class="vz-step">reverse each row</span><span class="vz-arr">&rarr;</span><span class="vz-step win">= 90&deg; clockwise</span></div>
     </div>
+    ===
+    5-7 | Transpose: swap [i][j] with [j][i] across the diagonal.
+    ===
+    8-11 | Swap each symmetric pair.
+    ===
+    12-15 | Reverse each row -> 90-degree clockwise rotation.
   source: "NeetCode 150 · Math & Geometry"
   tags: [rust, neetcode, math-geometry]
   tests: |
@@ -100,6 +106,14 @@
       <p>Walk four <b>shrinking boundaries</b> (top, bottom, left, right), peeling one edge at a time; guard checks stop re-reading a line when the region collapses.</p>
       <div class="vz-flow"><span class="vz-step">top row &rarr; right column</span><span class="vz-arr">&rarr;</span><span class="vz-step">bottom row &rarr; left column</span><span class="vz-arr">&rarr;</span><span class="vz-step">shrink the boundaries</span><span class="vz-arr">&rarr;</span><span class="vz-step win">repeat until empty</span></div>
     </div>
+    ===
+    6-10 | Four boundaries: top, bottom, left, right.
+    ===
+    11-18 | Walk the top row, then the right column.
+    ===
+    19-24 | Walk the bottom row (guard against a single row).
+    ===
+    25-33 | Walk the left column (guard against a single column).
   source: "NeetCode 150 · Math & Geometry"
   tags: [rust, neetcode, math-geometry]
   tests: |
@@ -152,6 +166,10 @@
       <p>First pass <b>records</b> which rows and columns contain a 0; second pass blanks them — recording first stops a freshly-written 0 from cascading.</p>
       <div class="vz-flow"><span class="vz-step">pass 1: mark zero rows/cols</span><span class="vz-arr">&rarr;</span><span class="vz-step">pass 2: blank them</span><span class="vz-arr">&rarr;</span><span class="vz-step win">record-first avoids cascade</span></div>
     </div>
+    ===
+    8-15 | Pass 1: record which rows and columns contain a 0.
+    ===
+    16-21 | Pass 2: blank those rows and columns.
   source: "NeetCode 150 · Math & Geometry"
   tags: [rust, neetcode, math-geometry]
   tests: |
@@ -208,6 +226,12 @@
       <p>Repeatedly replace n by the sum of its digits' squares; it either reaches <b>1</b> or loops forever. A set detects the loop.</p>
       <div class="vz-flow"><span class="vz-step">sum of digit squares</span><span class="vz-arr">&rarr;</span><span class="vz-step">reaches 1 &rarr; happy</span><span class="vz-arr">&rarr;</span><span class="vz-step win">seen before &rarr; cycle &rarr; no</span></div>
     </div>
+    ===
+    4-14 | next: sum of the squares of the digits.
+    ===
+    15-17 | Iterate until we reach 1 or revisit a value (a cycle).
+    ===
+    18-19 | Happy iff we landed on 1.
   source: "NeetCode 150 · Math & Geometry"
   tags: [rust, neetcode, math-geometry]
   tests: |
@@ -250,6 +274,14 @@
       <p>Add from the <b>least-significant</b> end: turn trailing 9s into 0s until a digit below 9 absorbs the carry; if every digit was 9, prepend a 1.</p>
       <div class="vz-flow"><span class="vz-step">add from the right</span><span class="vz-arr">&rarr;</span><span class="vz-step">9 &rarr; 0, carry on</span><span class="vz-arr">&rarr;</span><span class="vz-step">first &lt;9 absorbs +1</span><span class="vz-arr">&rarr;</span><span class="vz-step win">all 9s &rarr; prepend 1</span></div>
     </div>
+    ===
+    3 | Add from the least-significant digit.
+    ===
+    4-7 | A digit below 9 absorbs the carry -> done.
+    ===
+    8-10 | A 9 becomes 0 and carries.
+    ===
+    11-13 | All 9s -> prepend a leading 1.
   source: "NeetCode 150 · Math & Geometry"
   tags: [rust, neetcode, math-geometry]
   tests: |
@@ -297,6 +329,14 @@
       <p>Square-and-multiply: <b>square the base</b> each step and fold it into the result when the current exponent bit is 1 — O(log n).</p>
       <div class="vz-flow"><span class="vz-step">exponent bit set? &times; base</span><span class="vz-arr">&rarr;</span><span class="vz-step">square the base</span><span class="vz-arr">&rarr;</span><span class="vz-step">shift exponent right</span><span class="vz-arr">&rarr;</span><span class="vz-step win">negative n &rarr; reciprocal</span></div>
     </div>
+    ===
+    3-6 | Work with |n| (i64 avoids i32::MIN overflow).
+    ===
+    7-9 | When the current exponent bit is set, multiply in the base.
+    ===
+    10-12 | Square the base; shift the exponent right.
+    ===
+    13-18 | Negative power -> take the reciprocal.
   source: "NeetCode 150 · Math & Geometry"
   tags: [rust, neetcode, math-geometry]
   tests: |
@@ -346,6 +386,14 @@
       <p>Schoolbook multiplication on <b>reversed digit vectors</b>: digit i &times; digit j lands at position i+j, carry to i+j+1. Strip leading zeros, read high-to-low.</p>
       <div class="vz-flow"><span class="vz-step">reverse both digit strings</span><span class="vz-arr">&rarr;</span><span class="vz-step">da&times;db adds to pos i+j</span><span class="vz-arr">&rarr;</span><span class="vz-step">carry to i+j+1</span><span class="vz-arr">&rarr;</span><span class="vz-step win">strip zeros &rarr; read back</span></div>
     </div>
+    ===
+    5-9 | Reverse both numbers into digit vectors.
+    ===
+    10-14 | Digit i x digit j lands at i+j, carry to i+j+1.
+    ===
+    15-17 | Strip leading zeros.
+    ===
+    18-19 | Read the digits back high-to-low.
   source: "NeetCode 150 · Math & Geometry"
   tags: [rust, neetcode, math-geometry]
   tests: |
@@ -424,6 +472,14 @@
       <p>Store points as a <b>coordinate &rarr; count</b> map. For a query corner, any stored point on a true diagonal (|dx|==|dy|&ne;0) fixes a square; multiply the counts of the other two corners and sum.</p>
       <div class="vz-flow"><span class="vz-step">points &rarr; coordinate counts</span><span class="vz-arr">&rarr;</span><span class="vz-step">find diagonal partners (|dx|==|dy|)</span><span class="vz-arr">&rarr;</span><span class="vz-step">&times; counts of other 2 corners</span><span class="vz-arr">&rarr;</span><span class="vz-step win">sum over all</span></div>
     </div>
+    ===
+    14-20 | add: bump a coordinate -> count map.
+    ===
+    21-22 | count: scan stored points for a diagonal corner.
+    ===
+    23-27 | Keep only true diagonal partners (|dx| == |dy|, dx != 0).
+    ===
+    28-32 | Multiply the counts of the other two corners and sum.
   source: "NeetCode 150 · Math & Geometry"
   tags: [rust, neetcode, math-geometry]
   tests: |

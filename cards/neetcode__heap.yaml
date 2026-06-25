@@ -62,6 +62,14 @@
       <p>Keep only the <b>k largest</b> values in a min-heap; its smallest element is the k-th largest. Each add pushes, then drops the smallest while the size exceeds k.</p>
       <div class="vz-flow"><span class="vz-step">push value into a min-heap</span><span class="vz-arr">&rarr;</span><span class="vz-step">drop smallest while size &gt; k</span><span class="vz-arr">&rarr;</span><span class="vz-step win">heap's min = k-th largest</span></div>
     </div>
+    ===
+    10-18 | Seed by adding each initial number.
+    ===
+    19 | add: push into a min-heap (Reverse).
+    ===
+    20-22 | Drop the smallest while more than k remain.
+    ===
+    23-25 | The heap's minimum is the k-th largest.
   source: "NeetCode 150 · Heap / Priority Queue"
   tags: [rust, neetcode, heap]
   tests: |
@@ -109,6 +117,14 @@
       <p>A <b>max-heap</b> hands you the two heaviest stones each round. Smash them, push back the difference if they differ; whatever is left at the end is the answer.</p>
       <div class="vz-flow"><span class="vz-step">max-heap of weights</span><span class="vz-arr">&rarr;</span><span class="vz-step">pop the two heaviest</span><span class="vz-arr">&rarr;</span><span class="vz-step">push back the difference</span><span class="vz-arr">&rarr;</span><span class="vz-step win">one (or none) remains</span></div>
     </div>
+    ===
+    4-5 | Max-heap of all stone weights.
+    ===
+    6-7 | Pop the two heaviest stones.
+    ===
+    8-11 | If unequal, the difference goes back in.
+    ===
+    12-13 | The last stone (or 0).
   source: "NeetCode 150 · Heap / Priority Queue"
   tags: [rust, neetcode, heap]
   tests: |
@@ -155,6 +171,14 @@
       <p>Rank by <b>squared distance</b> (no sqrt needed). A max-heap capped at size k keeps evicting the farthest point, so the k closest remain.</p>
       <div class="vz-flow"><span class="vz-step">squared distance per point</span><span class="vz-arr">&rarr;</span><span class="vz-step">max-heap capped at k</span><span class="vz-arr">&rarr;</span><span class="vz-step">evict the farthest</span><span class="vz-arr">&rarr;</span><span class="vz-step win">k closest remain</span></div>
     </div>
+    ===
+    5-6 | Max-heap keyed by squared distance (no sqrt needed).
+    ===
+    7-8 | Compute each point's squared distance.
+    ===
+    9-12 | Keep only k by evicting the farthest.
+    ===
+    13-14 | The k closest remain.
   source: "NeetCode 150 · Heap / Priority Queue"
   tags: [rust, neetcode, heap]
   tests: |
@@ -203,6 +227,12 @@
       <p>A size-k <b>min-heap</b> holds the k largest values; its root is exactly the k-th largest.</p>
       <div class="vz-flow"><span class="vz-step">push into a min-heap</span><span class="vz-arr">&rarr;</span><span class="vz-step">drop smallest while size &gt; k</span><span class="vz-arr">&rarr;</span><span class="vz-step win">root = k-th largest</span></div>
     </div>
+    ===
+    6 | Min-heap holding the k largest values.
+    ===
+    7-12 | Push each value, drop the smallest beyond k.
+    ===
+    13-14 | Its root is the k-th largest.
   source: "NeetCode 150 · Heap / Priority Queue"
   tags: [rust, neetcode, heap]
   tests: |
@@ -248,6 +278,16 @@
       <p>The <b>most frequent task</b> sets the rhythm: it forces (maxCount&minus;1) gaps of width n+1, finished by the tasks tied for that max. If there are enough other tasks to fill the idle slots, no idling is needed.</p>
       <div class="vz-flow"><span class="vz-step">count each task</span><span class="vz-arr">&rarr;</span><span class="vz-step">most frequent sets the frame</span><span class="vz-arr">&rarr;</span><span class="vz-step">(maxCount&minus;1)&middot;(n+1) + ties</span><span class="vz-arr">&rarr;</span><span class="vz-step win">max with total tasks</span></div>
     </div>
+    ===
+    5-7 | Count how often each task occurs.
+    ===
+    8 | Find the most frequent task's count...
+    ===
+    9-10 | ...and how many tasks tie for it.
+    ===
+    11 | Skeleton: (maxCount-1) gaps of width n+1, plus the final batch.
+    ===
+    12-13 | If enough other tasks fill the idle slots, no idling needed.
   source: "NeetCode 150 · Heap / Priority Queue"
   tags: [rust, neetcode, heap]
   tests: |
@@ -361,6 +401,16 @@
       <p>Stamp every tweet with a <b>global counter</b> so recency is a total order. A feed merges the relevant authors' tweets through a max-heap and pops the 10 newest.</p>
       <div class="vz-flow"><span class="vz-step">timestamp every tweet</span><span class="vz-arr">&rarr;</span><span class="vz-step">gather self + followees</span><span class="vz-arr">&rarr;</span><span class="vz-step">max-heap by time</span><span class="vz-arr">&rarr;</span><span class="vz-step win">pop the 10 newest</span></div>
     </div>
+    ===
+    18-25 | post: stamp each tweet with a global counter (recency order).
+    ===
+    26-33 | feed: gather self plus everyone followed.
+    ===
+    34-38 | Push all their tweets into a max-heap by timestamp.
+    ===
+    39-45 | Pop the 10 newest.
+    ===
+    46-55 | follow / unfollow just edit a set per user.
   source: "NeetCode 150 · Heap / Priority Queue"
   tags: [rust, neetcode, heap]
   tests: |
@@ -453,6 +503,14 @@
       <p>Split the numbers at the median with <b>two heaps</b>: a max-heap for the lower half, a min-heap for the upper. Keep their sizes within one, so the median is a heap top (or the average of the two).</p>
       <div class="vz-flow"><span class="vz-step">max-heap = lower half</span><span class="vz-arr">&rarr;</span><span class="vz-step">min-heap = upper half</span><span class="vz-arr">&rarr;</span><span class="vz-step">keep sizes balanced</span><span class="vz-arr">&rarr;</span><span class="vz-step win">median = the top(s)</span></div>
     </div>
+    ===
+    16 | Two heaps: lo (max-heap) lower half, hi (min-heap) upper half.
+    ===
+    17-21 | Funnel the new number through lo into hi...
+    ===
+    22-27 | ...then rebalance so the sizes differ by at most one.
+    ===
+    28-37 | Median is lo's top (odd) or the average of both tops (even).
   source: "NeetCode 150 · Heap / Priority Queue"
   tags: [rust, neetcode, heap]
   tests: |
