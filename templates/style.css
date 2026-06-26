@@ -180,3 +180,15 @@
   border-radius: 6px; color: #d4d4d4; }
 .vz-step.win { border-color: #4ec96a; }
 .vz-arr { color: #858585; }
+
+/* Pointer / index walkthrough cells */
+.vz-str { display: flex; gap: 3px; flex-wrap: wrap; margin: 2px 0; }
+.vz-col { display: flex; flex-direction: column; align-items: center; }
+.vz-ptrs { height: 15px; font-size: 11px; line-height: 15px; font-weight: 700; }
+.vz-ch { font-family: Consolas, "Cascadia Code", Menlo, monospace; font-size: 13px; min-width: 20px;
+  height: 22px; line-height: 22px; text-align: center; padding: 0 3px; background: #1e1e1e;
+  border: 1px solid #3c3c3c; border-radius: 4px; color: #d4d4d4; }
+.vz-ch.take { background: #21381f; border-color: #4ec96a; color: #d7f0d2; }
+.vz-ch.hash { color: #ce9178; border-color: #6b4a3a; }
+.vz-ch.lenc { color: #569cd6; border-color: #38597a; }
+.vz-ix { font-size: 10px; color: #6a6a6a; margin-top: 1px; }

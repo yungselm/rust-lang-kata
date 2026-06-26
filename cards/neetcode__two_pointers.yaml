@@ -39,15 +39,17 @@
       <div class="vz-flow"><span class="vz-step">keep alphanumerics, lowercase</span><span class="vz-arr">→</span><span class="vz-step">compare the two ends</span><span class="vz-arr">→</span><span class="vz-step">step inward</span><span class="vz-arr">→</span><span class="vz-step win">any mismatch → false</span></div>
     </div>
     ===
-    2-6 | Keep only letters/digits and lowercase them.
+    2-6 | Keep only letters/digits, lowercased: "RaceCar" -> "racecar".
+    <div class="vz"><div class="vz-lab">filtered characters</div><div class="vz-str"><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">r</span><span class="vz-ix">0</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">a</span><span class="vz-ix">1</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">c</span><span class="vz-ix">2</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">e</span><span class="vz-ix">3</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">c</span><span class="vz-ix">4</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">a</span><span class="vz-ix">5</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">r</span><span class="vz-ix">6</span></span></div></div>
     ===
-    7-8 | A pointer at each end.
+    9-11 | Compare the two ends, stepping inward: r == r.
+    <div class="vz"><div class="vz-lab">i and j at the ends</div><div class="vz-str"><span class="vz-col"><span class="vz-ptrs"><span style="color:#569cd6">i</span></span><span class="vz-ch">r</span><span class="vz-ix">0</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">a</span><span class="vz-ix">1</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">c</span><span class="vz-ix">2</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">e</span><span class="vz-ix">3</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">c</span><span class="vz-ix">4</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">a</span><span class="vz-ix">5</span></span><span class="vz-col"><span class="vz-ptrs"><span style="color:#ce9178">j</span></span><span class="vz-ch">r</span><span class="vz-ix">6</span></span></div></div>
     ===
-    9-10 | Walk inward comparing the two ends.
+    11-14 | They keep matching: a == a, then c == c.
+    <div class="vz"><div class="vz-lab">step inward</div><div class="vz-str"><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch take">r</span><span class="vz-ix">0</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch take">a</span><span class="vz-ix">1</span></span><span class="vz-col"><span class="vz-ptrs"><span style="color:#569cd6">i</span></span><span class="vz-ch">c</span><span class="vz-ix">2</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">e</span><span class="vz-ix">3</span></span><span class="vz-col"><span class="vz-ptrs"><span style="color:#ce9178">j</span></span><span class="vz-ch">c</span><span class="vz-ix">4</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch take">a</span><span class="vz-ix">5</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch take">r</span><span class="vz-ix">6</span></span></div></div>
     ===
-    11-15 | Any mismatch => not a palindrome.
-    ===
-    16-17 | All pairs matched.
+    16 | Pointers meet with every pair equal -> palindrome.
+    <div class="vz"><div class="vz-lab">all matched</div><div class="vz-str"><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch take">r</span><span class="vz-ix">0</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch take">a</span><span class="vz-ix">1</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch take">c</span><span class="vz-ix">2</span></span><span class="vz-col"><span class="vz-ptrs"><span style="color:#4ec96a">ij</span></span><span class="vz-ch">e</span><span class="vz-ix">3</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch take">c</span><span class="vz-ix">4</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch take">a</span><span class="vz-ix">5</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch take">r</span><span class="vz-ix">6</span></span></div></div>
   source: "NeetCode 150 · Two Pointers"
   tags: [rust, neetcode, two-pointers]
   tests: |
@@ -95,15 +97,17 @@
       <div class="vz-flow"><span class="vz-step">lo at start, hi at end</span><span class="vz-arr">→</span><span class="vz-step">sum &lt; target → lo++</span><span class="vz-arr">→</span><span class="vz-step">sum &gt; target → hi−−</span><span class="vz-arr">→</span><span class="vz-step win">sum == target → found</span></div>
     </div>
     ===
-    5-7 | Start a pointer at each end of the sorted slice.
+    5-6 | Start lo and hi at the two ends of the sorted slice.
+    <div class="vz"><div class="vz-lab">lo / hi</div><div class="vz-str"><span class="vz-col"><span class="vz-ptrs"><span style="color:#569cd6">lo</span></span><span class="vz-ch">2</span><span class="vz-ix">0</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">7</span><span class="vz-ix">1</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">11</span><span class="vz-ix">2</span></span><span class="vz-col"><span class="vz-ptrs"><span style="color:#ce9178">hi</span></span><span class="vz-ch">15</span><span class="vz-ix">3</span></span></div></div>
     ===
-    8-9 | Sum the two ends.
+    8-12 | 2 + 15 = 17 > 9 -> move hi down.
+    <div class="vz"><div class="vz-lab">sum too big</div><div class="vz-str"><span class="vz-col"><span class="vz-ptrs"><span style="color:#569cd6">lo</span></span><span class="vz-ch">2</span><span class="vz-ix">0</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">7</span><span class="vz-ix">1</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">11</span><span class="vz-ix">2</span></span><span class="vz-col"><span class="vz-ptrs"><span style="color:#ce9178">hi</span></span><span class="vz-ch">15</span><span class="vz-ix">3</span></span></div></div>
     ===
-    10 | Match -> return the pair.
+    8-12 | 2 + 11 = 13 > 9 -> move hi down again.
+    <div class="vz"><div class="vz-lab">still too big</div><div class="vz-str"><span class="vz-col"><span class="vz-ptrs"><span style="color:#569cd6">lo</span></span><span class="vz-ch">2</span><span class="vz-ix">0</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">7</span><span class="vz-ix">1</span></span><span class="vz-col"><span class="vz-ptrs"><span style="color:#ce9178">hi</span></span><span class="vz-ch">11</span><span class="vz-ix">2</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">15</span><span class="vz-ix">3</span></span></div></div>
     ===
-    11-14 | Too small -> move lo up; too big -> move hi down.
-    ===
-    15-16 | Pointers crossed with no match.
+    8-10 | 2 + 7 = 9 = target -> return (0, 1).
+    <div class="vz"><div class="vz-lab">found</div><div class="vz-str"><span class="vz-col"><span class="vz-ptrs"><span style="color:#569cd6">lo</span></span><span class="vz-ch take">2</span><span class="vz-ix">0</span></span><span class="vz-col"><span class="vz-ptrs"><span style="color:#ce9178">hi</span></span><span class="vz-ch take">7</span><span class="vz-ix">1</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">11</span><span class="vz-ix">2</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">15</span><span class="vz-ix">3</span></span></div></div>
   source: "NeetCode 150 · Two Pointers"
   tags: [rust, neetcode, two-pointers]
   tests: |
@@ -167,17 +171,17 @@
       <div class="vz-flow"><span class="vz-step">sort</span><span class="vz-arr">→</span><span class="vz-step">fix nums[i]</span><span class="vz-arr">→</span><span class="vz-step">two-pointer rest for −nums[i]</span><span class="vz-arr">→</span><span class="vz-step win">skip duplicates</span></div>
     </div>
     ===
-    3-5 | Sort so we can two-pointer and skip duplicates.
+    2-3 | Sort first so we can two-pointer and skip duplicates.
+    <div class="vz"><div class="vz-lab">sorted</div><div class="vz-str"><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">-4</span><span class="vz-ix">0</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">-1</span><span class="vz-ix">1</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">-1</span><span class="vz-ix">2</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">0</span><span class="vz-ix">3</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">1</span><span class="vz-ix">4</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">2</span><span class="vz-ix">5</span></span></div></div>
     ===
-    6 | Fix the first number of the triplet.
+    6-11 | Fix nums[i], then two-pointer the rest for sum 0.
+    <div class="vz"><div class="vz-lab">fix i, scan lo/hi</div><div class="vz-str"><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">-4</span><span class="vz-ix">0</span></span><span class="vz-col"><span class="vz-ptrs"><span style="color:#4ec96a">i</span></span><span class="vz-ch">-1</span><span class="vz-ix">1</span></span><span class="vz-col"><span class="vz-ptrs"><span style="color:#569cd6">lo</span></span><span class="vz-ch">-1</span><span class="vz-ix">2</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">0</span><span class="vz-ix">3</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">1</span><span class="vz-ix">4</span></span><span class="vz-col"><span class="vz-ptrs"><span style="color:#ce9178">hi</span></span><span class="vz-ch">2</span><span class="vz-ix">5</span></span></div></div>
     ===
-    7-9 | Skip a repeated first number to avoid duplicate triplets.
+    13-18 | -1 + -1 + 2 = 0 -> record [-1, -1, 2].
+    <div class="vz"><div class="vz-lab">hit</div><div class="vz-str"><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">-4</span><span class="vz-ix">0</span></span><span class="vz-col"><span class="vz-ptrs"><span style="color:#4ec96a">i</span></span><span class="vz-ch take">-1</span><span class="vz-ix">1</span></span><span class="vz-col"><span class="vz-ptrs"><span style="color:#569cd6">lo</span></span><span class="vz-ch take">-1</span><span class="vz-ix">2</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">0</span><span class="vz-ix">3</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">1</span><span class="vz-ix">4</span></span><span class="vz-col"><span class="vz-ptrs"><span style="color:#ce9178">hi</span></span><span class="vz-ch take">2</span><span class="vz-ix">5</span></span></div></div>
     ===
-    10-17 | Two-pointer the rest looking for sum 0.
-    ===
-    18-30 | On a hit, record it, then skip duplicate lo/hi values.
-    ===
-    31-32 | All unique zero-sum triplets.
+    13-18 | Move inward: -1 + 0 + 1 = 0 -> [-1, 0, 1].
+    <div class="vz"><div class="vz-lab">another hit</div><div class="vz-str"><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">-4</span><span class="vz-ix">0</span></span><span class="vz-col"><span class="vz-ptrs"><span style="color:#4ec96a">i</span></span><span class="vz-ch take">-1</span><span class="vz-ix">1</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">-1</span><span class="vz-ix">2</span></span><span class="vz-col"><span class="vz-ptrs"><span style="color:#569cd6">lo</span></span><span class="vz-ch take">0</span><span class="vz-ix">3</span></span><span class="vz-col"><span class="vz-ptrs"><span style="color:#ce9178">hi</span></span><span class="vz-ch take">1</span><span class="vz-ix">4</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">2</span><span class="vz-ix">5</span></span></div></div>
   source: "NeetCode 150 · Two Pointers"
   tags: [rust, neetcode, two-pointers]
   tests: |
@@ -227,15 +231,14 @@
       <div class="vz-flow"><span class="vz-step">start widest pair</span><span class="vz-arr">→</span><span class="vz-step">area = shorter × width</span><span class="vz-arr">→</span><span class="vz-step">move the shorter wall in</span><span class="vz-arr">→</span><span class="vz-step win">track best</span></div>
     </div>
     ===
-    5-8 | Start at the widest pair of lines.
+    5-6 | Start lo and hi at the two ends (widest).
+    <div class="vz"><div class="vz-lab">widest pair</div><div class="vz-str"><span class="vz-col"><span class="vz-ptrs"><span style="color:#569cd6">lo</span></span><span class="vz-ch">1</span><span class="vz-ix">0</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">8</span><span class="vz-ix">1</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">6</span><span class="vz-ix">2</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">2</span><span class="vz-ix">3</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">5</span><span class="vz-ix">4</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">4</span><span class="vz-ix">5</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">8</span><span class="vz-ix">6</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">3</span><span class="vz-ix">7</span></span><span class="vz-col"><span class="vz-ptrs"><span style="color:#ce9178">hi</span></span><span class="vz-ch">7</span><span class="vz-ix">8</span></span></div></div>
     ===
-    9 | Area is the shorter wall x the width.
+    9-15 | Area = shorter wall x width = 1 x 8 = 8; the left wall is shorter, so move lo in.
+    <div class="vz"><div class="vz-lab">move the shorter wall</div><div class="vz-str"><span class="vz-col"><span class="vz-ptrs"><span style="color:#569cd6">lo</span></span><span class="vz-ch">1</span><span class="vz-ix">0</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">8</span><span class="vz-ix">1</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">6</span><span class="vz-ix">2</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">2</span><span class="vz-ix">3</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">5</span><span class="vz-ix">4</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">4</span><span class="vz-ix">5</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">8</span><span class="vz-ix">6</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">3</span><span class="vz-ix">7</span></span><span class="vz-col"><span class="vz-ptrs"><span style="color:#ce9178">hi</span></span><span class="vz-ch">7</span><span class="vz-ix">8</span></span></div></div>
     ===
-    10 | Keep the best area.
-    ===
-    11-16 | Move the shorter wall inward -- the only way to do better.
-    ===
-    17-18 | Largest area found.
+    9-10 | Best pair: walls 8 and 7 over width 7 -> area 49.
+    <div class="vz"><div class="vz-lab">max area</div><div class="vz-str"><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">1</span><span class="vz-ix">0</span></span><span class="vz-col"><span class="vz-ptrs"><span style="color:#569cd6">lo</span></span><span class="vz-ch take">8</span><span class="vz-ix">1</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">6</span><span class="vz-ix">2</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">2</span><span class="vz-ix">3</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">5</span><span class="vz-ix">4</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">4</span><span class="vz-ix">5</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">8</span><span class="vz-ix">6</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">3</span><span class="vz-ix">7</span></span><span class="vz-col"><span class="vz-ptrs"><span style="color:#ce9178">hi</span></span><span class="vz-ch take">7</span><span class="vz-ix">8</span></span></div></div>
   source: "NeetCode 150 · Two Pointers"
   tags: [rust, neetcode, two-pointers]
   tests: |
@@ -289,15 +292,14 @@
       <div class="vz-flow"><span class="vz-step">two pointers + running maxes</span><span class="vz-arr">→</span><span class="vz-step">move the smaller-max side</span><span class="vz-arr">→</span><span class="vz-step">add wall − height</span><span class="vz-arr">→</span><span class="vz-step win">sum the water</span></div>
     </div>
     ===
-    7-9 | Track the tallest wall seen from each side.
+    3-7 | Two pointers, plus a running max wall on each side.
+    <div class="vz"><div class="vz-lab">lo / hi</div><div class="vz-str"><span class="vz-col"><span class="vz-ptrs"><span style="color:#569cd6">lo</span></span><span class="vz-ch">0</span><span class="vz-ix">0</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">1</span><span class="vz-ix">1</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">0</span><span class="vz-ix">2</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">2</span><span class="vz-ix">3</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">1</span><span class="vz-ix">4</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">0</span><span class="vz-ix">5</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">1</span><span class="vz-ix">6</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">3</span><span class="vz-ix">7</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">2</span><span class="vz-ix">8</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">1</span><span class="vz-ix">9</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">2</span><span class="vz-ix">10</span></span><span class="vz-col"><span class="vz-ptrs"><span style="color:#ce9178">hi</span></span><span class="vz-ch">1</span><span class="vz-ix">11</span></span></div></div>
     ===
-    10 | Advance from the side with the smaller running max.
+    8-15 | Advance from the side with the smaller running max; that wall is the limit.
+    <div class="vz"><div class="vz-lab">advance smaller-max side</div><div class="vz-str"><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">0</span><span class="vz-ix">0</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">1</span><span class="vz-ix">1</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">0</span><span class="vz-ix">2</span></span><span class="vz-col"><span class="vz-ptrs"><span style="color:#569cd6">lo</span></span><span class="vz-ch">2</span><span class="vz-ix">3</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">1</span><span class="vz-ix">4</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">0</span><span class="vz-ix">5</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">1</span><span class="vz-ix">6</span></span><span class="vz-col"><span class="vz-ptrs"><span style="color:#ce9178">hi</span></span><span class="vz-ch">3</span><span class="vz-ix">7</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">2</span><span class="vz-ix">8</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">1</span><span class="vz-ix">9</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">2</span><span class="vz-ix">10</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">1</span><span class="vz-ix">11</span></span></div></div>
     ===
-    11-16 | Left is the limit: step right, update its max, add trapped water.
-    ===
-    17 | Otherwise the right side is the limit -- mirror it.
-    ===
-    18-22 | Total trapped water.
+    8-15 | Each trapped unit = min(maxLeft, maxRight) - height; total = 6.
+    <div class="vz"><div class="vz-lab">trapped water (6 units)</div><div class="vz-str"><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">0</span><span class="vz-ix">0</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">1</span><span class="vz-ix">1</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch take">0</span><span class="vz-ix">2</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">2</span><span class="vz-ix">3</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch take">1</span><span class="vz-ix">4</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch take">0</span><span class="vz-ix">5</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch take">1</span><span class="vz-ix">6</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">3</span><span class="vz-ix">7</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">2</span><span class="vz-ix">8</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch take">1</span><span class="vz-ix">9</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">2</span><span class="vz-ix">10</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">1</span><span class="vz-ix">11</span></span></div></div>
   source: "NeetCode 150 · Two Pointers"
   tags: [rust, neetcode, two-pointers]
   tests: |
