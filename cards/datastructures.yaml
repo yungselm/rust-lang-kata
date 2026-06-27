@@ -227,3 +227,72 @@
     (`BTreeMap`/`BTreeSet`): `Ord`. Keys that are "equal" must hash equally
     (hash) or compare consistently (Ord).
   tags: [hashmap, btreemap, concept]
+
+- type: concept
+  question: |
+    Contains Duplicate: a HashSet solution is O(n), while sort_unstable +
+    windows(2) is O(n log n). Why does the "worse" sorting version often run
+    FASTER on LeetCode/NeetCode inputs?
+  answer: |
+    Big-O ignores constants, but CPUs don't. On the small inputs these platforms
+    use, the constant factors dominate:
+    - Sorting i32s with sort_unstable is sequential memory access, no allocation,
+      no hashing -> great cache locality and branch prediction. Comparing two
+      adjacent integers is extremely cheap.
+    - A HashSet pays a real cost per element: hash the value, probe the table,
+      chase pointer-like (scattered) memory, and occasionally resize/rehash.
+    So the linear-but-heavy hash work loses to the n log n-but-light sort until n
+    gets large. The crossover is implementation/hardware dependent (roughly: sort
+    wins for thousands, hashing wins for millions).
+  tags: [sort, performance, bigo, concept]
+
+- type: concept
+  question: |
+    If sorting often wins on small inputs, when should you still reach for the
+    hashing solution (and what would an interviewer expect)?
+  answer: |
+    Reach for hashing when:
+    - n can grow large — O(n) eventually beats O(n log n) no matter the constants.
+    - You can early-exit (e.g. Contains Duplicate returns the instant a repeat is
+      inserted, often before scanning everything).
+    - You must NOT mutate or reorder the input, or you need the elements' original
+      positions.
+    - A faster hasher (ahash / FxHash) is available, which shrinks hashing's
+      constant and lowers the crossover point.
+    In an interview, the HashSet O(n) answer is the expected "optimal" one — state
+    it first, then note that an in-place sort can be faster in practice on small n.
+    In production, pick by measuring, not by Big-O alone.
+  tags: [sort, performance, bigo, concept]
+
+- type: concept
+  question: |
+    In Rust, what is the difference between iterating a string with `s.bytes()`
+    and `s.chars()`, and which is faster?
+  answer: |
+    `s.bytes()` yields the raw UTF-8 bytes (u8): essentially a pointer walk with
+    zero decoding, so it is the fastest. `s.chars()` decodes UTF-8 into Unicode
+    scalar values (`char`, 32-bit): it must inspect continuation bytes and build
+    each char, which is more work per element.
+    Use `bytes()` when the input is ASCII (e.g. constraints say "lowercase a-z") --
+    there one byte equals one character. Use `chars()` when the text may contain
+    non-ASCII (accents, emoji), because a single character then spans several bytes
+    and counting raw bytes would be wrong.
+    Gotcha: `s.len()` is the BYTE length, not the character count -- use
+    `s.chars().count()` for characters.
+  tags: [strings, bytes, chars, performance, concept]
+
+- type: concept
+  question: |
+    For "count the characters" problems (anagram, frequency), how do you choose
+    the counting structure in Rust, fastest first?
+  answer: |
+    - Small, KNOWN alphabet (e.g. lowercase a-z): a fixed array `[i32; 26]` indexed
+      by `(b - b'a') as usize`. O(1) lookups, no hashing, no allocation -- usually
+      the optimal answer.
+    - Arbitrary Unicode or an unknown/large key space: `HashMap<char, i32>` --
+      correct and flexible, but pays hashing + allocation overhead.
+    Rule of thumb: small fixed alphabet -> array; ASCII bytes -> `bytes()`; real
+    Unicode -> `chars()`; unknown/large -> `HashMap`. In practice on small/medium
+    n the ranking is array > sort_unstable > HashMap, because constant factors beat
+    Big-O at those sizes.
+  tags: [strings, counting, performance, concept]

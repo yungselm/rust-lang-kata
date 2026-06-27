@@ -43,13 +43,17 @@
       <div class="vz-flow"><span class="vz-step">take the head node</span><span class="vz-arr">&rarr;</span><span class="vz-step">point its next at prev</span><span class="vz-arr">&rarr;</span><span class="vz-step">prev = this node</span><span class="vz-arr">&rarr;</span><span class="vz-step win">repeat &rarr; new head</span></div>
     </div>
     ===
-    8 | prev is the already-reversed front (starts empty).
+    8 | prev (the reversed front) starts empty.
+    <div class="vz"><div class="vz-lab">list</div><div class="vz-str"><span class="vz-col"><span class="vz-ptrs"><span style="color:#569cd6">head</span></span><span class="vz-ch">1</span><span class="vz-ix">0</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">2</span><span class="vz-ix">1</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">3</span><span class="vz-ix">2</span></span></div></div><div class="vz"><div class="vz-lab">prev</div><div class="vz-row"><span class="vz-lab">prev</span><span class="vz-chip">(empty)</span></div></div>
     ===
-    9 | Detach the head node.
+    9-12 | Detach the head, point its next at prev, then prev = this node.
+    <div class="vz"><div class="vz-lab">after node 1</div><div class="vz-row"><span class="vz-lab">prev (reversed)</span><span class="vz-chip">1</span></div></div>
     ===
-    10 | Remember the rest of the list.
+    9-12 | Repeat for 2 then 3, each splicing onto the front of prev.
+    <div class="vz"><div class="vz-lab">after node 2</div><div class="vz-row"><span class="vz-lab">prev (reversed)</span><span class="vz-chip">2</span><span class="vz-chip">1</span></div></div>
     ===
-    11-15 | Point this node back at prev; advance prev (it becomes the new head).
+    14 | prev is the new head: 3 -> 2 -> 1.
+    <div class="vz"><div class="vz-lab">result</div><div class="vz-row"><span class="vz-lab">reversed</span><span class="vz-chip win">3</span><span class="vz-chip win">2</span><span class="vz-chip win">1</span></div></div>
   source: "NeetCode 150 · Linked List"
   tags: [rust, neetcode, linked-list]
   tests: |
@@ -228,15 +232,14 @@
       <div class="vz-flow"><span class="vz-step">collect nodes into a Vec</span><span class="vz-arr">&rarr;</span><span class="vz-step">weave front / back / front &hellip;</span><span class="vz-arr">&rarr;</span><span class="vz-step win">relink in that order</span></div>
     </div>
     ===
-    9-21 | Detach every node into a Vec for easy indexing.
+    9-14 | Detach every node into a Vec for two-ended indexing.
+    <div class="vz"><div class="vz-lab">nodes</div><div class="vz-str"><span class="vz-col"><span class="vz-ptrs"><span style="color:#569cd6">lo</span></span><span class="vz-ch">1</span><span class="vz-ix">0</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">2</span><span class="vz-ix">1</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">3</span><span class="vz-ix">2</span></span><span class="vz-col"><span class="vz-ptrs"><span style="color:#ce9178">hi</span></span><span class="vz-ch">4</span><span class="vz-ix">3</span></span></div></div>
     ===
-    22 | Weave from both ends: front, back, front, back...
+    23-38 | Weave: take front, then back, then front, then back -> 1, 4, 2, 3.
+    <div class="vz"><div class="vz-lab">woven order</div><div class="vz-row"><span class="vz-lab">order</span><span class="vz-chip">1</span><span class="vz-chip">4</span><span class="vz-chip">2</span><span class="vz-chip">3</span></div></div>
     ===
-    23-40 | Pull from the front, then the back, alternating.
-    ===
-    41-44 | Relink the woven order into a list.
-    ===
-    45-46 | Store the reordered list back.
+    40-45 | Relink in that order -> 1 -> 4 -> 2 -> 3.
+    <div class="vz"><div class="vz-lab">result</div><div class="vz-row"><span class="vz-lab">reordered</span><span class="vz-chip win">1</span><span class="vz-chip win">4</span><span class="vz-chip win">2</span><span class="vz-chip win">3</span></div></div>
   source: "NeetCode 150 · Linked List"
   tags: [rust, neetcode, linked-list]
   tests: |
@@ -322,13 +325,14 @@
       <div class="vz-flow"><span class="vz-step">collect nodes (know len)</span><span class="vz-arr">&rarr;</span><span class="vz-step">drop index len &minus; n</span><span class="vz-arr">&rarr;</span><span class="vz-step win">relink the rest</span></div>
     </div>
     ===
-    12-22 | Collect the nodes so the length is known.
+    12-17 | Collect the nodes into a Vec so the length is known.
+    <div class="vz"><div class="vz-lab">nodes</div><div class="vz-str"><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">1</span><span class="vz-ix">0</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">2</span><span class="vz-ix">1</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">3</span><span class="vz-ix">2</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">4</span><span class="vz-ix">3</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">5</span><span class="vz-ix">4</span></span></div></div>
     ===
-    23 | nth from the end is index len - n from the front.
+    23 | nth from the end is index len - n = 5 - 2 = 3 from the front.
+    <div class="vz"><div class="vz-lab">target index</div><div class="vz-str"><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">1</span><span class="vz-ix">0</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">2</span><span class="vz-ix">1</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">3</span><span class="vz-ix">2</span></span><span class="vz-col"><span class="vz-ptrs"><span style="color:#ce9178">len-n</span></span><span class="vz-ch">4</span><span class="vz-ix">3</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">5</span><span class="vz-ix">4</span></span></div></div>
     ===
-    24 | Drop that node.
-    ===
-    25-35 | Relink the remaining nodes.
+    24-25 | Drop that node and relink -> 1 -> 2 -> 3 -> 5.
+    <div class="vz"><div class="vz-lab">after removal</div><div class="vz-str"><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch take">1</span><span class="vz-ix">0</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch take">2</span><span class="vz-ix">1</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch take">3</span><span class="vz-ix">2</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch take">5</span><span class="vz-ix">3</span></span></div></div>
   source: "NeetCode 150 · Linked List"
   tags: [rust, neetcode, linked-list]
   tests: |
@@ -457,15 +461,17 @@
       <div class="vz-flow"><span class="vz-step">digit + digit + carry</span><span class="vz-arr">&rarr;</span><span class="vz-step">emit sum % 10</span><span class="vz-arr">&rarr;</span><span class="vz-step">carry = sum / 10</span><span class="vz-arr">&rarr;</span><span class="vz-step win">until both end &amp; no carry</span></div>
     </div>
     ===
-    13 | Dummy head + tail, and a running carry.
+    13-14 | Add digit by digit (least-significant first) with a running carry.
+    <div class="vz"><div class="vz-lab">a (342, reversed)</div><div class="vz-str"><span class="vz-col"><span class="vz-ptrs"><span style="color:#569cd6">+</span></span><span class="vz-ch">2</span><span class="vz-ix">0</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">4</span><span class="vz-ix">1</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">3</span><span class="vz-ix">2</span></span></div></div><div class="vz"><div class="vz-lab">b (465, reversed)</div><div class="vz-str"><span class="vz-col"><span class="vz-ptrs"><span style="color:#ce9178">+</span></span><span class="vz-ch">5</span><span class="vz-ix">0</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">6</span><span class="vz-ix">1</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">4</span><span class="vz-ix">2</span></span></div></div><div class="vz"><div class="vz-lab">carry</div><div class="vz-row"><span class="vz-lab">carry</span><span class="vz-chip">0</span></div></div>
     ===
-    14 | Loop while digits remain or a carry is pending.
+    15-23 | 2 + 5 = 7 (carry 0); 4 + 6 = 10 -> digit 0, carry 1.
+    <div class="vz"><div class="vz-lab">result so far</div><div class="vz-row"><span class="vz-lab">result</span><span class="vz-chip">7</span><span class="vz-chip">0</span></div></div><div class="vz"><div class="vz-lab">carry</div><div class="vz-row"><span class="vz-lab">carry</span><span class="vz-chip">1</span></div></div>
     ===
-    15-23 | Add the two current digits plus the carry.
+    24-29 | 3 + 4 + carry 1 = 8.
+    <div class="vz"><div class="vz-lab">result</div><div class="vz-row"><span class="vz-lab">result</span><span class="vz-chip">7</span><span class="vz-chip">0</span><span class="vz-chip">8</span></div></div>
     ===
-    24-30 | New carry is sum/10; emit sum%10 as the next digit.
-    ===
-    31-32 | Return the summed list.
+    31 | Return 7 -> 0 -> 8 (= 807).
+    <div class="vz"><div class="vz-lab">answer</div><div class="vz-row"><span class="vz-lab">result</span><span class="vz-chip win">7</span><span class="vz-chip win">0</span><span class="vz-chip win">8</span></div></div>
   source: "NeetCode 150 · Linked List"
   tags: [rust, neetcode, linked-list]
   tests: |
@@ -525,15 +531,14 @@
       <div class="vz-flow"><span class="vz-step">slow +1, fast +2</span><span class="vz-arr">&rarr;</span><span class="vz-step">fast hits end &rarr; no cycle</span><span class="vz-arr">&rarr;</span><span class="vz-step win">slow == fast &rarr; cycle</span></div>
     </div>
     ===
-    2-5 | Two pointers start at the head.
+    2-3 | Slow and fast both start at the head.
+    <div class="vz"><div class="vz-lab">0 -> 1 -> 2 -> 3 -> 4 -> (back to 2)</div><div class="vz-str"><span class="vz-col"><span class="vz-ptrs"><span style="color:#569cd6">s</span><span style="color:#ce9178">f</span></span><span class="vz-ch">0</span><span class="vz-ix">0</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">1</span><span class="vz-ix">1</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">2</span><span class="vz-ix">2</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">3</span><span class="vz-ix">3</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">4</span><span class="vz-ix">4</span></span></div></div>
     ===
-    6-9 | Fast moves two steps; if it runs off the end, no cycle.
+    6-10 | Each loop: fast moves two steps, slow moves one.
+    <div class="vz"><div class="vz-lab">fast +2, slow +1</div><div class="vz-str"><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">0</span><span class="vz-ix">0</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">1</span><span class="vz-ix">1</span></span><span class="vz-col"><span class="vz-ptrs"><span style="color:#569cd6">s</span></span><span class="vz-ch">2</span><span class="vz-ix">2</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">3</span><span class="vz-ix">3</span></span><span class="vz-col"><span class="vz-ptrs"><span style="color:#ce9178">f</span></span><span class="vz-ch">4</span><span class="vz-ix">4</span></span></div></div>
     ===
-    10 | Slow moves one step.
-    ===
-    11-14 | If they meet, there's a cycle.
-    ===
-    15-16 | Fast reached the end -> no cycle.
+    11-12 | The cycle forces them onto the same node -> true.
+    <div class="vz"><div class="vz-lab">they meet</div><div class="vz-str"><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">0</span><span class="vz-ix">0</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">1</span><span class="vz-ix">1</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch take">2</span><span class="vz-ix">2</span></span><span class="vz-col"><span class="vz-ptrs"><span style="color:#569cd6">s</span><span style="color:#ce9178">f</span></span><span class="vz-ch take">3</span><span class="vz-ix">3</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch take">4</span><span class="vz-ix">4</span></span></div></div>
   source: "NeetCode 150 · Linked List"
   tags: [rust, neetcode, linked-list]
   tests: |
@@ -587,15 +592,14 @@
       <div class="vz-flow"><span class="vz-step">follow i &rarr; nums[i]</span><span class="vz-arr">&rarr;</span><span class="vz-step">tortoise/hare meet</span><span class="vz-arr">&rarr;</span><span class="vz-step">walk from start in lockstep</span><span class="vz-arr">&rarr;</span><span class="vz-step win">meet point = duplicate</span></div>
     </div>
     ===
-    3-4 | Treat value -> index as 'next'; start tortoise and hare.
+    3-4 | Follow value -> index like a linked list (start at nums[0]).
+    <div class="vz"><div class="vz-lab">nums (value = next index)</div><div class="vz-str"><span class="vz-col"><span class="vz-ptrs"><span style="color:#4ec96a">start</span></span><span class="vz-ch">1</span><span class="vz-ix">0</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">3</span><span class="vz-ix">1</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">4</span><span class="vz-ix">2</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">2</span><span class="vz-ix">3</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">2</span><span class="vz-ix">4</span></span></div></div>
     ===
-    5-8 | Phase 1: advance 1x and 2x until they meet in the cycle.
+    5-8 | Phase 1: slow +1, fast +2 until they meet inside the cycle.
+    <div class="vz"><div class="vz-lab">tortoise & hare</div><div class="vz-str"><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">1</span><span class="vz-ix">0</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">3</span><span class="vz-ix">1</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">4</span><span class="vz-ix">2</span></span><span class="vz-col"><span class="vz-ptrs"><span style="color:#569cd6">s</span></span><span class="vz-ch">2</span><span class="vz-ix">3</span></span><span class="vz-col"><span class="vz-ptrs"><span style="color:#ce9178">f</span></span><span class="vz-ch">2</span><span class="vz-ix">4</span></span></div></div>
     ===
-    9 | Phase 2: a fresh pointer from the start.
-    ===
-    10-13 | Move both one step; they meet at the cycle entrance.
-    ===
-    14-15 | That entrance is the duplicated value.
+    9-14 | Phase 2: a walk from the start meets it at the cycle entrance = 2 (the duplicate).
+    <div class="vz"><div class="vz-lab">entrance = duplicate</div><div class="vz-str"><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">1</span><span class="vz-ix">0</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">3</span><span class="vz-ix">1</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">4</span><span class="vz-ix">2</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch take">2</span><span class="vz-ix">3</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch take">2</span><span class="vz-ix">4</span></span></div></div>
   source: "NeetCode 150 · Linked List"
   tags: [rust, neetcode, linked-list]
   tests: |

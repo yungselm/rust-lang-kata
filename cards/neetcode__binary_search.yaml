@@ -36,15 +36,17 @@
       <div class="vz-flow"><span class="vz-step">look at the middle</span><span class="vz-arr">&rarr;</span><span class="vz-step">target smaller &rarr; go left</span><span class="vz-arr">&rarr;</span><span class="vz-step">target larger &rarr; go right</span><span class="vz-arr">&rarr;</span><span class="vz-step win">found, or empty</span></div>
     </div>
     ===
-    2-4 | Half-open search range [lo, hi).
+    2-5 | Range [lo, hi) starts as the whole array; look at the midpoint.
+    <div class="vz"><div class="vz-lab">lo .. hi</div><div class="vz-str"><span class="vz-col"><span class="vz-ptrs"><span style="color:#569cd6">lo</span></span><span class="vz-ch take">-1</span><span class="vz-ix">0</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch take">0</span><span class="vz-ix">1</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch take">3</span><span class="vz-ix">2</span></span><span class="vz-col"><span class="vz-ptrs"><span style="color:#c586c0">mid</span></span><span class="vz-ch take">5</span><span class="vz-ix">3</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch take">9</span><span class="vz-ix">4</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch take">12</span><span class="vz-ix">5</span></span></div></div>
     ===
-    5 | Look at the midpoint (overflow-safe).
+    6-9 | nums[mid]=5 < 9 -> discard the left half, lo = mid+1.
+    <div class="vz"><div class="vz-lab">go right</div><div class="vz-str"><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">-1</span><span class="vz-ix">0</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">0</span><span class="vz-ix">1</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">3</span><span class="vz-ix">2</span></span><span class="vz-col"><span class="vz-ptrs"><span style="color:#c586c0">mid</span></span><span class="vz-ch">5</span><span class="vz-ix">3</span></span><span class="vz-col"><span class="vz-ptrs"><span style="color:#569cd6">lo</span></span><span class="vz-ch take">9</span><span class="vz-ix">4</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch take">12</span><span class="vz-ix">5</span></span></div></div>
     ===
-    6-7 | Hit -> return its index.
+    5-11 | New mid=5, nums[5]=12 > 9 -> discard the right, hi = mid.
+    <div class="vz"><div class="vz-lab">go left</div><div class="vz-str"><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">-1</span><span class="vz-ix">0</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">0</span><span class="vz-ix">1</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">3</span><span class="vz-ix">2</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">5</span><span class="vz-ix">3</span></span><span class="vz-col"><span class="vz-ptrs"><span style="color:#569cd6">lo</span></span><span class="vz-ch take">9</span><span class="vz-ix">4</span></span><span class="vz-col"><span class="vz-ptrs"><span style="color:#c586c0">mid</span></span><span class="vz-ch">12</span><span class="vz-ix">5</span></span></div></div>
     ===
-    8-13 | Too small -> search right; too big -> search left.
-    ===
-    14-15 | Range emptied, not found.
+    6-7 | mid=4, nums[4]=9 = target -> found at index 4.
+    <div class="vz"><div class="vz-lab">found</div><div class="vz-str"><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">-1</span><span class="vz-ix">0</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">0</span><span class="vz-ix">1</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">3</span><span class="vz-ix">2</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">5</span><span class="vz-ix">3</span></span><span class="vz-col"><span class="vz-ptrs"><span style="color:#4ec96a">mid</span></span><span class="vz-ch take">9</span><span class="vz-ix">4</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">12</span><span class="vz-ix">5</span></span></div></div>
   source: "NeetCode 150 · Binary Search"
   tags: [rust, neetcode, binary-search]
   tests: |
@@ -96,15 +98,17 @@
       <div class="vz-flow"><span class="vz-step">treat grid as one sorted line</span><span class="vz-arr">&rarr;</span><span class="vz-step">binary-search the flat index</span><span class="vz-arr">&rarr;</span><span class="vz-step">map i &rarr; (i/cols, i%cols)</span><span class="vz-arr">&rarr;</span><span class="vz-step win">found?</span></div>
     </div>
     ===
-    8-9 | Treat the grid as one sorted array of length rows*cols.
+    5-6 | Treat the grid as one sorted array of length rows*cols = 12.
+    <div class="vz"><div class="vz-lab">flattened buffer</div><div class="vz-str"><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">1</span><span class="vz-ix">0</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">3</span><span class="vz-ix">1</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">5</span><span class="vz-ix">2</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">7</span><span class="vz-ix">3</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">10</span><span class="vz-ix">4</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">11</span><span class="vz-ix">5</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">16</span><span class="vz-ix">6</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">20</span><span class="vz-ix">7</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">23</span><span class="vz-ix">8</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">30</span><span class="vz-ix">9</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">34</span><span class="vz-ix">10</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">60</span><span class="vz-ix">11</span></span></div></div>
     ===
-    10 | Binary-search the flat index.
+    8-12 | mid=6 -> matrix[1][2]=16 > 3 -> search the left half.
+    <div class="vz"><div class="vz-lab">go left</div><div class="vz-str"><span class="vz-col"><span class="vz-ptrs"><span style="color:#569cd6">lo</span></span><span class="vz-ch take">1</span><span class="vz-ix">0</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch take">3</span><span class="vz-ix">1</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch take">5</span><span class="vz-ix">2</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch take">7</span><span class="vz-ix">3</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch take">10</span><span class="vz-ix">4</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch take">11</span><span class="vz-ix">5</span></span><span class="vz-col"><span class="vz-ptrs"><span style="color:#c586c0">mid</span></span><span class="vz-ch">16</span><span class="vz-ix">6</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">20</span><span class="vz-ix">7</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">23</span><span class="vz-ix">8</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">30</span><span class="vz-ix">9</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">34</span><span class="vz-ix">10</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">60</span><span class="vz-ix">11</span></span></div></div>
     ===
-    11 | Map the flat index back to (row, col).
+    8-12 | mid=3 -> value 7 > 3 -> left again.
+    <div class="vz"><div class="vz-lab">go left</div><div class="vz-str"><span class="vz-col"><span class="vz-ptrs"><span style="color:#569cd6">lo</span></span><span class="vz-ch take">1</span><span class="vz-ix">0</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch take">3</span><span class="vz-ix">1</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch take">5</span><span class="vz-ix">2</span></span><span class="vz-col"><span class="vz-ptrs"><span style="color:#c586c0">mid</span></span><span class="vz-ch">7</span><span class="vz-ix">3</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">10</span><span class="vz-ix">4</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">11</span><span class="vz-ix">5</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">16</span><span class="vz-ix">6</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">20</span><span class="vz-ix">7</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">23</span><span class="vz-ix">8</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">30</span><span class="vz-ix">9</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">34</span><span class="vz-ix">10</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">60</span><span class="vz-ix">11</span></span></div></div>
     ===
-    12-19 | Found / go right / go left as usual.
-    ===
-    20-21 | Not present.
+    8-10 | mid=1 -> value 3 = target -> true (that is matrix[0][1]).
+    <div class="vz"><div class="vz-lab">found at flat 1 = (0,1)</div><div class="vz-str"><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">1</span><span class="vz-ix">0</span></span><span class="vz-col"><span class="vz-ptrs"><span style="color:#4ec96a">mid</span></span><span class="vz-ch take">3</span><span class="vz-ix">1</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">5</span><span class="vz-ix">2</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">7</span><span class="vz-ix">3</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">10</span><span class="vz-ix">4</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">11</span><span class="vz-ix">5</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">16</span><span class="vz-ix">6</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">20</span><span class="vz-ix">7</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">23</span><span class="vz-ix">8</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">30</span><span class="vz-ix">9</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">34</span><span class="vz-ix">10</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">60</span><span class="vz-ix">11</span></span></div></div>
   source: "NeetCode 150 · Binary Search"
   tags: [rust, neetcode, binary-search]
   tests: |
@@ -158,13 +162,17 @@
       <div class="vz-flow"><span class="vz-step">speeds 1 .. max pile</span><span class="vz-arr">&rarr;</span><span class="vz-step">mid speed: hours &le; h?</span><span class="vz-arr">&rarr;</span><span class="vz-step">yes &rarr; try slower</span><span class="vz-arr">&rarr;</span><span class="vz-step win">smallest feasible speed</span></div>
     </div>
     ===
-    2-4 | Helper: hours needed at speed k (ceil-divide each pile).
+    5-6 | Binary-search the eating speed between 1 and the max pile = 11.
+    <div class="vz"><div class="vz-lab">candidate speeds (bananas/hour)</div><div class="vz-str"><span class="vz-col"><span class="vz-ptrs"><span style="color:#569cd6">lo</span></span><span class="vz-ch">1</span><span class="vz-ix">0</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">2</span><span class="vz-ix">1</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">3</span><span class="vz-ix">2</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">4</span><span class="vz-ix">3</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">5</span><span class="vz-ix">4</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">6</span><span class="vz-ix">5</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">7</span><span class="vz-ix">6</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">8</span><span class="vz-ix">7</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">9</span><span class="vz-ix">8</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">10</span><span class="vz-ix">9</span></span><span class="vz-col"><span class="vz-ptrs"><span style="color:#ce9178">hi</span></span><span class="vz-ch">11</span><span class="vz-ix">10</span></span></div></div>
     ===
-    5-8 | Search speeds from 1 up to the largest pile.
+    8-12 | speed 6 finishes in 6 h <= 8 -> feasible, so try slower (hi = mid).
+    <div class="vz"><div class="vz-lab">feasible -> go slower</div><div class="vz-str"><span class="vz-col"><span class="vz-ptrs"><span style="color:#569cd6">lo</span></span><span class="vz-ch">1</span><span class="vz-ix">0</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">2</span><span class="vz-ix">1</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">3</span><span class="vz-ix">2</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">4</span><span class="vz-ix">3</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">5</span><span class="vz-ix">4</span></span><span class="vz-col"><span class="vz-ptrs"><span style="color:#c586c0">mid</span></span><span class="vz-ch">6</span><span class="vz-ix">5</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">7</span><span class="vz-ix">6</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">8</span><span class="vz-ix">7</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">9</span><span class="vz-ix">8</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">10</span><span class="vz-ix">9</span></span><span class="vz-col"><span class="vz-ptrs"><span style="color:#ce9178">hi</span></span><span class="vz-ch">11</span><span class="vz-ix">10</span></span></div></div>
     ===
-    9-14 | Fast enough -> try slower; too slow -> go faster.
+    8-12 | speed 3 needs 10 h > 8 -> too slow (lo = mid+1).
+    <div class="vz"><div class="vz-lab">too slow -> go faster</div><div class="vz-str"><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">1</span><span class="vz-ix">0</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">2</span><span class="vz-ix">1</span></span><span class="vz-col"><span class="vz-ptrs"><span style="color:#c586c0">mid</span></span><span class="vz-ch">3</span><span class="vz-ix">2</span></span><span class="vz-col"><span class="vz-ptrs"><span style="color:#569cd6">lo</span></span><span class="vz-ch">4</span><span class="vz-ix">3</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">5</span><span class="vz-ix">4</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">6</span><span class="vz-ix">5</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">7</span><span class="vz-ix">6</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">8</span><span class="vz-ix">7</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">9</span><span class="vz-ix">8</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">10</span><span class="vz-ix">9</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">11</span><span class="vz-ix">10</span></span></div></div>
     ===
-    15-16 | Smallest speed that still finishes in time.
+    15 | The smallest feasible speed converges to 4.
+    <div class="vz"><div class="vz-lab">answer = 4</div><div class="vz-str"><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">1</span><span class="vz-ix">0</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">2</span><span class="vz-ix">1</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">3</span><span class="vz-ix">2</span></span><span class="vz-col"><span class="vz-ptrs"><span style="color:#4ec96a">k</span></span><span class="vz-ch take">4</span><span class="vz-ix">3</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">5</span><span class="vz-ix">4</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">6</span><span class="vz-ix">5</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">7</span><span class="vz-ix">6</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">8</span><span class="vz-ix">7</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">9</span><span class="vz-ix">8</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">10</span><span class="vz-ix">9</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">11</span><span class="vz-ix">10</span></span></div></div>
   source: "NeetCode 150 · Binary Search"
   tags: [rust, neetcode, binary-search]
   tests: |
@@ -207,13 +215,17 @@
       <div class="vz-flow"><span class="vz-step">mid vs right end</span><span class="vz-arr">&rarr;</span><span class="vz-step">mid &gt; right &rarr; go right</span><span class="vz-arr">&rarr;</span><span class="vz-step">else &rarr; mid or left</span><span class="vz-arr">&rarr;</span><span class="vz-step win">range collapses on the min</span></div>
     </div>
     ===
-    2-4 | Search the whole array.
+    2-3 | lo and hi span the whole rotated array.
+    <div class="vz"><div class="vz-lab">lo / hi</div><div class="vz-str"><span class="vz-col"><span class="vz-ptrs"><span style="color:#569cd6">lo</span></span><span class="vz-ch">3</span><span class="vz-ix">0</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">4</span><span class="vz-ix">1</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">5</span><span class="vz-ix">2</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">1</span><span class="vz-ix">3</span></span><span class="vz-col"><span class="vz-ptrs"><span style="color:#ce9178">hi</span></span><span class="vz-ch">2</span><span class="vz-ix">4</span></span></div></div>
     ===
-    5 | Compare the midpoint to the right end.
+    5-7 | mid=2 (5) > nums[hi] (2): the dip is to the right -> lo = mid+1.
+    <div class="vz"><div class="vz-lab">go right</div><div class="vz-str"><span class="vz-col"><span class="vz-ptrs"><span style="color:#569cd6">lo</span></span><span class="vz-ch">3</span><span class="vz-ix">0</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">4</span><span class="vz-ix">1</span></span><span class="vz-col"><span class="vz-ptrs"><span style="color:#c586c0">mid</span></span><span class="vz-ch">5</span><span class="vz-ix">2</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">1</span><span class="vz-ix">3</span></span><span class="vz-col"><span class="vz-ptrs"><span style="color:#ce9178">hi</span></span><span class="vz-ch">2</span><span class="vz-ix">4</span></span></div></div>
     ===
-    6-11 | mid > right end -> min is to the right; else mid or left.
+    5-9 | mid=3 (1) <= nums[hi] (2): min is mid or to the left -> hi = mid.
+    <div class="vz"><div class="vz-lab">go left</div><div class="vz-str"><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">3</span><span class="vz-ix">0</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">4</span><span class="vz-ix">1</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">5</span><span class="vz-ix">2</span></span><span class="vz-col"><span class="vz-ptrs"><span style="color:#569cd6">lo</span><span style="color:#c586c0">mid</span><span style="color:#ce9178">hi</span></span><span class="vz-ch">1</span><span class="vz-ix">3</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">2</span><span class="vz-ix">4</span></span></div></div>
     ===
-    12-13 | Range collapses onto the minimum.
+    12 | lo meets hi at the minimum: 1.
+    <div class="vz"><div class="vz-lab">minimum</div><div class="vz-str"><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">3</span><span class="vz-ix">0</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">4</span><span class="vz-ix">1</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">5</span><span class="vz-ix">2</span></span><span class="vz-col"><span class="vz-ptrs"><span style="color:#4ec96a">min</span></span><span class="vz-ch take">1</span><span class="vz-ix">3</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">2</span><span class="vz-ix">4</span></span></div></div>
   source: "NeetCode 150 · Binary Search"
   tags: [rust, neetcode, binary-search]
   tests: |
@@ -267,15 +279,17 @@
       <div class="vz-flow"><span class="vz-step">find the sorted half</span><span class="vz-arr">&rarr;</span><span class="vz-step">target inside it?</span><span class="vz-arr">&rarr;</span><span class="vz-step">yes &rarr; search there</span><span class="vz-arr">&rarr;</span><span class="vz-step win">else &rarr; the other half</span></div>
     </div>
     ===
-    2-5 | Binary search over the rotated array.
+    2-5 | Binary search, but the array is rotated.
+    <div class="vz"><div class="vz-lab">lo / mid / hi</div><div class="vz-str"><span class="vz-col"><span class="vz-ptrs"><span style="color:#569cd6">lo</span></span><span class="vz-ch">4</span><span class="vz-ix">0</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">5</span><span class="vz-ix">1</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">6</span><span class="vz-ix">2</span></span><span class="vz-col"><span class="vz-ptrs"><span style="color:#c586c0">mid</span></span><span class="vz-ch">7</span><span class="vz-ix">3</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">0</span><span class="vz-ix">4</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">1</span><span class="vz-ix">5</span></span><span class="vz-col"><span class="vz-ptrs"><span style="color:#ce9178">hi</span></span><span class="vz-ch">2</span><span class="vz-ix">6</span></span></div></div>
     ===
-    6-8 | Direct hit -> done.
+    9-13 | Left half [lo..mid] is sorted (4..7); target 0 isn't in it -> go right.
+    <div class="vz"><div class="vz-lab">search the right half</div><div class="vz-str"><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">4</span><span class="vz-ix">0</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">5</span><span class="vz-ix">1</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">6</span><span class="vz-ix">2</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">7</span><span class="vz-ix">3</span></span><span class="vz-col"><span class="vz-ptrs"><span style="color:#569cd6">lo</span></span><span class="vz-ch take">0</span><span class="vz-ix">4</span></span><span class="vz-col"><span class="vz-ptrs"><span style="color:#c586c0">mid</span></span><span class="vz-ch take">1</span><span class="vz-ix">5</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch take">2</span><span class="vz-ix">6</span></span></div></div>
     ===
-    9 | Decide which half is the sorted one.
+    9-11 | Now the left half [0..1] is sorted and 0 is in it -> go left (hi = mid).
+    <div class="vz"><div class="vz-lab">target in the sorted half</div><div class="vz-str"><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">4</span><span class="vz-ix">0</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">5</span><span class="vz-ix">1</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">6</span><span class="vz-ix">2</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">7</span><span class="vz-ix">3</span></span><span class="vz-col"><span class="vz-ptrs"><span style="color:#569cd6">lo</span></span><span class="vz-ch take">0</span><span class="vz-ix">4</span></span><span class="vz-col"><span class="vz-ptrs"><span style="color:#c586c0">mid</span></span><span class="vz-ch take">1</span><span class="vz-ix">5</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">2</span><span class="vz-ix">6</span></span></div></div>
     ===
-    10-20 | If target lies in the sorted half, search there; else the other.
-    ===
-    21-22 | Not found.
+    6-7 | mid=4 -> value 0 = target -> found at index 4.
+    <div class="vz"><div class="vz-lab">found</div><div class="vz-str"><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">4</span><span class="vz-ix">0</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">5</span><span class="vz-ix">1</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">6</span><span class="vz-ix">2</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">7</span><span class="vz-ix">3</span></span><span class="vz-col"><span class="vz-ptrs"><span style="color:#4ec96a">mid</span></span><span class="vz-ch take">0</span><span class="vz-ix">4</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">1</span><span class="vz-ix">5</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">2</span><span class="vz-ix">6</span></span></div></div>
   source: "NeetCode 150 · Binary Search"
   tags: [rust, neetcode, binary-search]
   tests: |
@@ -351,13 +365,14 @@
       <div class="vz-flow"><span class="vz-step">key &rarr; list sorted by time</span><span class="vz-arr">&rarr;</span><span class="vz-step">binary-search &le; query</span><span class="vz-arr">&rarr;</span><span class="vz-step win">take the entry just before</span></div>
     </div>
     ===
-    14-18 | set: append (timestamp, value); arriving in order keeps the list sorted.
+    14-16 | set: append (timestamp, value); timestamps arrive increasing, so the list stays sorted.
+    <div class="vz"><div class="vz-lab">foo -> entries sorted by time</div><div class="vz-row"><span class="vz-lab">entries</span><span class="vz-chip">t=1: bar</span><span class="vz-chip">t=4: bar2</span></div></div>
     ===
-    19 | get: grab this key's time-ordered list.
+    20 | get(foo, 3): binary-search for where timestamps stop being <= 3.
+    <div class="vz"><div class="vz-lab">query t <= 3</div><div class="vz-str"><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">1</span><span class="vz-ix">0</span></span><span class="vz-col"><span class="vz-ptrs"><span style="color:#c586c0">idx</span></span><span class="vz-ch">4</span><span class="vz-ix">1</span></span></div></div>
     ===
-    20-23 | Binary-search where timestamps stop being <= the query.
-    ===
-    24-27 | The entry just before that point is the answer.
+    24 | Take the entry just before that point -> entries[0] = bar.
+    <div class="vz"><div class="vz-lab">answer</div><div class="vz-row"><span class="vz-lab">result</span><span class="vz-chip win">bar</span></div></div>
   source: "NeetCode 150 · Binary Search"
   tags: [rust, neetcode, binary-search]
   tests: |
@@ -417,13 +432,17 @@
       <div class="vz-flow"><span class="vz-step">merge both sorted slices</span><span class="vz-arr">&rarr;</span><span class="vz-step">one sorted sequence</span><span class="vz-arr">&rarr;</span><span class="vz-step win">read middle (or avg of two)</span></div>
     </div>
     ===
-    6-14 | Merge the two sorted slices (merge-sort's merge step).
+    6-13 | Merge a and b like merge-sort, picking the smaller head each step.
+    <div class="vz"><div class="vz-lab">two sorted inputs</div><div class="vz-lab">a</div><div class="vz-str"><span class="vz-col"><span class="vz-ptrs"><span style="color:#569cd6">i</span></span><span class="vz-ch">1</span><span class="vz-ix">0</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">3</span><span class="vz-ix">1</span></span></div><div class="vz-lab">b</div><div class="vz-str"><span class="vz-col"><span class="vz-ptrs"><span style="color:#ce9178">j</span></span><span class="vz-ch">2</span><span class="vz-ix">0</span></span></div></div>
     ===
-    15-16 | Append whatever remains of either slice.
+    7-9 | a[i]=1 <= b[j]=2 -> take 1, advance i.
+    <div class="vz"><div class="vz-lab">merged so far</div><div class="vz-row"><span class="vz-lab">merged</span><span class="vz-chip">1</span></div></div>
     ===
-    17 | Find the middle position.
+    15-16 | One side empties; append the rest -> [1, 2, 3].
+    <div class="vz"><div class="vz-lab">merged</div><div class="vz-row"><span class="vz-lab">merged</span><span class="vz-chip">1</span><span class="vz-chip">2</span><span class="vz-chip">3</span></div></div>
     ===
-    18-23 | Odd total -> middle element; even -> average the two middles.
+    17-21 | Odd total -> the median is the middle element = 2.
+    <div class="vz"><div class="vz-lab">median</div><div class="vz-row"><span class="vz-lab">merged</span><span class="vz-chip">1</span><span class="vz-chip win">2</span><span class="vz-chip">3</span></div></div>
   source: "NeetCode 150 · Binary Search"
   tags: [rust, neetcode, binary-search]
   tests: |

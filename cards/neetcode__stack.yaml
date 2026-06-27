@@ -38,13 +38,17 @@
       <div class="vz-flow"><span class="vz-step">opener → push its closer</span><span class="vz-arr">→</span><span class="vz-step">closer → must equal top</span><span class="vz-arr">→</span><span class="vz-step win">empty at end → valid</span></div>
     </div>
     ===
-    2-4 | Stack of expected closing brackets.
+    2 | A stack holds the closing bracket we still expect.
+    <div class="vz"><div class="vz-lab">input</div><div class="vz-str"><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">(</span><span class="vz-ix">0</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">[</span><span class="vz-ix">1</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">]</span><span class="vz-ix">2</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">)</span><span class="vz-ix">3</span></span></div></div><div class="vz"><div class="vz-lab">stack</div><div class="vz-row"><span class="vz-lab">stack</span><span class="vz-chip">(empty)</span></div></div>
     ===
-    5-8 | On an opener, push the closer we expect.
+    5-7 | Each opener pushes its matching closer.
+    <div class="vz"><div class="vz-lab">after ( [</div><div class="vz-str"><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch take">(</span><span class="vz-ix">0</span></span><span class="vz-col"><span class="vz-ptrs"><span style="color:#569cd6">i</span></span><span class="vz-ch take">[</span><span class="vz-ix">1</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">]</span><span class="vz-ix">2</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">)</span><span class="vz-ix">3</span></span></div></div><div class="vz"><div class="vz-lab">stack (top -> right)</div><div class="vz-row"><span class="vz-lab">stack</span><span class="vz-chip">)</span><span class="vz-chip">]</span></div></div>
     ===
-    9-14 | On a closer, it must match the top of the stack.
+    8-13 | Each closer must equal the top: ] then ) both match.
+    <div class="vz"><div class="vz-lab">after ] )</div><div class="vz-str"><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch take">(</span><span class="vz-ix">0</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch take">[</span><span class="vz-ix">1</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch take">]</span><span class="vz-ix">2</span></span><span class="vz-col"><span class="vz-ptrs"><span style="color:#569cd6">i</span></span><span class="vz-ch take">)</span><span class="vz-ix">3</span></span></div></div><div class="vz"><div class="vz-lab">stack</div><div class="vz-row"><span class="vz-lab">stack</span><span class="vz-chip">(empty)</span></div></div>
     ===
-    15-16 | Valid iff nothing is left open.
+    15 | Stack empty at the end -> valid.
+    <div class="vz"><div class="vz-lab">valid</div><div class="vz-row"><span class="vz-lab">stack</span><span class="vz-chip">(empty)</span></div></div>
   source: "NeetCode 150 · Stack"
   tags: [rust, neetcode, stack]
   tests: |
@@ -320,15 +324,14 @@
       <div class="vz-flow"><span class="vz-step">stack of cooler days</span><span class="vz-arr">→</span><span class="vz-step">today warmer? pop &amp; record gap</span><span class="vz-arr">→</span><span class="vz-step win">push today</span></div>
     </div>
     ===
-    3 | Stack of days still waiting for a warmer one (decreasing temps).
+    3 | Keep a stack of day indices still waiting for a warmer temperature.
+    <div class="vz"><div class="vz-lab">temps</div><div class="vz-str"><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">73</span><span class="vz-ix">0</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">74</span><span class="vz-ix">1</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">75</span><span class="vz-ix">2</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">71</span><span class="vz-ix">3</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">69</span><span class="vz-ix">4</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">72</span><span class="vz-ix">5</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">76</span><span class="vz-ix">6</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">73</span><span class="vz-ix">7</span></span></div></div><div class="vz"><div class="vz-lab">stack</div><div class="vz-row"><span class="vz-lab">stack (indices)</span><span class="vz-chip">(empty)</span></div></div>
     ===
-    4-5 | Scan each day.
+    5-12 | When today is warmer, pop waiting days and record the day gap.
+    <div class="vz"><div class="vz-lab">day 6 (76) pops the cooler days behind it</div><div class="vz-str"><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">73</span><span class="vz-ix">0</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch take">74</span><span class="vz-ix">1</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch take">75</span><span class="vz-ix">2</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch take">71</span><span class="vz-ix">3</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch take">69</span><span class="vz-ix">4</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch take">72</span><span class="vz-ix">5</span></span><span class="vz-col"><span class="vz-ptrs"><span style="color:#569cd6">i</span></span><span class="vz-ch">76</span><span class="vz-ix">6</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">73</span><span class="vz-ix">7</span></span></div></div><div class="vz"><div class="vz-lab">res so far</div><div class="vz-row"><span class="vz-lab">res</span><span class="vz-chip">1</span><span class="vz-chip">1</span><span class="vz-chip">4</span><span class="vz-chip">2</span><span class="vz-chip">1</span><span class="vz-chip">1</span><span class="vz-chip">?</span><span class="vz-chip">?</span></div></div>
     ===
-    6-12 | Today is warmer -> pop waiting days and record how long they waited.
-    ===
-    13-14 | Today now waits too.
-    ===
-    15-16 | Days-to-warmer for each day.
+    15 | Days never warmed stay 0 -> [1,1,4,2,1,1,0,0].
+    <div class="vz"><div class="vz-lab">answer</div><div class="vz-row"><span class="vz-lab">res</span><span class="vz-chip">1</span><span class="vz-chip">1</span><span class="vz-chip">4</span><span class="vz-chip">2</span><span class="vz-chip">1</span><span class="vz-chip">1</span><span class="vz-chip">0</span><span class="vz-chip">0</span></div></div>
   source: "NeetCode 150 · Stack"
   tags: [rust, neetcode, stack]
   tests: |
@@ -379,13 +382,14 @@
       <div class="vz-flow"><span class="vz-step">sort by position, nearest first</span><span class="vz-arr">→</span><span class="vz-step">compute each arrival time</span><span class="vz-arr">→</span><span class="vz-step">later than leader → new fleet</span><span class="vz-arr">→</span><span class="vz-step win">else merge</span></div>
     </div>
     ===
-    4-7 | Sort cars from nearest the target backwards.
+    4 | Sort the cars from nearest the target backwards.
+    <div class="vz"><div class="vz-lab">position (descending)</div><div class="vz-str"><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">10</span><span class="vz-ix">0</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">8</span><span class="vz-ix">1</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">5</span><span class="vz-ix">2</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">3</span><span class="vz-ix">3</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">0</span><span class="vz-ix">4</span></span></div></div><div class="vz"><div class="vz-lab">arrival time</div><div class="vz-str"><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">1</span><span class="vz-ix">0</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">1</span><span class="vz-ix">1</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">7</span><span class="vz-ix">2</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">3</span><span class="vz-ix">3</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">12</span><span class="vz-ix">4</span></span></div></div>
     ===
-    8 | Compute each car's arrival time.
+    7-12 | A car arriving later than the fleet ahead starts a new fleet; otherwise it merges.
+    <div class="vz"><div class="vz-lab">arrival times</div><div class="vz-str"><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch take">1</span><span class="vz-ix">0</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">1</span><span class="vz-ix">1</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch take">7</span><span class="vz-ix">2</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">3</span><span class="vz-ix">3</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch take">12</span><span class="vz-ix">4</span></span></div></div>
     ===
-    9 | Arrives later than the fleet ahead -> new fleet; else it merges.
-    ===
-    10-15 | Number of fleets.
+    14 | New fleets begin at times 1, 7, 12 -> 3 fleets.
+    <div class="vz"><div class="vz-lab">3 fleets</div><div class="vz-str"><span class="vz-col"><span class="vz-ptrs"><span style="color:#4ec96a">f1</span></span><span class="vz-ch take">1</span><span class="vz-ix">0</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">1</span><span class="vz-ix">1</span></span><span class="vz-col"><span class="vz-ptrs"><span style="color:#4ec96a">f2</span></span><span class="vz-ch take">7</span><span class="vz-ix">2</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">3</span><span class="vz-ix">3</span></span><span class="vz-col"><span class="vz-ptrs"><span style="color:#4ec96a">f3</span></span><span class="vz-ch take">12</span><span class="vz-ix">4</span></span></div></div>
   source: "NeetCode 150 · Stack"
   tags: [rust, neetcode, stack]
   tests: |
@@ -438,15 +442,14 @@
       <div class="vz-flow"><span class="vz-step">increasing stack of bars</span><span class="vz-arr">→</span><span class="vz-step">shorter bar → pop &amp; close rectangle</span><span class="vz-arr">→</span><span class="vz-step">extend start back</span><span class="vz-arr">→</span><span class="vz-step win">track max area</span></div>
     </div>
     ===
-    2-5 | Increasing stack of (start index, height).
+    2 | An increasing stack of (start index, height).
+    <div class="vz"><div class="vz-lab">heights</div><div class="vz-str"><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">2</span><span class="vz-ix">0</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">1</span><span class="vz-ix">1</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">5</span><span class="vz-ix">2</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">6</span><span class="vz-ix">3</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">2</span><span class="vz-ix">4</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">3</span><span class="vz-ix">5</span></span></div></div>
     ===
-    6-9 | A shorter bar arrives -> pop taller bars and close their rectangles.
+    6-14 | A shorter bar arrives -> pop the taller bars and close their rectangles.
+    <div class="vz"><div class="vz-lab">bar 4 (h=2) pops bars 6 and 5</div><div class="vz-str"><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">2</span><span class="vz-ix">0</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">1</span><span class="vz-ix">1</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch take">5</span><span class="vz-ix">2</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch take">6</span><span class="vz-ix">3</span></span><span class="vz-col"><span class="vz-ptrs"><span style="color:#569cd6">i</span></span><span class="vz-ch">2</span><span class="vz-ix">4</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">3</span><span class="vz-ix">5</span></span></div></div>
     ===
-    10-17 | Extend the new bar's start back to where the popped bar began.
-    ===
-    18 | Bars left on the stack reach the end.
-    ===
-    19-22 | Largest rectangle area.
+    9 | Best closed here: heights 5 & 6 over width 2 -> area 10.
+    <div class="vz"><div class="vz-lab">max area = 10</div><div class="vz-str"><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">2</span><span class="vz-ix">0</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">1</span><span class="vz-ix">1</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch take">5</span><span class="vz-ix">2</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch take">6</span><span class="vz-ix">3</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">2</span><span class="vz-ix">4</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">3</span><span class="vz-ix">5</span></span></div></div>
   source: "NeetCode 150 · Stack"
   tags: [rust, neetcode, stack]
   tests: |

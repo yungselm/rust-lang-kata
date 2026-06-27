@@ -402,15 +402,14 @@
       <div class="vz-flow"><span class="vz-step">sweep left &rarr; prefix products</span><span class="vz-arr">&rarr;</span><span class="vz-step">sweep right &rarr; &times; suffix products</span><span class="vz-arr">&rarr;</span><span class="vz-step win">each slot = left &times; right</span></div>
     </div>
     ===
-    2-3 | Output starts all 1s; prefix tracks the product so far.
+    2-3 | Output starts all 1s; 'prefix' will accumulate the product to the left.
+    <div class="vz"><div class="vz-lab">nums</div><div class="vz-str"><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">1</span><span class="vz-ix">0</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">2</span><span class="vz-ix">1</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">3</span><span class="vz-ix">2</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">4</span><span class="vz-ix">3</span></span></div></div><div class="vz"><div class="vz-lab">res (start)</div><div class="vz-str"><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">1</span><span class="vz-ix">0</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">1</span><span class="vz-ix">1</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">1</span><span class="vz-ix">2</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">1</span><span class="vz-ix">3</span></span></div></div>
     ===
-    4-7 | Left sweep: each slot gets the product of everything to its left.
+    4-7 | Left sweep: res[i] = product of everything to its left -> [1, 1, 2, 6].
+    <div class="vz"><div class="vz-lab">after the left sweep</div><div class="vz-str"><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">1</span><span class="vz-ix">0</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">1</span><span class="vz-ix">1</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">2</span><span class="vz-ix">2</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">6</span><span class="vz-ix">3</span></span></div></div>
     ===
-    8 | Now sweep from the right.
-    ===
-    9-12 | Multiply in the product of everything to the right.
-    ===
-    13-14 | Each slot = left product x right product, no division.
+    8-12 | Right sweep: multiply in the product to the right -> [24, 12, 8, 6].
+    <div class="vz"><div class="vz-lab">after the right sweep (answer)</div><div class="vz-str"><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch take">24</span><span class="vz-ix">0</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch take">12</span><span class="vz-ix">1</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch take">8</span><span class="vz-ix">2</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch take">6</span><span class="vz-ix">3</span></span></div></div>
   source: "NeetCode 150 · Arrays & Hashing"
   tags: [rust, neetcode, arrays-hashing]
   tests: |
@@ -533,15 +532,14 @@
       <div class="vz-flow"><span class="vz-step">all values in a set</span><span class="vz-arr">&rarr;</span><span class="vz-step">start where n&minus;1 is absent</span><span class="vz-arr">&rarr;</span><span class="vz-step">walk n+1, n+2, &hellip;</span><span class="vz-arr">&rarr;</span><span class="vz-step win">longest run</span></div>
     </div>
     ===
-    4-5 | Put every value in a set for O(1) membership.
+    4 | Put every value in a set for O(1) membership tests.
+    <div class="vz"><div class="vz-lab">set</div><div class="vz-row"><span class="vz-lab">set</span><span class="vz-chip">100</span><span class="vz-chip">4</span><span class="vz-chip">200</span><span class="vz-chip">1</span><span class="vz-chip">3</span><span class="vz-chip">2</span></div></div>
     ===
-    6 | Consider each value...
+    6-7 | Only start a run at a value whose n-1 is absent (here 1, since 0 is missing).
+    <div class="vz"><div class="vz-lab">candidate run-starts</div><div class="vz-row"><span class="vz-lab">values</span><span class="vz-chip">1</span><span class="vz-chip">100</span><span class="vz-chip">200</span></div></div>
     ===
-    7-9 | ...but only start a run at its smallest member (no n-1 present).
-    ===
-    10-13 | Walk upward counting consecutive values.
-    ===
-    14-18 | Keep the longest run.
+    10-14 | Walk upward 1 -> 2 -> 3 -> 4: the longest run has length 4.
+    <div class="vz"><div class="vz-lab">the run</div><div class="vz-row"><span class="vz-lab">consecutive</span><span class="vz-chip win">1</span><span class="vz-chip win">2</span><span class="vz-chip win">3</span><span class="vz-chip win">4</span></div></div>
   source: "NeetCode 150 · Arrays & Hashing"
   tags: [rust, neetcode, arrays-hashing]
   tests: |
