@@ -391,3 +391,19 @@
     when there's no value to infer from or several types would fit.
   source: "Rust Book §10.1 / §13.2 (collect)"
   tags: [rust, generics, concept]
+
+- type: concept
+  question: |
+    Which common Rust types are unsized (`!Sized`), and how do you always handle
+    them?
+  answer: |
+    The everyday unsized types are slices `[T]`, the string slice `str`, and trait
+    objects `dyn Trait`. Their size isn't known at compile time, so you never hold
+    one by value — you handle them behind a pointer: `&[T]` / `&mut [T]`, `&str`,
+    `Box<dyn Trait>` / `&dyn Trait`.
+    This is also why a generic parameter has an implicit `T: Sized` bound; write
+    `T: ?Sized` to opt out and accept unsized types (then you must take them by
+    reference, e.g. `&T`). It is the same reason `|&w|` over `&[i32]` fails: you
+    can't move an unsized `[i32]` out from behind the reference.
+  source: "book ch.19 dynamically sized types; std::marker::Sized"
+  tags: [rust, generics, sized, concept]

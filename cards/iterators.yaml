@@ -691,3 +691,63 @@
     assert_eq!(capitalize_first("hello"), "Hello");
     assert_eq!(capitalize_first(""), "");
     assert_eq!(capitalize_first("a"), "A");
+
+- type: concept
+  question: |
+    Why does `v.windows(2).map(|&w| w[0] + w[1])` fail with "the size for values
+    of type `[i32]` cannot be known at compile time"?
+  answer: |
+    `windows(2)` yields `&[i32]` — a reference to a slice. The pattern `|&w|` says
+    "peel the reference and bind the pointee by value", which would make `w` a bare
+    `[i32]`. But `[i32]` is unsized (`!Sized`): its length isn't part of the type,
+    so the compiler can't store one in a local or move it. Keep the reference:
+    write `|w|` (so `w: &[i32]`) and index through it — `w[0]` auto-derefs to a
+    sized `i32` and the arithmetic is fine.
+  source: "std slice::windows; std::marker::Sized"
+  tags: [rust, iterators, sized, concept]
+
+- type: concept
+  question: |
+    When can you use the reference-peeling closure pattern `|&x|` (binding the
+    value behind the reference), and when does it fail?
+  answer: |
+    Only when what's behind the reference is `Sized`.
+    - `v.iter().map(|&x| ...)` over `&i32`: peeling binds `x: i32`. `i32` is sized,
+      so this is fine (and idiomatic).
+    - `v.windows(2).map(|&w| ...)` over `&[i32]`: peeling would bind `w: [i32]`, a
+      bare slice — unsized -> compile error.
+    The deciding factor is SIZEDNESS, not `Copy`: you can only move a pointee out
+    by value if its size is known at compile time. A single `i32` qualifies; a
+    slice `[i32]` does not.
+  source: "std::marker::Sized"
+  tags: [rust, iterators, sized, concept]
+
+- type: concept
+  question: |
+    Safe default when you're unsure whether to peel the reference in a closure
+    pattern (`|&x|` vs `|x|`)?
+  answer: |
+    Don't destructure — write `|w|` (or `|x|`) and reach inside: `w[0]`, `w.0`,
+    `*x`, a method call, etc. Indexing, field access, and method calls auto-deref,
+    so this works whether the item is a slice or a sized value, and it always
+    compiles. Reach for `|&x|` deliberately only when the item is an obvious `&i32`
+    / `&T: Copy` and you want the value directly. This single habit makes
+    `windows`, `chunks`, and `iter` all correct.
+  tags: [rust, iterators, concept]
+
+- type: concept
+  question: |
+    Does the "you can only peel `&` in a pattern if the pointee is `Sized`" rule
+    apply only to `.map()` closures, or more broadly?
+  answer: |
+    It applies EVERYWHERE a pattern binds a value: `for` loops, `let`, `match`
+    arms, function parameters, and closure arguments. A leading `&` in a pattern
+    always means "match a reference and move the pointee out by value", which only
+    works if that pointee is `Sized`.
+    - `for &x in &nums {}` — pointee `i32`, sized -> OK.
+    - `for &w in nums.windows(2) {}` — pointee `[i32]`, unsized -> ERROR (use
+      `for w in ...` and index).
+    - `let &x = &5;` works; `let &s = &v[..];` does not.
+    Same rule, same fix everywhere: keep the reference (`w`, `x`) and reach inside.
+  source: "std::marker::Sized"
+  tags: [rust, iterators, sized, concept]
