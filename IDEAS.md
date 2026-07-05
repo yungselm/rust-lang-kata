@@ -34,6 +34,14 @@ hasher, cache locality, ...).
   Anagram's `[i32; 26]` and Group Anagrams' `[u8; 26]`: a small, known domain ->
   index a fixed array instead of hashing. (Also note our shipped card uses the
   idiomatic `&[[char; 9]; 9]` signature rather than LeetCode's `Vec<Vec<char>>`.)
+- *3Sum* — `match sum.cmp(&0)` vs a plain `if sum > 0 {..} else if sum < 0 {..}
+  else {..}` chain. Benchmarked ~7-20% faster with the if/else + caching `nums[i]`
+  into a local (`enumerate`). Two lessons: (1) hoisting the fixed `nums[i]` out of
+  the inner loop is the dominant win (the optimizer won't do it for you here); (2)
+  clippy's `comparison_chain` lint pushes you to `match cmp`, but the direct
+  comparisons codegen a touch faster on this hot path — a case where the idiomatic/
+  lint-preferred form isn't the fastest. (Shipped card keeps the caching win + the
+  clippy-clean match; the if/else is the Tradeoffs variant.)
 - (collect more of these as they come up during review)
 
 **Trigger:** start once ~half of the current deck is learned (~75 days out from

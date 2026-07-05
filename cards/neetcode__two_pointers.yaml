@@ -129,28 +129,23 @@
     fn three_sum(nums: &[i32]) -> Vec<[i32; 3]> {
         let mut nums = nums.to_vec();
         nums.sort_unstable();
-        let n = nums.len();
         let mut res = Vec::new();
-        for i in 0..n {
-            if i > 0 && nums[i] == nums[i - 1] {
+        for (i, &first) in nums.iter().enumerate() {
+            if i > 0 && first == nums[i - 1] {
                 continue;
             }
             let mut lo = i + 1;
-            let mut hi = n.saturating_sub(1);
+            let mut hi = nums.len() - 1;
             while lo < hi {
-                let sum = nums[i] + nums[lo] + nums[hi];
+                let sum = first + nums[lo] + nums[hi];
                 match sum.cmp(&0) {
-                    std::cmp::Ordering::Less => lo += 1,
                     std::cmp::Ordering::Greater => hi -= 1,
+                    std::cmp::Ordering::Less => lo += 1,
                     std::cmp::Ordering::Equal => {
-                        res.push([nums[i], nums[lo], nums[hi]]);
+                        res.push([first, nums[lo], nums[hi]]);
                         lo += 1;
-                        hi -= 1;
                         while lo < hi && nums[lo] == nums[lo - 1] {
                             lo += 1;
-                        }
-                        while lo < hi && nums[hi] == nums[hi + 1] {
-                            hi -= 1;
                         }
                     }
                 }
@@ -159,9 +154,14 @@
         res
     }
   notes: |
-    Sort, then fix the first element and two-pointer the rest. Skipping equal
-    neighbours (for `i`, and after each hit for `lo`/`hi`) suppresses duplicates.
-    The extra space is constant beyond the sort.
+    Sort, then fix `first = nums[i]` (cached via `enumerate`, so it isn't
+    re-indexed on every inner step) and two-pointer the rest. After a hit, advance
+    `lo` past equal neighbours to drop duplicate triplets; `hi` self-corrects on the
+    next pass, so a single dedup loop suffices. Beyond the sort, space is constant.
+    Perf note: a plain `if sum > 0 {..} else if sum < 0 {..} else {..}` chain
+    benchmarks a few % faster than `match sum.cmp(&0)`, but clippy's
+    `comparison_chain` lint (enforced here with -D warnings) rewrites it to the
+    match. The bigger win was caching `nums[i]`.
     Time O(n^2), Space O(1).
   walkthrough: |
     @idea
@@ -174,13 +174,13 @@
     2-3 | Sort first so we can two-pointer and skip duplicates.
     <div class="vz"><div class="vz-lab">sorted</div><div class="vz-str"><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">-4</span><span class="vz-ix">0</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">-1</span><span class="vz-ix">1</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">-1</span><span class="vz-ix">2</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">0</span><span class="vz-ix">3</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">1</span><span class="vz-ix">4</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">2</span><span class="vz-ix">5</span></span></div></div>
     ===
-    6-11 | Fix nums[i], then two-pointer the rest for sum 0.
+    5-10 | Fix first = nums[i], then two-pointer the rest for sum 0.
     <div class="vz"><div class="vz-lab">fix i, scan lo/hi</div><div class="vz-str"><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">-4</span><span class="vz-ix">0</span></span><span class="vz-col"><span class="vz-ptrs"><span style="color:#4ec96a">i</span></span><span class="vz-ch">-1</span><span class="vz-ix">1</span></span><span class="vz-col"><span class="vz-ptrs"><span style="color:#569cd6">lo</span></span><span class="vz-ch">-1</span><span class="vz-ix">2</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">0</span><span class="vz-ix">3</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">1</span><span class="vz-ix">4</span></span><span class="vz-col"><span class="vz-ptrs"><span style="color:#ce9178">hi</span></span><span class="vz-ch">2</span><span class="vz-ix">5</span></span></div></div>
     ===
-    13-18 | -1 + -1 + 2 = 0 -> record [-1, -1, 2].
+    12-17 | -1 + -1 + 2 = 0 -> record [-1, -1, 2].
     <div class="vz"><div class="vz-lab">hit</div><div class="vz-str"><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">-4</span><span class="vz-ix">0</span></span><span class="vz-col"><span class="vz-ptrs"><span style="color:#4ec96a">i</span></span><span class="vz-ch take">-1</span><span class="vz-ix">1</span></span><span class="vz-col"><span class="vz-ptrs"><span style="color:#569cd6">lo</span></span><span class="vz-ch take">-1</span><span class="vz-ix">2</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">0</span><span class="vz-ix">3</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">1</span><span class="vz-ix">4</span></span><span class="vz-col"><span class="vz-ptrs"><span style="color:#ce9178">hi</span></span><span class="vz-ch take">2</span><span class="vz-ix">5</span></span></div></div>
     ===
-    13-18 | Move inward: -1 + 0 + 1 = 0 -> [-1, 0, 1].
+    12-17 | Advance lo past its duplicates; the next pair -1 + 0 + 1 = 0 -> [-1, 0, 1].
     <div class="vz"><div class="vz-lab">another hit</div><div class="vz-str"><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">-4</span><span class="vz-ix">0</span></span><span class="vz-col"><span class="vz-ptrs"><span style="color:#4ec96a">i</span></span><span class="vz-ch take">-1</span><span class="vz-ix">1</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">-1</span><span class="vz-ix">2</span></span><span class="vz-col"><span class="vz-ptrs"><span style="color:#569cd6">lo</span></span><span class="vz-ch take">0</span><span class="vz-ix">3</span></span><span class="vz-col"><span class="vz-ptrs"><span style="color:#ce9178">hi</span></span><span class="vz-ch take">1</span><span class="vz-ix">4</span></span><span class="vz-col"><span class="vz-ptrs"></span><span class="vz-ch">2</span><span class="vz-ix">5</span></span></div></div>
   source: "NeetCode 150 · Two Pointers"
   tags: [rust, neetcode, two-pointers]
