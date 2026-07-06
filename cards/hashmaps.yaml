@@ -511,7 +511,19 @@
     }
 
     fn build_scores_table(results: &str) -> HashMap<&str, TeamScores> {
+        let mut scores: HashMap<&str, TeamScores> = HashMap::new();
+        for line in results.lines() {
+            let mut parts = line.split(',');
+            let team_1 = parts.next().unwrap();
+            let team_2 = parts.next().unwrap();
+            let score_1: u8 = parts.next().unwrap().parse().unwrap();
+            let score_2: u8 = parts.next().unwrap().parse().unwrap();
 
+            // TODO: add score_1 / score_2 onto team_1 and team_2 using
+            // scores.entry(team).or_default() -> &mut TeamScores, then += fields
+
+        }
+        scores
     }
   solution: |
     use std::collections::HashMap;
