@@ -105,7 +105,7 @@
     `while let` loops while the pattern matches; `pop()` yields `Some` until the
     Vec is empty, then `None` ends it. (`&mut Vec` is right here — `pop` mutates
     the length.)
-  source: "book §18.1 (while let)"
+  source: "book §19.1 (while let)"
   tags: [rust, matching, while-let]
 
 - instruction: |
@@ -125,7 +125,7 @@
   notes: |
     `let else` (Rust 1.65+) binds on the happy path and forces the `else` block
     to diverge (return/break/panic), keeping `n` in scope afterward.
-  source: "book §18.1 (let else)"
+  source: "book §6.3 (let else)"
   tags: [rust, matching, let-else]
 
 - instruction: |
@@ -146,7 +146,7 @@
   notes: |
     A guard (`if cond`) adds a runtime condition to an arm. Guards don't count
     toward exhaustiveness, so you still need a catch-all.
-  source: "book §18.3 (match guards)"
+  source: "book §19.3 (match guards)"
   tags: [rust, matching, guards]
 
 - instruction: |
@@ -165,7 +165,7 @@
     }
   notes: |
     `name @ pattern` tests the pattern AND binds the matched value to `name`.
-  source: "book §18.3 (@ bindings)"
+  source: "book §19.3 (@ bindings)"
   tags: [rust, matching, bindings]
 
 - instruction: |
@@ -205,7 +205,7 @@
   notes: |
     `a..=b` is an inclusive range pattern (only `..=`, not `..`, is allowed in
     patterns for integers/chars).
-  source: "book §18.3 (range patterns)"
+  source: "book §19.3 (range patterns)"
   tags: [rust, matching, ranges]
 
 - instruction: |
@@ -224,7 +224,7 @@
             _ => 9,
         }
     }
-  source: "book §18.3 (tuple patterns)"
+  source: "book §19.3 (tuple patterns)"
   tags: [rust, matching, tuples, guards]
 
 - instruction: |
@@ -251,7 +251,7 @@
   notes: |
     `matches!` with struct patterns: `..` ignores the remaining fields, and the
     or-pattern `|` covers either axis. (clippy prefers this over match->bool.)
-  source: "book §18.3 (struct patterns)"
+  source: "book §19.3 (struct patterns)"
   tags: [rust, matching, structs]
 
 - instruction: |
@@ -282,7 +282,7 @@
     }
   notes: |
     Struct variants destructure with `{ field, .. }`; tuple variants with `(..)`.
-  source: "book §18.3 (enum variants)"
+  source: "book §19.3 (enum variants)"
   tags: [rust, matching, enums]
 
 - instruction: |
@@ -303,7 +303,7 @@
   notes: |
     Slice patterns match by length; `..` is a "rest" matching any number of
     middle elements. These arms cover lengths 0, 1, and >= 2 — exhaustive.
-  source: "book §18.3 (slice patterns)"
+  source: "book §19.3 (slice patterns)"
   tags: [rust, matching, slices]
 
 - instruction: |
@@ -323,7 +323,7 @@
   notes: |
     Matching `&Option<String>` against `Some(text)` binds `text: &String`
     automatically (default binding modes), so you don't move out of the borrow.
-  source: "book §18.3 (binding modes)"
+  source: "book §19.3 (binding modes)"
   tags: [rust, matching, ergonomics]
 
 - instruction: |
@@ -385,7 +385,7 @@
     }
   notes: |
     Patterns nest: `Some(Some(n))` matches only when both layers are present.
-  source: "book §18.3 (nested patterns)"
+  source: "book §19.3 (nested patterns)"
   tags: [rust, matching, option]
 
 - instruction: |
@@ -432,7 +432,7 @@
   notes: |
     Matching `&(i32, i32)` binds `a`, `b` as `&i32` (ergonomics); the guard
     compares them and `*a` copies out the `i32`.
-  source: "book §18.3 (binding modes)"
+  source: "book §19.3 (binding modes)"
   tags: [rust, matching, ergonomics]
 
 # --- concept cards ---
@@ -465,7 +465,7 @@
     required by `let` and function params. Refutable patterns can fail (e.g.
     `Some(x)`) and are used in `match`, `if let`, `while let`. A refutable
     pattern in a plain `let` is an error — use `let else`.
-  source: "book §18.2"
+  source: "book §19.2 (refutability)"
   tags: [rust, matching, concept]
 
 - type: concept
@@ -476,7 +476,7 @@
     automatically become references — so `match &opt { Some(x) => ... }` gives
     `x: &T` without writing `ref`. It removes manual `ref`/`&` noise when matching
     through borrows.
-  source: "book §18.3 (default binding modes)"
+  source: "book §19.3 (default binding modes)"
   tags: [rust, matching, concept]
 
 - instruction: |
@@ -558,7 +558,7 @@
     One `match` dispatches over all variant shapes at once: struct variants
     destructure named fields, tuple variants bind positionally, and the unit variant
     matches by name. The bound values move straight into `self`'s fields.
-  source: "Rustlings enums3 · Book §6.2 / §18 (matching enum variants)"
+  source: "Rustlings enums3 · Book §6.2 / §19 (matching enum variants)"
   tags: [rust, matching, enums, rustlings]
   tests: |
     let mut s = State::default();

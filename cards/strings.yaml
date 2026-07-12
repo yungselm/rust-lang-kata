@@ -1,0 +1,500 @@
+# Strings — String vs &str, UTF-8, building, splitting, parsing, searching.
+# Solutions are clippy-clean.
+- type: concept
+  question: |
+    `String` vs `&str` — what is each, and which should a function PARAMETER
+    usually be?
+  answer: |
+    `String`: owned, growable, heap-allocated UTF-8 buffer.
+    `&str`: borrowed view into UTF-8 data (a String, a literal, a slice of
+    either).
+    Parameters should usually be `&str`: deref coercion lets callers pass
+    `&String` or a literal for free. Take `String` only when you need
+    ownership (e.g. storing it).
+  source: "book §4.3 + §8.2 (String vs &str)"
+  tags: [rust, strings, str, api-design, concept]
+
+- instruction: |
+    Write `shout_owned(s: &str) -> String` three-ways in one body: build the
+    same `String` from `s` via `to_string()`, `String::from`, and `to_owned()`,
+    then return any one uppercased. (Drill: all three conversions.)
+  starter: |
+    fn shout_owned(s: &str) -> String {
+
+    }
+  solution: |
+    fn shout_owned(s: &str) -> String {
+        let a = s.to_string();
+        let b = String::from(s);
+        let c = s.to_owned();
+        assert_eq!(a, b);
+        assert_eq!(b, c);
+        a.to_uppercase()
+    }
+  notes: |
+    All three are equivalent for `&str` → `String`; pick one style per codebase
+    (`to_string()` is the most common). The real cost is the same: one
+    allocation + copy.
+  source: "book §8.2 (creating strings)"
+  tags: [rust, strings, conversions]
+  tests: |
+    assert_eq!(shout_owned("hi"), "HI");
+
+- instruction: |
+    Write `build_line(words: &[&str]) -> String` using `push_str` and `push`:
+    words separated by single spaces, terminated with `'\n'`.
+  starter: |
+    fn build_line(words: &[&str]) -> String {
+
+    }
+  solution: |
+    fn build_line(words: &[&str]) -> String {
+        let mut line = String::new();
+        for (i, w) in words.iter().enumerate() {
+            if i > 0 {
+                line.push(' ');
+            }
+            line.push_str(w);
+        }
+        line.push('\n');
+        line
+    }
+  notes: |
+    `push_str` appends a `&str`, `push` appends a single `char`. Growing one
+    String in place beats repeated `+`/`format!` in a loop (each of those
+    allocates).
+  source: "book §8.2 (updating a String)"
+  tags: [rust, strings, push_str]
+  tests: |
+    assert_eq!(build_line(&["a", "b", "c"]), "a b c\n");
+    assert_eq!(build_line(&[]), "\n");
+
+- type: concept
+  question: |
+    After `let s3 = s1 + &s2;` — why can't you use `s1` anymore, and what's the
+    usual alternative when combining several pieces?
+  answer: |
+    `+` calls `fn add(self, s: &str) -> String`: it takes s1 BY VALUE (moves
+    it, reusing its buffer) and appends s2. s1 is gone; s2 (borrowed) is fine.
+    For multi-part combinations use `format!("{s1}-{s2}")` — it borrows
+    everything, at the cost of a fresh allocation.
+  source: "book §8.2 (concatenation)"
+  tags: [rust, strings, ownership, format, concept]
+
+- type: concept
+  question: |
+    Why does `&"héllo"[0..1]` risk a panic, and `"héllo".len() != 5`?
+  answer: |
+    Strings are UTF-8 bytes: `len()` counts BYTES (é is 2 bytes → 6), and
+    slicing uses byte offsets — slicing must land on char boundaries or it
+    PANICS at runtime (`[0..2]` through é would). Indexing `s[0]` doesn't
+    compile at all.
+    Iterate `chars()` for characters, or check `is_char_boundary` before
+    slicing byte ranges.
+  source: "book §8.2 (bytes, scalars, graphemes)"
+  tags: [rust, strings, utf8, slicing, concept]
+
+- instruction: |
+    Write `char_stats(s: &str) -> (usize, usize)` returning
+    `(character count, byte count)` — they differ for non-ASCII.
+  starter: |
+    fn char_stats(s: &str) -> (usize, usize) {
+
+    }
+  solution: |
+    fn char_stats(s: &str) -> (usize, usize) {
+        (s.chars().count(), s.len())
+    }
+  notes: |
+    `chars()` yields `char` scalar values (walking the UTF-8), `len()` is raw
+    bytes — O(n) vs O(1). Neither is "grapheme clusters" (é composed of two
+    scalars counts as 2 chars; that needs a crate).
+  source: "book §8.2 (UTF-8)"
+  tags: [rust, strings, utf8, chars]
+  tests: |
+    assert_eq!(char_stats("abc"), (3, 3));
+    assert_eq!(char_stats("héllo"), (5, 6));
+
+- instruction: |
+    Write `first_char_upper(s: &str) -> String`: uppercase the first character
+    (correct for multi-byte chars), keep the rest as is.
+  starter: |
+    fn first_char_upper(s: &str) -> String {
+
+    }
+  solution: |
+    fn first_char_upper(s: &str) -> String {
+        let mut chars = s.chars();
+        match chars.next() {
+            Some(c) => c.to_uppercase().collect::<String>() + chars.as_str(),
+            None => String::new(),
+        }
+    }
+  notes: |
+    `chars.as_str()` returns the UNCONSUMED remainder as a `&str` — the trick
+    that avoids byte-offset math. `to_uppercase` on char returns an iterator
+    (some chars uppercase to several).
+  source: "std str::chars + char::to_uppercase"
+  tags: [rust, strings, chars, utf8]
+  tests: |
+    assert_eq!(first_char_upper("hello"), "Hello");
+    assert_eq!(first_char_upper("über"), "Über");
+    assert_eq!(first_char_upper(""), "");
+
+- instruction: |
+    Write `csv_fields(line: &str) -> Vec<&str>`: split on commas and trim
+    whitespace from each field.
+  starter: |
+    fn csv_fields(line: &str) -> Vec<&str> {
+
+    }
+  solution: |
+    fn csv_fields(line: &str) -> Vec<&str> {
+        line.split(',').map(str::trim).collect()
+    }
+  notes: |
+    `split` borrows — zero allocation for the fields themselves. `str::trim` as
+    a plain function path works because each item is already `&str`.
+    (`split_whitespace` is the cousin for space-separated input.)
+  source: "std str::split + str::trim"
+  tags: [rust, strings, split, parsing]
+  tests: |
+    assert_eq!(csv_fields("a, b ,c"), vec!["a", "b", "c"]);
+    assert_eq!(csv_fields(""), vec![""]);
+
+- instruction: |
+    Write `to_csv(nums: &[i32]) -> String` joining the numbers with commas,
+    e.g. [1,2,3] -> "1,2,3".
+  starter: |
+    fn to_csv(nums: &[i32]) -> String {
+
+    }
+  solution: |
+    fn to_csv(nums: &[i32]) -> String {
+        nums.iter()
+            .map(|n| n.to_string())
+            .collect::<Vec<_>>()
+            .join(",")
+    }
+  notes: |
+    `join` lives on slices of strings, so collect the pieces first. For big
+    inputs a fold with `push_str` avoids the intermediate Vec, but this is the
+    readable default.
+  source: "std slice::join"
+  tags: [rust, strings, join, iterators]
+  tests: |
+    assert_eq!(to_csv(&[1, 2, 3]), "1,2,3");
+    assert_eq!(to_csv(&[]), "");
+
+- instruction: |
+    Write `sum_line(line: &str) -> i32`: the line contains whitespace-separated
+    numbers (possibly with stray surrounding spaces); trim, split, parse, sum.
+    Ignore tokens that fail to parse.
+  starter: |
+    fn sum_line(line: &str) -> i32 {
+
+    }
+  solution: |
+    fn sum_line(line: &str) -> i32 {
+        line.split_whitespace()
+            .filter_map(|tok| tok.parse::<i32>().ok())
+            .sum()
+    }
+  notes: |
+    The trim-split-parse pipeline is everyday input handling.
+    `split_whitespace` already ignores leading/trailing/repeated whitespace, so
+    no explicit `trim` needed.
+  source: "book §8.2 + std str::parse"
+  tags: [rust, strings, parsing, iterators]
+  tests: |
+    assert_eq!(sum_line("  1 2  30 "), 33);
+    assert_eq!(sum_line("4 x 5"), 9);
+    assert_eq!(sum_line(""), 0);
+
+- instruction: |
+    Write `key_value(line: &str) -> Option<(&str, &str)>` splitting
+    `"key=value"` at the FIRST `'='` using `split_once`; trim both sides.
+  starter: |
+    fn key_value(line: &str) -> Option<(&str, &str)> {
+
+    }
+  solution: |
+    fn key_value(line: &str) -> Option<(&str, &str)> {
+        line.split_once('=')
+            .map(|(k, v)| (k.trim(), v.trim()))
+    }
+  notes: |
+    `split_once` is the right tool for key/value shapes — it splits exactly
+    once and returns `Option`, so "no separator" is handled without panics,
+    and values may contain further `=`.
+  source: "std str::split_once"
+  tags: [rust, strings, split, option, parsing]
+  tests: |
+    assert_eq!(key_value("name = rust "), Some(("name", "rust")));
+    assert_eq!(key_value("a=b=c"), Some(("a", "b=c")));
+    assert_eq!(key_value("no separator"), None);
+
+- instruction: |
+    Write `nonempty_lines(text: &str) -> Vec<&str>` returning trimmed,
+    non-empty lines.
+  starter: |
+    fn nonempty_lines(text: &str) -> Vec<&str> {
+
+    }
+  solution: |
+    fn nonempty_lines(text: &str) -> Vec<&str> {
+        text.lines()
+            .map(str::trim)
+            .filter(|l| !l.is_empty())
+            .collect()
+    }
+  notes: |
+    `lines()` handles both `\n` and `\r\n` and doesn't include the terminator.
+    Chain with trim/filter for robust text ingestion.
+  source: "std str::lines"
+  tags: [rust, strings, lines, iterators]
+  tests: |
+    assert_eq!(nonempty_lines("a\n\n  b  \r\nc"), vec!["a", "b", "c"]);
+
+- instruction: |
+    Write `redact(text: &str, secret: &str) -> String` replacing every
+    occurrence of `secret` with `"***"`, and `has_secret(text: &str, secret: &str) -> bool`.
+  starter: |
+    fn redact(text: &str, secret: &str) -> String {
+
+    }
+
+    fn has_secret(text: &str, secret: &str) -> bool {
+
+    }
+  solution: |
+    fn redact(text: &str, secret: &str) -> String {
+        text.replace(secret, "***")
+    }
+
+    fn has_secret(text: &str, secret: &str) -> bool {
+        text.contains(secret)
+    }
+  notes: |
+    `contains`/`starts_with`/`ends_with`/`replace` all take patterns: `&str`,
+    `char`, or a `char`-predicate closure. `replace` allocates a new String;
+    the original is untouched.
+  source: "std str::replace + str::contains"
+  tags: [rust, strings, replace, search]
+  tests: |
+    assert_eq!(redact("pw=abc, again abc", "abc"), "pw=***, again ***");
+    assert!(has_secret("xabcx", "abc"));
+    assert!(!has_secret("xy", "abc"));
+
+- instruction: |
+    Write `find_word(text: &str, word: &str) -> Option<usize>` returning the
+    BYTE index of the first occurrence, and use it to return the text UP TO
+    that point in `prefix_before<'a>(text: &'a str, word: &str) -> &'a str`
+    (whole text if absent).
+  starter: |
+    fn find_word(text: &str, word: &str) -> Option<usize> {
+
+    }
+
+    fn prefix_before<'a>(text: &'a str, word: &str) -> &'a str {
+
+    }
+  solution: |
+    fn find_word(text: &str, word: &str) -> Option<usize> {
+        text.find(word)
+    }
+
+    fn prefix_before<'a>(text: &'a str, word: &str) -> &'a str {
+        match find_word(text, word) {
+            Some(i) => &text[..i],
+            None => text,
+        }
+    }
+  notes: |
+    `find` returns a BYTE offset — safe to slice with, because match positions
+    always sit on char boundaries.
+  source: "std str::find"
+  tags: [rust, strings, find, slicing, option]
+  tests: |
+    assert_eq!(find_word("hello world", "world"), Some(6));
+    assert_eq!(prefix_before("hello world", " world"), "hello");
+    assert_eq!(prefix_before("hello", "x"), "hello");
+
+- instruction: |
+    Write `strip_scheme(url: &str) -> &str` removing a leading `"https://"` or
+    `"http://"` if present, using `strip_prefix`.
+  starter: |
+    fn strip_scheme(url: &str) -> &str {
+
+    }
+  solution: |
+    fn strip_scheme(url: &str) -> &str {
+        url.strip_prefix("https://")
+            .or_else(|| url.strip_prefix("http://"))
+            .unwrap_or(url)
+    }
+  notes: |
+    `strip_prefix` returns `Option<&str>` — no found-check/slice-math dance,
+    and chaining `or_else`/`unwrap_or` reads as the fallback logic it is.
+    (`trim_start_matches` would strip REPEATED occurrences — a classic bug.)
+  source: "std str::strip_prefix"
+  tags: [rust, strings, strip_prefix, option]
+  tests: |
+    assert_eq!(strip_scheme("https://a.ch"), "a.ch");
+    assert_eq!(strip_scheme("http://b.ch"), "b.ch");
+    assert_eq!(strip_scheme("c.ch"), "c.ch");
+
+- instruction: |
+    Write `is_palindrome(s: &str) -> bool` on characters, ignoring case and
+    non-alphanumeric chars.
+  starter: |
+    fn is_palindrome(s: &str) -> bool {
+
+    }
+  solution: |
+    fn is_palindrome(s: &str) -> bool {
+        let cleaned: Vec<char> = s
+            .chars()
+            .filter(|c| c.is_alphanumeric())
+            .flat_map(char::to_lowercase)
+            .collect();
+        cleaned.iter().eq(cleaned.iter().rev())
+    }
+  notes: |
+    `iter().eq(iter().rev())` compares without building the reversed Vec.
+    `char::to_lowercase` yields an iterator (rarely >1 char), hence `flat_map`.
+  source: "std char methods + Iterator::eq"
+  tags: [rust, strings, chars, iterators]
+  tests: |
+    assert!(is_palindrome("A man, a plan, a canal: Panama"));
+    assert!(!is_palindrome("rust"));
+    assert!(is_palindrome(""));
+
+- instruction: |
+    Write `reversed(s: &str) -> String` reversing by characters (not bytes!).
+  starter: |
+    fn reversed(s: &str) -> String {
+
+    }
+  solution: |
+    fn reversed(s: &str) -> String {
+        s.chars().rev().collect()
+    }
+  notes: |
+    `String` implements `FromIterator<char>`, so `collect()` closes the loop.
+    Reversing BYTES would shred multi-byte chars into invalid UTF-8 — which is
+    why there's no `s.reverse()`.
+  source: "std str::chars + FromIterator"
+  tags: [rust, strings, chars, collect]
+  tests: |
+    assert_eq!(reversed("abc"), "cba");
+    assert_eq!(reversed("héllo"), "olléh");
+
+- instruction: |
+    Write `caesar(s: &str, shift: u8) -> String` shifting ASCII letters by
+    `shift` (wrapping within a-z / A-Z), leaving everything else unchanged —
+    chars ↔ bytes arithmetic.
+  starter: |
+    fn caesar(s: &str, shift: u8) -> String {
+
+    }
+  solution: |
+    fn caesar(s: &str, shift: u8) -> String {
+        s.chars()
+            .map(|c| {
+                let base = if c.is_ascii_lowercase() {
+                    b'a'
+                } else if c.is_ascii_uppercase() {
+                    b'A'
+                } else {
+                    return c;
+                };
+                (((c as u8 - base + shift % 26) % 26) + base) as char
+            })
+            .collect()
+    }
+  notes: |
+    `c as u8` / `as char` round-trips safely only for ASCII — hence the
+    explicit `is_ascii_*` guards. The early `return c` inside the closure
+    returns from the CLOSURE, not the function.
+  source: "std char (ASCII methods) + Rust by Example"
+  tags: [rust, strings, chars, bytes, ascii]
+  tests: |
+    assert_eq!(caesar("abc XYZ!", 3), "def ABC!");
+    assert_eq!(caesar("zZ", 1), "aA");
+
+- type: concept
+  question: |
+    `bytes()` vs `chars()` vs `char_indices()` — what does each iterator yield
+    and when do you use it?
+  answer: |
+    `bytes()` → `u8`: raw UTF-8 bytes; fastest, correct for pure-ASCII work.
+    `chars()` → `char`: Unicode scalar values; the default for text logic.
+    `char_indices()` → `(usize, char)`: char plus its BYTE offset — use when
+    you need to slice the string at positions found while scanning.
+  source: "book §8.2 + std str"
+  tags: [rust, strings, utf8, iterators, concept]
+
+- instruction: |
+    Write `parse_pair(s: &str) -> Result<(f64, f64), String>` parsing `"x,y"`
+    into two floats, with a readable error message for both failure shapes
+    (missing comma, bad number).
+  starter: |
+    fn parse_pair(s: &str) -> Result<(f64, f64), String> {
+
+    }
+  solution: |
+    fn parse_pair(s: &str) -> Result<(f64, f64), String> {
+        let (x, y) = s.split_once(',').ok_or("expected 'x,y'")?;
+        let x = x.trim().parse::<f64>().map_err(|e| format!("bad x: {e}"))?;
+        let y = y.trim().parse::<f64>().map_err(|e| format!("bad y: {e}"))?;
+        Ok((x, y))
+    }
+  notes: |
+    Real-world string parsing = split + trim + parse with `?` at each stage.
+    `ok_or` converts the Option from `split_once` into the Result world so one
+    `?` pipeline handles everything.
+  source: "std str::split_once + book §9.2"
+  tags: [rust, strings, parsing, results]
+  tests: |
+    assert_eq!(parse_pair("1.5, 2"), Ok((1.5, 2.0)));
+    assert!(parse_pair("1.5").is_err());
+    assert!(parse_pair("a,2").is_err());
+
+- instruction: |
+    Write `word_lengths(s: &str) -> String`: replace each word with its length,
+    keeping single spaces, e.g. "hello brave world" -> "5 5 5".
+  starter: |
+    fn word_lengths(s: &str) -> String {
+
+    }
+  solution: |
+    fn word_lengths(s: &str) -> String {
+        s.split_whitespace()
+            .map(|w| w.len().to_string())
+            .collect::<Vec<_>>()
+            .join(" ")
+    }
+  notes: |
+    The split → map → collect → join round trip is the bread-and-butter shape
+    for word-level transforms.
+  source: "std str (split_whitespace, join)"
+  tags: [rust, strings, split, join, iterators]
+  tests: |
+    assert_eq!(word_lengths("hello brave world"), "5 5 5");
+    assert_eq!(word_lengths(""), "");
+
+- type: concept
+  question: |
+    You have `bytes: Vec<u8>` from a file/socket. How do you get a `String`,
+    and what are the failure-handling options?
+  answer: |
+    `String::from_utf8(bytes)` → `Result<String, FromUtf8Error>` — strict,
+    zero-copy on success; the error can give the bytes back.
+    `String::from_utf8_lossy(&bytes)` → `Cow<str>` — replaces invalid
+    sequences with U+FFFD (�), never fails; allocates only if repairs were
+    needed.
+    Strict for protocols where invalid UTF-8 is a real error; lossy for
+    display/logging.
+  source: "std String::from_utf8(_lossy)"
+  tags: [rust, strings, utf8, bytes, concept]

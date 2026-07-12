@@ -441,7 +441,7 @@
     let mut owned = v.clone();
     for x in owned.iter_mut() { *x += 1; }            // mutate in place
     let _moved: Vec<i32> = v.into_iter().collect();   // consumes v
-  source: "book §13.1"
+  source: "book §13.2"
   tags: [rust, iterators, concept]
 
 - type: concept

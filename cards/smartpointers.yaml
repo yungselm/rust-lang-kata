@@ -1,0 +1,577 @@
+# Smart pointers — Box, Deref, Drop, Rc, RefCell/Cell, Weak.
+# Solutions are clippy-clean.
+- type: concept
+  question: |
+    Name the three classic situations where you reach for `Box<T>`.
+  answer: |
+    1. Recursive types — the type's size would be infinite without a pointer
+       (`enum List { Cons(i32, Box<List>), Nil }`).
+    2. Trait objects — owning a value known only by trait: `Box<dyn Trait>`.
+    3. Moving large data without copying it — a Box move copies only the pointer.
+    A Box is just an owned heap allocation, freed when the Box drops.
+  source: "book §15.1 (Box<T>)"
+  tags: [rust, smart-pointers, box, concept]
+
+- instruction: |
+    Define the recursive cons list `enum List { Cons(i32, Box<List>), Nil }`
+    and write `sum(list: &List) -> i32` adding up all elements recursively.
+  starter: |
+    enum List {
+        Cons(i32, Box<List>),
+        Nil,
+    }
+
+    use List::{Cons, Nil};
+
+    fn sum(list: &List) -> i32 {
+
+    }
+  solution: |
+    enum List {
+        Cons(i32, Box<List>),
+        Nil,
+    }
+
+    use List::{Cons, Nil};
+
+    fn sum(list: &List) -> i32 {
+        match list {
+            Cons(v, rest) => v + sum(rest),
+            Nil => 0,
+        }
+    }
+  notes: |
+    Without `Box`, `List` would contain itself directly → infinite size.
+    The Box makes the recursive part a fixed-size pointer. Matching on `&List`
+    gives `rest` as `&Box<List>`, which auto-derefs into `&List` for the call.
+  source: "book §15.1 (cons list)"
+  tags: [rust, smart-pointers, box, recursion, enums]
+  tests: |
+    let list = Cons(1, Box::new(Cons(2, Box::new(Cons(3, Box::new(Nil))))));
+    assert_eq!(sum(&list), 6);
+    assert_eq!(sum(&Nil), 0);
+
+- instruction: |
+    Given `trait Shape { fn area(&self) -> f64; }` implemented by `Circle` and
+    `Square`, write `total_area(shapes: &[Box<dyn Shape>]) -> f64`.
+  starter: |
+    trait Shape {
+        fn area(&self) -> f64;
+    }
+
+    struct Circle { r: f64 }
+    struct Square { side: f64 }
+
+    impl Shape for Circle {
+        fn area(&self) -> f64 { std::f64::consts::PI * self.r * self.r }
+    }
+
+    impl Shape for Square {
+        fn area(&self) -> f64 { self.side * self.side }
+    }
+
+    fn total_area(shapes: &[Box<dyn Shape>]) -> f64 {
+
+    }
+  solution: |
+    trait Shape {
+        fn area(&self) -> f64;
+    }
+
+    struct Circle { r: f64 }
+    struct Square { side: f64 }
+
+    impl Shape for Circle {
+        fn area(&self) -> f64 { std::f64::consts::PI * self.r * self.r }
+    }
+
+    impl Shape for Square {
+        fn area(&self) -> f64 { self.side * self.side }
+    }
+
+    fn total_area(shapes: &[Box<dyn Shape>]) -> f64 {
+        shapes.iter().map(|s| s.area()).sum()
+    }
+  notes: |
+    `Vec<Box<dyn Shape>>` is THE pattern for an owned, heterogeneous collection:
+    the Box gives each differently-sized concrete type one uniform, owned
+    pointer; dispatch is dynamic (vtable).
+  source: "book §15.1 + §18.2 (trait objects)"
+  tags: [rust, smart-pointers, box, dyn, traits]
+  tests: |
+    let shapes: Vec<Box<dyn Shape>> = vec![
+        Box::new(Square { side: 2.0 }),
+        Box::new(Circle { r: 1.0 }),
+    ];
+    assert!((total_area(&shapes) - (4.0 + std::f64::consts::PI)).abs() < 1e-9);
+
+- instruction: |
+    Implement `Deref` for `struct MyBox<T>(T)` so that `hello(&MyBox(String::from("Rust")))`
+    works for `hello(name: &str)`.
+  starter: |
+    use std::ops::Deref;
+
+    struct MyBox<T>(T);
+
+    fn hello(name: &str) -> String {
+        format!("Hello, {name}!")
+    }
+  solution: |
+    use std::ops::Deref;
+
+    struct MyBox<T>(T);
+
+    impl<T> Deref for MyBox<T> {
+        type Target = T;
+
+        fn deref(&self) -> &T {
+            &self.0
+        }
+    }
+
+    fn hello(name: &str) -> String {
+        format!("Hello, {name}!")
+    }
+  notes: |
+    `Deref` powers both `*mybox` and deref COERCION: `&MyBox<String>` →
+    `&String` → `&str`, applied automatically (and repeatedly) at call sites.
+  source: "book §15.2 (Deref)"
+  tags: [rust, smart-pointers, deref, traits]
+  tests: |
+    let b = MyBox(String::from("Rust"));
+    assert_eq!(hello(&b), "Hello, Rust!");
+    assert_eq!(*MyBox(5), 5);
+
+- type: concept
+  question: |
+    What is deref coercion, and why does `hello(&boxed_string)` compile when
+    `hello` takes `&str` but `boxed_string` is a `Box<String>`?
+  answer: |
+    When argument types don't match, the compiler inserts `.deref()` calls as
+    long as the types implement `Deref`: `&Box<String>` → `&String` → `&str`.
+    It happens at compile time, only through `&` (no surprise moves), and also
+    applies when calling methods. It's why `&String` works anywhere `&str` is
+    expected.
+  source: "book §15.2 (deref coercion)"
+  tags: [rust, smart-pointers, deref, concept]
+
+- instruction: |
+    Implement `Drop` for `struct Guard { name: &'static str, log: Rc<RefCell<Vec<&'static str>>> }`
+    so it pushes its name to the log when dropped. (The test observes drop order.)
+  starter: |
+    use std::cell::RefCell;
+    use std::rc::Rc;
+
+    struct Guard {
+        name: &'static str,
+        log: Rc<RefCell<Vec<&'static str>>>,
+    }
+  solution: |
+    use std::cell::RefCell;
+    use std::rc::Rc;
+
+    struct Guard {
+        name: &'static str,
+        log: Rc<RefCell<Vec<&'static str>>>,
+    }
+
+    impl Drop for Guard {
+        fn drop(&mut self) {
+            self.log.borrow_mut().push(self.name);
+        }
+    }
+  notes: |
+    `Drop::drop` runs automatically when the value goes out of scope. Locals
+    drop in REVERSE declaration order — see the test: b before a.
+  source: "book §15.3 (Drop)"
+  tags: [rust, smart-pointers, drop, traits]
+  tests: |
+    let log = Rc::new(RefCell::new(Vec::new()));
+    {
+        let _a = Guard { name: "a", log: Rc::clone(&log) };
+        let _b = Guard { name: "b", log: Rc::clone(&log) };
+    }
+    assert_eq!(*log.borrow(), vec!["b", "a"]);
+
+- type: concept
+  question: |
+    You want a value cleaned up BEFORE the end of its scope. Can you call
+    `x.drop()`? What's the idiomatic way?
+  answer: |
+    No — explicit destructor calls are forbidden (`E0040`), because the
+    compiler would still auto-drop at scope end → double free.
+    Use `std::mem::drop(x)` (in the prelude as `drop(x)`): it simply takes
+    ownership and lets `x` fall out of scope immediately.
+  source: "book §15.3 (dropping early)"
+  tags: [rust, smart-pointers, drop, concept]
+
+- instruction: |
+    Write `share<T>(value: T) -> (Rc<T>, Rc<T>)` returning two handles to the
+    SAME allocation.
+  starter: |
+    use std::rc::Rc;
+
+    fn share<T>(value: T) -> (Rc<T>, Rc<T>) {
+
+    }
+  solution: |
+    use std::rc::Rc;
+
+    fn share<T>(value: T) -> (Rc<T>, Rc<T>) {
+        let first = Rc::new(value);
+        let second = Rc::clone(&first);
+        (first, second)
+    }
+  notes: |
+    `Rc::clone(&rc)` bumps a reference count — no data is copied. Writing it as
+    `Rc::clone` (not `.clone()`) is the convention that visually flags "cheap
+    refcount bump, not deep copy".
+  source: "book §15.4 (Rc<T>)"
+  tags: [rust, smart-pointers, rc]
+  tests: |
+    let (a, b) = share(vec![1, 2, 3]);
+    assert!(Rc::ptr_eq(&a, &b));
+    assert_eq!(Rc::strong_count(&a), 2);
+    drop(b);
+    assert_eq!(Rc::strong_count(&a), 1);
+
+- type: concept
+  question: |
+    When do you need `Rc<T>` instead of plain ownership or references? What
+    are its two big restrictions?
+  answer: |
+    When MULTIPLE owners must keep the same value alive and no single owner's
+    scope dominates (graph nodes, shared config, caches) — lifetimes can't
+    express that.
+    Restrictions: (1) single-threaded only — not `Send`; use `Arc` across
+    threads. (2) Gives only SHARED access — combine with `RefCell` (or
+    `Mutex` for `Arc`) to mutate.
+  source: "book §15.4 (Rc<T>)"
+  tags: [rust, smart-pointers, rc, concept]
+
+- instruction: |
+    Write `append_and_len(handle: &Rc<RefCell<Vec<i32>>>, x: i32) -> usize`:
+    push through the shared handle, return the new length.
+  starter: |
+    use std::cell::RefCell;
+    use std::rc::Rc;
+
+    fn append_and_len(handle: &Rc<RefCell<Vec<i32>>>, x: i32) -> usize {
+
+    }
+  solution: |
+    use std::cell::RefCell;
+    use std::rc::Rc;
+
+    fn append_and_len(handle: &Rc<RefCell<Vec<i32>>>, x: i32) -> usize {
+        let mut v = handle.borrow_mut();
+        v.push(x);
+        v.len()
+    }
+  notes: |
+    `Rc<RefCell<T>>` = shared ownership + interior mutability: every clone of
+    the Rc can mutate the same Vec through `borrow_mut()`. The single-threaded
+    sibling of `Arc<Mutex<T>>`.
+  source: "book §15.5 (Rc<RefCell<T>>)"
+  tags: [rust, smart-pointers, rc, refcell]
+  tests: |
+    let a = Rc::new(RefCell::new(vec![]));
+    let b = Rc::clone(&a);
+    assert_eq!(append_and_len(&a, 1), 1);
+    assert_eq!(append_and_len(&b, 2), 2);
+    assert_eq!(*a.borrow(), vec![1, 2]);
+
+- type: concept
+  question: |
+    `RefCell<T>` enforces the borrow rules — how does that differ from normal
+    references, and what happens on violation?
+  answer: |
+    Same rules (many readers XOR one writer), but checked at RUNTIME instead of
+    compile time: `borrow()` and `borrow_mut()` count active borrows and PANIC
+    on conflict (e.g. `borrow_mut` while a `borrow` guard is alive).
+    Use it when you're sure the code is correct but the borrow checker can't
+    see it — typically mutation behind `&self` (interior mutability).
+  source: "book §15.5 (RefCell<T>)"
+  tags: [rust, smart-pointers, refcell, interior-mutability, concept]
+
+- instruction: |
+    Define `struct Logger { messages: RefCell<Vec<String>> }` with
+    `log(&self, msg: &str)` and `count(&self) -> usize` — mutation through
+    `&self` via interior mutability.
+  starter: |
+    use std::cell::RefCell;
+
+    struct Logger {
+        messages: RefCell<Vec<String>>,
+    }
+
+    impl Logger {
+
+    }
+  solution: |
+    use std::cell::RefCell;
+
+    struct Logger {
+        messages: RefCell<Vec<String>>,
+    }
+
+    impl Logger {
+        fn log(&self, msg: &str) {
+            self.messages.borrow_mut().push(msg.to_string());
+        }
+
+        fn count(&self) -> usize {
+            self.messages.borrow().len()
+        }
+    }
+  notes: |
+    The book's MockMessenger pattern: a trait/API only hands you `&self`, but
+    you still need to record something — wrap the state in `RefCell`. The
+    outside world sees an immutable Logger.
+  source: "book §15.5 (interior mutability / mock objects)"
+  tags: [rust, smart-pointers, refcell, interior-mutability]
+  tests: |
+    let logger = Logger { messages: RefCell::new(vec![]) };
+    logger.log("first");
+    logger.log("second");
+    assert_eq!(logger.count(), 2);
+    assert_eq!(logger.messages.borrow()[0], "first");
+
+- type: concept
+  question: |
+    `Cell<T>` vs `RefCell<T>` — how do they differ and when do you pick each?
+  answer: |
+    `Cell<T>`: no references into the value at all — you `get()` a COPY and
+    `set()`/`replace()` the whole value. Zero runtime cost, can't panic. Ideal
+    for small `Copy` types (counters, flags).
+    `RefCell<T>`: hands out real `&`/`&mut` guards with runtime borrow
+    counting (can panic). Needed when the value isn't `Copy` or you must
+    mutate in place (e.g. a `Vec`).
+  source: "std cell (module docs); book §15.5"
+  tags: [rust, smart-pointers, cell, refcell, concept]
+
+- instruction: |
+    Define `struct HitCounter { hits: Cell<u32> }` with `record(&self) -> u32`
+    that increments and returns the new count — no RefCell needed.
+  starter: |
+    use std::cell::Cell;
+
+    struct HitCounter {
+        hits: Cell<u32>,
+    }
+
+    impl HitCounter {
+
+    }
+  solution: |
+    use std::cell::Cell;
+
+    struct HitCounter {
+        hits: Cell<u32>,
+    }
+
+    impl HitCounter {
+        fn record(&self) -> u32 {
+            self.hits.set(self.hits.get() + 1);
+            self.hits.get()
+        }
+    }
+  notes: |
+    For a `Copy` value, `Cell` is the lighter tool: `get` copies out, `set`
+    stores back — no borrow guards, no possible panic.
+  source: "std cell::Cell"
+  tags: [rust, smart-pointers, cell, interior-mutability]
+  tests: |
+    let c = HitCounter { hits: Cell::new(0) };
+    assert_eq!(c.record(), 1);
+    assert_eq!(c.record(), 2);
+
+- instruction: |
+    Using `struct Node { value: i32, parent: RefCell<Weak<Node>>, children: RefCell<Vec<Rc<Node>>> }`,
+    write `add_child(parent: &Rc<Node>, child: Rc<Node>)` linking both
+    directions WITHOUT creating a reference cycle.
+  starter: |
+    use std::cell::RefCell;
+    use std::rc::{Rc, Weak};
+
+    struct Node {
+        value: i32,
+        parent: RefCell<Weak<Node>>,
+        children: RefCell<Vec<Rc<Node>>>,
+    }
+
+    fn add_child(parent: &Rc<Node>, child: Rc<Node>) {
+
+    }
+  solution: |
+    use std::cell::RefCell;
+    use std::rc::{Rc, Weak};
+
+    struct Node {
+        value: i32,
+        parent: RefCell<Weak<Node>>,
+        children: RefCell<Vec<Rc<Node>>>,
+    }
+
+    fn add_child(parent: &Rc<Node>, child: Rc<Node>) {
+        *child.parent.borrow_mut() = Rc::downgrade(parent);
+        parent.children.borrow_mut().push(child);
+    }
+  notes: |
+    Child→parent uses `Weak` (via `Rc::downgrade`) so the cycle
+    parent↔child doesn't keep both alive forever. Reading the parent requires
+    `upgrade()`, which yields `Option<Rc<Node>>`.
+  source: "book §15.6 (Weak, parent-child tree)"
+  tags: [rust, smart-pointers, weak, rc, refcell]
+  tests: |
+    let root = Rc::new(Node { value: 1, parent: RefCell::new(Weak::new()), children: RefCell::new(vec![]) });
+    let leaf = Rc::new(Node { value: 2, parent: RefCell::new(Weak::new()), children: RefCell::new(vec![]) });
+    add_child(&root, Rc::clone(&leaf));
+    assert_eq!(leaf.parent.borrow().upgrade().unwrap().value, 1);
+    assert_eq!(Rc::strong_count(&root), 1);
+    assert_eq!(Rc::weak_count(&root), 1);
+    assert_eq!(Rc::strong_count(&leaf), 2);
+
+- type: concept
+  question: |
+    How does an `Rc` reference cycle leak memory, and how does `Weak` fix it?
+  answer: |
+    If A holds `Rc<B>` and B holds `Rc<A>`, both strong counts stay ≥ 1 even
+    after all outside handles are gone — neither ever drops (leak, no crash).
+    `Weak` participates in the cycle WITHOUT counting toward strong count: the
+    value drops when strong count hits 0, and remaining `Weak`s just return
+    `None` from `upgrade()`. Rule of thumb: ownership direction gets `Rc`,
+    back-references get `Weak`.
+  source: "book §15.6 (reference cycles)"
+  tags: [rust, smart-pointers, weak, rc, memory-leak, concept]
+
+- instruction: |
+    Write `try_push(rc: &mut Rc<Vec<i32>>, x: i32) -> bool` that pushes only if
+    this is the ONLY handle (use `Rc::get_mut`), returning whether it pushed.
+  starter: |
+    use std::rc::Rc;
+
+    fn try_push(rc: &mut Rc<Vec<i32>>, x: i32) -> bool {
+
+    }
+  solution: |
+    use std::rc::Rc;
+
+    fn try_push(rc: &mut Rc<Vec<i32>>, x: i32) -> bool {
+        match Rc::get_mut(rc) {
+            Some(v) => {
+                v.push(x);
+                true
+            }
+            None => false,
+        }
+    }
+  notes: |
+    `Rc` normally forbids mutation, but `Rc::get_mut` gives `Some(&mut T)` when
+    strong count is 1 and no Weak refs exist — exclusive access proven at
+    runtime. (`Rc::make_mut` is the clone-on-write alternative.)
+  source: "std Rc::get_mut"
+  tags: [rust, smart-pointers, rc, mut]
+  tests: |
+    let mut a = Rc::new(vec![1]);
+    assert!(try_push(&mut a, 2));
+    assert_eq!(*a, vec![1, 2]);
+    let b = Rc::clone(&a);
+    assert!(!try_push(&mut a, 3));
+    assert_eq!(*b, vec![1, 2]);
+
+- type: concept
+  question: |
+    Chooser: `Box<T>` vs `Rc<T>` vs `Arc<T>` — one line each.
+  answer: |
+    `Box<T>` — single owner, heap allocation (recursive types, owned trait
+    objects).
+    `Rc<T>` — many owners, one thread (refcount not thread-safe, not `Send`).
+    `Arc<T>` — many owners across threads (atomic refcount; slightly slower —
+    don't default to it needlessly).
+    All three give shared/immutable access; add `RefCell` (Rc) or
+    `Mutex`/`RwLock` (Arc) for mutation.
+  source: "book §15 + §16.3"
+  tags: [rust, smart-pointers, box, rc, arc, concept]
+
+- instruction: |
+    Write `tree_sum(node: &Option<Box<Node>>) -> i32` for a binary tree
+    `struct Node { val: i32, left: Option<Box<Node>>, right: Option<Box<Node>> }`.
+  starter: |
+    struct Node {
+        val: i32,
+        left: Option<Box<Node>>,
+        right: Option<Box<Node>>,
+    }
+
+    fn tree_sum(node: &Option<Box<Node>>) -> i32 {
+
+    }
+  solution: |
+    struct Node {
+        val: i32,
+        left: Option<Box<Node>>,
+        right: Option<Box<Node>>,
+    }
+
+    fn tree_sum(node: &Option<Box<Node>>) -> i32 {
+        match node {
+            Some(n) => n.val + tree_sum(&n.left) + tree_sum(&n.right),
+            None => 0,
+        }
+    }
+  notes: |
+    `Option<Box<Node>>` is the canonical owned-tree shape: `Box` breaks the
+    recursive size, `Option` encodes the missing child. (Thanks to the niche
+    optimization it's still just one pointer wide.)
+  source: "book §15.1 + std (Option<Box<T>> trees)"
+  tags: [rust, smart-pointers, box, recursion, trees]
+  tests: |
+    let tree = Some(Box::new(Node {
+        val: 1,
+        left: Some(Box::new(Node { val: 2, left: None, right: None })),
+        right: Some(Box::new(Node { val: 3, left: None, right: None })),
+    }));
+    assert_eq!(tree_sum(&tree), 6);
+    assert_eq!(tree_sum(&None), 0);
+
+- instruction: |
+    Write `double_all(v: &RefCell<Vec<i32>>)` doubling every element in place
+    through a shared reference.
+  starter: |
+    use std::cell::RefCell;
+
+    fn double_all(v: &RefCell<Vec<i32>>) {
+
+    }
+  solution: |
+    use std::cell::RefCell;
+
+    fn double_all(v: &RefCell<Vec<i32>>) {
+        for x in v.borrow_mut().iter_mut() {
+            *x *= 2;
+        }
+    }
+  notes: |
+    One `borrow_mut()` guard lives for the whole loop — fine. The classic
+    panic trap is calling something that ALSO borrows `v` while a guard is
+    still alive (e.g. `v.borrow()` inside this loop would panic at runtime).
+  source: "book §15.5 (RefCell)"
+  tags: [rust, smart-pointers, refcell, interior-mutability]
+  tests: |
+    let v = RefCell::new(vec![1, 2, 3]);
+    double_all(&v);
+    assert_eq!(*v.borrow(), vec![2, 4, 6]);
+
+- type: concept
+  question: |
+    Why does this panic at runtime?
+    `let a = data.borrow_mut(); let b = data.borrow(); // data: RefCell<...>`
+  answer: |
+    The first guard (`a`) is an active mutable borrow; taking any other borrow
+    while it's alive violates "many readers XOR one writer", which RefCell
+    checks at runtime → `BorrowError` panic ("already mutably borrowed").
+    Fix: end the first borrow before the second (`drop(a)` or a narrower
+    scope). Guards release their borrow when dropped.
+  source: "book §15.5 (RefCell panics)"
+  tags: [rust, smart-pointers, refcell, panics, concept]

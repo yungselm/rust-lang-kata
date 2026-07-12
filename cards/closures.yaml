@@ -1,0 +1,540 @@
+# Closures — Fn/FnMut/FnOnce, capture modes, move, closures as params/returns,
+# storing closures, function pointers. Solutions are clippy-clean.
+- type: concept
+  question: |
+    Name the three closure traits and what each is allowed to do with its
+    captured environment.
+  answer: |
+    `FnOnce` — consumes captures; callable at most once. Every closure implements it.
+    `FnMut` — mutates captures; callable repeatedly.
+    `Fn` — only reads captures (or captures nothing); callable repeatedly, even through `&`.
+    Subtrait chain: `Fn: FnMut: FnOnce` — a `Fn` closure can be used wherever
+    `FnMut` or `FnOnce` is expected.
+  source: "book §13.1 (Fn traits)"
+  tags: [rust, closures, fn-traits, concept]
+
+- type: concept
+  question: |
+    How does a closure decide whether it captures a variable by `&`, `&mut`,
+    or by value? What does the `move` keyword change?
+  answer: |
+    The compiler infers the weakest capture the body needs: read-only use → `&`,
+    mutation → `&mut`, consuming (drop/move out) → by value.
+    `move` forces EVERY capture to be by value (ownership) regardless of use —
+    it changes how the closure captures, not which `Fn` trait it implements.
+  source: "book §13.1 (capturing the environment)"
+  tags: [rust, closures, move, concept]
+
+- instruction: |
+    Write `apply_twice(f: impl Fn(i32) -> i32, x: i32) -> i32` that applies `f`
+    to `x` two times, e.g. with f = double: apply_twice(double, 3) -> 12.
+  starter: |
+    fn apply_twice(f: impl Fn(i32) -> i32, x: i32) -> i32 {
+
+    }
+  solution: |
+    fn apply_twice(f: impl Fn(i32) -> i32, x: i32) -> i32 {
+        f(f(x))
+    }
+  notes: |
+    `impl Fn(i32) -> i32` accepts any closure (or function) that reads-only.
+    Calling is plain `f(x)` — no dereferencing needed.
+  source: "book §13.1 (closures as parameters)"
+  tags: [rust, closures, fn-traits]
+  tests: |
+    assert_eq!(apply_twice(|x| x * 2, 3), 12);
+    assert_eq!(apply_twice(|x| x + 1, 0), 2);
+
+- instruction: |
+    Write `call_n(mut f: impl FnMut(), n: usize)` that calls the closure `n`
+    times. Why must the parameter be `mut`?
+  starter: |
+    fn call_n(mut f: impl FnMut(), n: usize) {
+
+    }
+  solution: |
+    fn call_n(mut f: impl FnMut(), n: usize) {
+        for _ in 0..n {
+            f();
+        }
+    }
+  notes: |
+    Calling a `FnMut` closure mutates its captured state, so the binding holding
+    the closure must itself be `mut` — hence `mut f` in the signature.
+  source: "book §13.1 (FnMut)"
+  tags: [rust, closures, fnmut]
+  tests: |
+    let mut count = 0;
+    call_n(|| count += 1, 5);
+    assert_eq!(count, 5);
+
+- instruction: |
+    Write `consume_with(f: impl FnOnce() -> String) -> String` that calls `f`
+    once and returns its output with `"!"` appended.
+  starter: |
+    fn consume_with(f: impl FnOnce() -> String) -> String {
+
+    }
+  solution: |
+    fn consume_with(f: impl FnOnce() -> String) -> String {
+        f() + "!"
+    }
+  notes: |
+    `FnOnce` is the loosest bound — it accepts closures that consume their
+    captures. Prefer it for callbacks you call exactly once; every closure
+    satisfies it.
+  source: "book §13.1 (FnOnce)"
+  tags: [rust, closures, fnonce]
+  tests: |
+    let s = String::from("hi");
+    assert_eq!(consume_with(move || s), "hi!");
+    assert_eq!(consume_with(|| "ok".to_string()), "ok!");
+
+- instruction: |
+    Write `make_counter() -> impl FnMut() -> i32` returning a closure that
+    counts up from 1 on each call: first call 1, then 2, 3, ...
+  starter: |
+    fn make_counter() -> impl FnMut() -> i32 {
+
+    }
+  solution: |
+    fn make_counter() -> impl FnMut() -> i32 {
+        let mut count = 0;
+        move || {
+            count += 1;
+            count
+        }
+    }
+  notes: |
+    The closure owns `count` (via `move`) and mutates it, so it is `FnMut`,
+    not `Fn`. Each `make_counter()` call produces an independent counter.
+  source: "book §13.1 + Rust by Example (closures: as output parameters)"
+  tags: [rust, closures, fnmut, move]
+  tests: |
+    let mut c = make_counter();
+    assert_eq!(c(), 1);
+    assert_eq!(c(), 2);
+    let mut d = make_counter();
+    assert_eq!(d(), 1);
+
+- instruction: |
+    Write `compose(f: impl Fn(i32) -> i32, g: impl Fn(i32) -> i32) -> impl Fn(i32) -> i32`
+    returning the composition g(f(x)).
+  starter: |
+    fn compose(f: impl Fn(i32) -> i32, g: impl Fn(i32) -> i32) -> impl Fn(i32) -> i32 {
+
+    }
+  solution: |
+    fn compose(f: impl Fn(i32) -> i32, g: impl Fn(i32) -> i32) -> impl Fn(i32) -> i32 {
+        move |x| g(f(x))
+    }
+  notes: |
+    The returned closure must own `f` and `g` (`move`), because they'd otherwise
+    be dropped when `compose` returns.
+  source: "book §13.1 (returning closures)"
+  tags: [rust, closures, higher-order]
+  tests: |
+    let add_then_double = compose(|x| x + 1, |x| x * 2);
+    assert_eq!(add_then_double(3), 8);
+
+- instruction: |
+    Write `pick_op(double: bool) -> Box<dyn Fn(i32) -> i32>`: return a doubling
+    closure if `double` is true, else a squaring closure.
+  starter: |
+    fn pick_op(double: bool) -> Box<dyn Fn(i32) -> i32> {
+
+    }
+  solution: |
+    fn pick_op(double: bool) -> Box<dyn Fn(i32) -> i32> {
+        if double {
+            Box::new(|x| x * 2)
+        } else {
+            Box::new(|x| x * x)
+        }
+    }
+  notes: |
+    Each closure has its own unique type, so two different closures can't both
+    be `impl Fn` returns — you must erase the type behind `Box<dyn Fn>`.
+  source: "book §20.4 / Rust by Example (dyn closures)"
+  tags: [rust, closures, box, dyn]
+  tests: |
+    assert_eq!(pick_op(true)(4), 8);
+    assert_eq!(pick_op(false)(4), 16);
+
+- type: concept
+  question: |
+    Why does returning two different closures from the same function require
+    `Box<dyn Fn(..)>` instead of `impl Fn(..)`?
+  answer: |
+    Every closure expression has its own unique, unnameable type. `impl Fn`
+    means ONE concrete (hidden) type, so both `return` branches would have to be
+    the same closure. `Box<dyn Fn>` erases the concrete type behind a trait
+    object, letting different branches return different closures.
+  source: "book §20.4 (returning closures)"
+  tags: [rust, closures, dyn, concept]
+
+- instruction: |
+    Write `keep_above(v: Vec<i32>, min: i32) -> Vec<i32>` using `retain` with a
+    closure that captures `min`.
+  starter: |
+    fn keep_above(v: Vec<i32>, min: i32) -> Vec<i32> {
+
+    }
+  solution: |
+    fn keep_above(mut v: Vec<i32>, min: i32) -> Vec<i32> {
+        v.retain(|&x| x > min);
+        v
+    }
+  notes: |
+    The closure captures `min` by reference — capture is automatic; you just
+    name the variable. `retain` keeps elements where the closure returns true.
+  source: "std Vec::retain + book §13.1"
+  tags: [rust, closures, capture, vectors]
+  tests: |
+    assert_eq!(keep_above(vec![1, 5, 3, 7], 3), vec![5, 7]);
+
+- instruction: |
+    Write `sort_by_distance(v: &mut [i32], target: i32)` sorting the numbers
+    by how far they are from `target` (closest first), using `sort_by_key`
+    with a capturing closure.
+  starter: |
+    fn sort_by_distance(v: &mut [i32], target: i32) {
+
+    }
+  solution: |
+    fn sort_by_distance(v: &mut [i32], target: i32) {
+        v.sort_by_key(|x| (x - target).abs());
+    }
+  notes: |
+    The key-extraction closure captures `target` from the enclosing scope —
+    something a plain `fn` could never do.
+  source: "std slice::sort_by_key + book §13.1"
+  tags: [rust, closures, capture, sorting]
+  tests: |
+    let mut v = vec![10, 1, 6, 4];
+    sort_by_distance(&mut v, 5);
+    assert_eq!(v, vec![6, 4, 1, 10]);
+
+- instruction: |
+    Write `apply_all(fs: &[Box<dyn Fn(i32) -> i32>], x: i32) -> Vec<i32>`
+    applying every stored closure to `x`.
+  starter: |
+    fn apply_all(fs: &[Box<dyn Fn(i32) -> i32>], x: i32) -> Vec<i32> {
+
+    }
+  solution: |
+    fn apply_all(fs: &[Box<dyn Fn(i32) -> i32>], x: i32) -> Vec<i32> {
+        fs.iter().map(|f| f(x)).collect()
+    }
+  notes: |
+    A `Vec<Box<dyn Fn..>>` is the standard way to store a heterogeneous list of
+    closures — the box erases each closure's unique type.
+  source: "book §20.4 + std (trait objects)"
+  tags: [rust, closures, dyn, box]
+  tests: |
+    let fs: Vec<Box<dyn Fn(i32) -> i32>> = vec![Box::new(|x| x + 1), Box::new(|x| x * 10)];
+    assert_eq!(apply_all(&fs, 5), vec![6, 50]);
+
+- instruction: |
+    Define `struct Calculator<F: Fn(i32, i32) -> i32> { op: F }` with a method
+    `run(&self, a: i32, b: i32) -> i32` that applies the stored operation.
+  starter: |
+    struct Calculator<F: Fn(i32, i32) -> i32> {
+        op: F,
+    }
+
+    impl<F: Fn(i32, i32) -> i32> Calculator<F> {
+
+    }
+  solution: |
+    struct Calculator<F: Fn(i32, i32) -> i32> {
+        op: F,
+    }
+
+    impl<F: Fn(i32, i32) -> i32> Calculator<F> {
+        fn run(&self, a: i32, b: i32) -> i32 {
+            (self.op)(a, b)
+        }
+    }
+  notes: |
+    Storing a closure in a struct needs a generic parameter with a `Fn` bound
+    (zero-cost) or `Box<dyn Fn>` (flexible). Calling a closure field requires
+    parentheses: `(self.op)(a, b)` — otherwise Rust looks for a METHOD `op`.
+  source: "book §13.1 (storing closures in structs)"
+  tags: [rust, closures, structs, generics]
+  tests: |
+    let add = Calculator { op: |a, b| a + b };
+    assert_eq!(add.run(2, 3), 5);
+    let mul = Calculator { op: |a, b| a * b };
+    assert_eq!(mul.run(2, 3), 6);
+
+- instruction: |
+    Write `parse_all_lengths(words: &[&str]) -> Vec<usize>` by passing the
+    NAMED function `str::len` to `map` (no closure).
+  starter: |
+    fn parse_all_lengths(words: &[&str]) -> Vec<usize> {
+
+    }
+  solution: |
+    fn parse_all_lengths(words: &[&str]) -> Vec<usize> {
+        words.iter().map(|w| w.len()).collect()
+    }
+  notes: |
+    Function items coerce to closures wherever an `Fn` bound is expected —
+    `map(|w| w.len())` and a named helper behave identically. (Here a closure is
+    still needed because of the extra `&` from `iter()`; with owned items you
+    could write `map(str::len)` directly.)
+  source: "book §13.1 + §20.3 (function pointers)"
+  tags: [rust, closures, fn-pointers]
+  tests: |
+    assert_eq!(parse_all_lengths(&["hi", "world"]), vec![2, 5]);
+
+- instruction: |
+    Write `run_pipeline(x: i32, steps: Vec<fn(i32) -> i32>) -> i32` folding `x`
+    through a vector of PLAIN function pointers.
+  starter: |
+    fn run_pipeline(x: i32, steps: Vec<fn(i32) -> i32>) -> i32 {
+
+    }
+  solution: |
+    fn run_pipeline(x: i32, steps: Vec<fn(i32) -> i32>) -> i32 {
+        steps.into_iter().fold(x, |acc, f| f(acc))
+    }
+  notes: |
+    `fn(i32) -> i32` (lowercase) is a function POINTER type — a concrete type,
+    so it works in a Vec without boxing. Only capture-free closures and named
+    functions coerce to it.
+  source: "book §20.3 (function pointers)"
+  tags: [rust, closures, fn-pointers, fold]
+  tests: |
+    fn inc(x: i32) -> i32 { x + 1 }
+    fn double(x: i32) -> i32 { x * 2 }
+    assert_eq!(run_pipeline(3, vec![inc, double]), 8);
+
+- type: concept
+  question: |
+    What's the difference between `fn(i32) -> i32` and `impl Fn(i32) -> i32`
+    as a parameter type?
+  answer: |
+    `fn(..)` is a function pointer — a concrete type. Only named functions and
+    NON-capturing closures coerce to it.
+    `impl Fn(..)` is a generic with a trait bound — accepts capturing closures
+    too, and is monomorphized (zero-cost).
+    Rule of thumb: take `impl Fn`/`FnMut`/`FnOnce` unless you specifically need
+    a concrete type (FFI, storing many in a Vec without boxes).
+  source: "book §20.3 (function pointers vs closures)"
+  tags: [rust, closures, fn-pointers, concept]
+
+- instruction: |
+    Write `lazy_default(opt: Option<String>, make: impl FnOnce() -> String) -> String`
+    returning the value or the closure's product — WITHOUT calling `make` when
+    `opt` is `Some`.
+  starter: |
+    fn lazy_default(opt: Option<String>, make: impl FnOnce() -> String) -> String {
+
+    }
+  solution: |
+    fn lazy_default(opt: Option<String>, make: impl FnOnce() -> String) -> String {
+        opt.unwrap_or_else(make)
+    }
+  notes: |
+    This is the pattern behind the whole `_else` family: take `impl FnOnce` so
+    the (possibly expensive) fallback runs only when needed, and pass the
+    closure straight through without wrapping it in another closure.
+  source: "std Option::unwrap_or_else + book §13.1"
+  tags: [rust, closures, fnonce, option]
+  tests: |
+    assert_eq!(lazy_default(Some("a".into()), || panic!("not lazy!")), "a");
+    assert_eq!(lazy_default(None, || "fallback".to_string()), "fallback");
+
+- instruction: |
+    Write `make_appender(sep: char) -> impl FnMut(&str) -> String`: each call
+    appends the separator plus the given word to an internal accumulator and
+    returns the current text. First call returns just the word.
+  starter: |
+    fn make_appender(sep: char) -> impl FnMut(&str) -> String {
+
+    }
+  solution: |
+    fn make_appender(sep: char) -> impl FnMut(&str) -> String {
+        let mut acc = String::new();
+        move |word| {
+            if !acc.is_empty() {
+                acc.push(sep);
+            }
+            acc.push_str(word);
+            acc.clone()
+        }
+    }
+  notes: |
+    Stateful closure: `acc` lives inside the closure across calls (owned via
+    `move`, mutated → `FnMut`). Returning `acc.clone()` keeps the state for
+    future calls.
+  source: "book §13.1 (FnMut, move)"
+  tags: [rust, closures, fnmut, move, strings]
+  tests: |
+    let mut app = make_appender('-');
+    assert_eq!(app("a"), "a");
+    assert_eq!(app("b"), "a-b");
+    assert_eq!(app("c"), "a-b-c");
+
+- type: concept
+  question: |
+    A closure only READS a captured `String`. Does adding `move` change which
+    Fn trait it implements? What does change?
+  answer: |
+    No — trait inference depends on what the BODY does with captures, not how
+    they got captured. A read-only body is `Fn` either way.
+    What changes: with `move` the closure OWNS the String (so it can outlive the
+    original scope — required for threads and returned closures); without it,
+    the closure borrows, tying its lifetime to the variable.
+  source: "book §13.1 (move closures)"
+  tags: [rust, closures, move, concept]
+
+- instruction: |
+    Write `counts_by<T, K, F>(items: &[T], key: F) -> HashMap<K, usize>` counting
+    items per key, where `F: Fn(&T) -> K` and `K: Eq + Hash`.
+  starter: |
+    use std::collections::HashMap;
+    use std::hash::Hash;
+
+    fn counts_by<T, K: Eq + Hash, F: Fn(&T) -> K>(items: &[T], key: F) -> HashMap<K, usize> {
+
+    }
+  solution: |
+    use std::collections::HashMap;
+    use std::hash::Hash;
+
+    fn counts_by<T, K: Eq + Hash, F: Fn(&T) -> K>(items: &[T], key: F) -> HashMap<K, usize> {
+        let mut map = HashMap::new();
+        for item in items {
+            *map.entry(key(item)).or_insert(0) += 1;
+        }
+        map
+    }
+  notes: |
+    A user-supplied key closure makes one function serve every grouping — this
+    is the shape of `Iterator::max_by_key`, `sort_by_key`, itertools'
+    `group_by`, etc.
+  source: "book §13.1 + std (closures as generic bounds)"
+  tags: [rust, closures, generics, hashmaps]
+  tests: |
+    let words = ["apple", "avocado", "banana"];
+    let by_first = counts_by(&words, |w| w.chars().next().unwrap());
+    assert_eq!(by_first[&'a'], 2);
+    assert_eq!(by_first[&'b'], 1);
+
+- instruction: |
+    Write `retry(mut attempt: impl FnMut() -> Result<i32, String>, times: usize) -> Result<i32, String>`:
+    call `attempt` up to `times` times, returning the first `Ok`, or the last
+    `Err` if all fail (assume `times >= 1`).
+  starter: |
+    fn retry(mut attempt: impl FnMut() -> Result<i32, String>, times: usize) -> Result<i32, String> {
+
+    }
+  solution: |
+    fn retry(mut attempt: impl FnMut() -> Result<i32, String>, times: usize) -> Result<i32, String> {
+        let mut last = Err("no attempts".to_string());
+        for _ in 0..times {
+            last = attempt();
+            if last.is_ok() {
+                break;
+            }
+        }
+        last
+    }
+  notes: |
+    The callback must be `FnMut`, not `Fn`: real retry targets (network calls,
+    counters) mutate state between attempts. Taking `Fn` would reject them.
+  source: "book §13.1 (choosing the right Fn bound)"
+  tags: [rust, closures, fnmut, results]
+  tests: |
+    let mut n = 0;
+    let result = retry(|| { n += 1; if n < 3 { Err(format!("fail {n}")) } else { Ok(n) } }, 5);
+    assert_eq!(result, Ok(3));
+    let result = retry(|| Err::<i32, _>("always".to_string()), 2);
+    assert_eq!(result, Err("always".to_string()));
+
+- type: concept
+  question: |
+    Which `Fn` bound should an API take for: (a) a callback called once,
+    (b) a callback called repeatedly that may update state, (c) a callback
+    called repeatedly, possibly in parallel / through `&`?
+  answer: |
+    (a) `FnOnce` — most permissive for the caller.
+    (b) `FnMut` — repeat calls, mutation allowed.
+    (c) `Fn` — read-only, safe to share.
+    Guideline: accept the LOOSEST trait your usage allows (FnOnce ⊇ FnMut ⊇ Fn
+    in terms of which closures the caller can pass).
+  source: "book §13.1 (which trait to use)"
+  tags: [rust, closures, fn-traits, api-design, concept]
+
+- instruction: |
+    Write `map_pair<T, U>(pair: (T, T), f: impl Fn(T) -> U) -> (U, U)` applying
+    the closure to both elements. Why won't `impl FnOnce` work here?
+  starter: |
+    fn map_pair<T, U>(pair: (T, T), f: impl Fn(T) -> U) -> (U, U) {
+
+    }
+  solution: |
+    fn map_pair<T, U>(pair: (T, T), f: impl Fn(T) -> U) -> (U, U) {
+        (f(pair.0), f(pair.1))
+    }
+  notes: |
+    The closure is called twice, so `FnOnce` is not enough — the compiler would
+    reject the second call because the first consumed `f`. (`FnMut` would also
+    work here; `Fn` is fine since we don't need mutation.)
+  source: "book §13.1 (Fn traits)"
+  tags: [rust, closures, fn-traits, generics]
+  tests: |
+    assert_eq!(map_pair((2, 3), |x: i32| x * 10), (20, 30));
+    assert_eq!(map_pair(("a", "bb"), |s: &str| s.len()), (1, 2));
+
+- instruction: |
+    Fix the bug: this closure borrows `data`, but we need to return it from the
+    function. Write `make_getter(data: Vec<i32>) -> impl Fn(usize) -> Option<i32>`
+    returning a closure that looks up an index in the vector.
+  starter: |
+    fn make_getter(data: Vec<i32>) -> impl Fn(usize) -> Option<i32> {
+        // |i| data.get(i).copied()   // ERROR: closure may outlive `data`
+
+    }
+  solution: |
+    fn make_getter(data: Vec<i32>) -> impl Fn(usize) -> Option<i32> {
+        move |i| data.get(i).copied()
+    }
+  notes: |
+    Without `move` the closure borrows `data`, which dies when `make_getter`
+    returns — the classic "closure may outlive the current function" error.
+    `move` transfers ownership of the Vec into the closure.
+  source: "book §13.1 (move closures)"
+  tags: [rust, closures, move, ownership]
+  tests: |
+    let get = make_getter(vec![10, 20, 30]);
+    assert_eq!(get(1), Some(20));
+    assert_eq!(get(9), None);
+
+- instruction: |
+    Write `min_by_key_f64(v: &[f64], key: impl Fn(f64) -> f64) -> Option<f64>`
+    returning the element with the smallest key, using `total_cmp` for the
+    comparison.
+  starter: |
+    fn min_by_key_f64(v: &[f64], key: impl Fn(f64) -> f64) -> Option<f64> {
+
+    }
+  solution: |
+    fn min_by_key_f64(v: &[f64], key: impl Fn(f64) -> f64) -> Option<f64> {
+        v.iter()
+            .copied()
+            .min_by(|a, b| key(*a).total_cmp(&key(*b)))
+    }
+  notes: |
+    Floats aren't `Ord`, so `min_by_key` doesn't work directly; `min_by` with
+    `total_cmp` is the idiomatic escape hatch. The comparator closure captures
+    YOUR key closure — closures nest freely.
+  source: "std f64::total_cmp + Iterator::min_by"
+  tags: [rust, closures, floats, iterators]
+  tests: |
+    let v = [3.0, -1.5, 2.0];
+    assert_eq!(min_by_key_f64(&v, |x| x.abs()), Some(-1.5));
+    assert_eq!(min_by_key_f64(&[], |x| x), None);

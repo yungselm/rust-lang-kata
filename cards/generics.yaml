@@ -405,5 +405,5 @@
     `T: ?Sized` to opt out and accept unsized types (then you must take them by
     reference, e.g. `&T`). It is the same reason `|&w|` over `&[i32]` fails: you
     can't move an unsized `[i32]` out from behind the reference.
-  source: "book ch.19 dynamically sized types; std::marker::Sized"
+  source: "book ch.20 (advanced types: dynamically sized types); std::marker::Sized"
   tags: [rust, generics, sized, concept]

@@ -1,0 +1,527 @@
+# Lifetimes — annotations, elision, structs holding references, 'static.
+# Solutions are clippy-clean (incl. needless_lifetimes: only annotate when required).
+- type: concept
+  question: |
+    What problem do lifetimes solve? What do the annotations actually do?
+  answer: |
+    They prevent dangling references — using a reference after the data it
+    points to is gone. Annotations DESCRIBE relationships between the lifetimes
+    of parameters and return values so the borrow checker can verify them; they
+    never extend or change how long anything actually lives.
+  source: "book §10.3 (validating references with lifetimes)"
+  tags: [rust, lifetimes, concept]
+
+- instruction: |
+    Write the classic `longest<'a>(x: &'a str, y: &'a str) -> &'a str`
+    returning the longer of the two string slices.
+  starter: |
+    fn longest<'a>(x: &'a str, y: &'a str) -> &'a str {
+
+    }
+  solution: |
+    fn longest<'a>(x: &'a str, y: &'a str) -> &'a str {
+        if x.len() > y.len() {
+            x
+        } else {
+            y
+        }
+    }
+  notes: |
+    The return borrows from EITHER input, so both must share one lifetime `'a`.
+    Concretely, `'a` becomes the smaller of the two input lifetimes — the result
+    can't outlive the shorter-lived argument.
+  source: "book §10.3 (longest)"
+  tags: [rust, lifetimes]
+  tests: |
+    assert_eq!(longest("hello", "hi"), "hello");
+    assert_eq!(longest("a", "bb"), "bb");
+
+- type: concept
+  question: |
+    State the three lifetime elision rules the compiler applies before
+    requiring explicit annotations.
+  answer: |
+    1. Each reference parameter gets its own lifetime.
+    2. If there is exactly ONE input lifetime, it is assigned to all outputs.
+    3. If one parameter is `&self`/`&mut self`, self's lifetime is assigned to
+       all outputs.
+    If outputs still have no lifetime after these rules, you must annotate.
+  source: "book §10.3 (lifetime elision)"
+  tags: [rust, lifetimes, elision, concept]
+
+- instruction: |
+    Write `first_word(s: &str) -> &str` returning everything before the first
+    space (or the whole string). No explicit lifetimes — say why they're not
+    needed.
+  starter: |
+    fn first_word(s: &str) -> &str {
+
+    }
+  solution: |
+    fn first_word(s: &str) -> &str {
+        s.split_whitespace().next().unwrap_or("")
+    }
+  notes: |
+    Elision rule 2: one input reference → its lifetime is assigned to the
+    output. Writing `<'a>` here would work but clippy flags it as a needless
+    lifetime.
+  source: "book §4.3 + §10.3 (elision)"
+  tags: [rust, lifetimes, elision, strings]
+  tests: |
+    assert_eq!(first_word("hello world"), "hello");
+    assert_eq!(first_word("solo"), "solo");
+    assert_eq!(first_word(""), "");
+
+- instruction: |
+    Write `first_of<'a>(x: &'a str, _fallback: &str) -> &'a str` that always
+    returns `x` — annotate so the result is tied ONLY to `x`, not to the
+    fallback.
+  starter: |
+    fn first_of<'a>(x: &'a str, _fallback: &str) -> &'a str {
+
+    }
+  solution: |
+    fn first_of<'a>(x: &'a str, _fallback: &str) -> &'a str {
+        x
+    }
+  notes: |
+    With two reference params, elision can't decide the output lifetime — you
+    must annotate. Tying the return to `'a` only means the caller may drop the
+    fallback immediately and keep the result alive.
+  source: "book §10.3 (thinking in terms of lifetimes)"
+  tags: [rust, lifetimes]
+  tests: |
+    let keep = String::from("keep");
+    let result = {
+        let temp = String::from("temp");
+        first_of(&keep, &temp)
+    };
+    assert_eq!(result, "keep");
+
+- instruction: |
+    Define `struct Excerpt<'a> { part: &'a str }` and a function
+    `first_sentence(text: &str) -> Excerpt<'_>` holding everything before the
+    first `'.'` (or the whole text).
+  starter: |
+    struct Excerpt<'a> {
+        part: &'a str,
+    }
+
+    fn first_sentence(text: &str) -> Excerpt<'_> {
+
+    }
+  solution: |
+    struct Excerpt<'a> {
+        part: &'a str,
+    }
+
+    fn first_sentence(text: &str) -> Excerpt<'_> {
+        let part = text.split('.').next().unwrap_or(text);
+        Excerpt { part }
+    }
+  notes: |
+    A struct holding a reference ALWAYS needs a lifetime parameter — the
+    instance cannot outlive the data it points into. `Excerpt<'_>` in the
+    return uses the anonymous lifetime; elision ties it to `text`.
+  source: "book §10.3 (structs holding references)"
+  tags: [rust, lifetimes, structs]
+  tests: |
+    let e = first_sentence("Hello there. More.");
+    assert_eq!(e.part, "Hello there");
+
+- instruction: |
+    For `struct Excerpt<'a> { part: &'a str }`, implement a method
+    `announce(&self, msg: &str) -> &str` that prints the message (`println!`)
+    and returns the stored part. Which elision rule makes the return valid?
+  starter: |
+    struct Excerpt<'a> {
+        part: &'a str,
+    }
+
+    impl<'a> Excerpt<'a> {
+
+    }
+  solution: |
+    struct Excerpt<'a> {
+        part: &'a str,
+    }
+
+    impl<'a> Excerpt<'a> {
+        fn announce(&self, msg: &str) -> &str {
+            println!("Attention: {msg}");
+            self.part
+        }
+    }
+  notes: |
+    Rule 3: with `&self` present, the output gets self's lifetime — even though
+    `msg` is also a reference. The `impl<'a> ... <'a>` dance declares the
+    struct's lifetime for the impl block.
+  source: "book §10.3 (methods + elision rule 3)"
+  tags: [rust, lifetimes, elision, structs]
+  tests: |
+    let text = String::from("important part");
+    let e = Excerpt { part: &text };
+    assert_eq!(e.announce("read this"), "important part");
+
+- type: concept
+  question: |
+    Why does `fn make_greeting() -> &String { let s = String::from("hello"); &s }`
+    fail to compile, and what are the two idiomatic fixes?
+  answer: |
+    It returns a reference to `s`, a local String dropped at the end of the
+    function — a dangling reference ("cannot return reference to local
+    variable"). No lifetime annotation can fix this: there's nothing valid to
+    borrow from.
+    Fixes: return the owned `String` itself (usual), or — when the result is
+    genuinely a view into an INPUT — return a slice of that input parameter.
+  source: "book §10.3 (dangling references)"
+  tags: [rust, lifetimes, ownership, concept]
+
+- instruction: |
+    Write `tokenize(input: &str) -> Vec<Token<'_>>` for
+    `enum Token<'a> { Num(i32), Word(&'a str) }`: whitespace-split; anything
+    that parses as i32 is a `Num`, the rest are `Word`s borrowing the input.
+  starter: |
+    #[derive(Debug, PartialEq)]
+    enum Token<'a> {
+        Num(i32),
+        Word(&'a str),
+    }
+
+    fn tokenize(input: &str) -> Vec<Token<'_>> {
+
+    }
+  solution: |
+    #[derive(Debug, PartialEq)]
+    enum Token<'a> {
+        Num(i32),
+        Word(&'a str),
+    }
+
+    fn tokenize(input: &str) -> Vec<Token<'_>> {
+        input
+            .split_whitespace()
+            .map(|s| match s.parse::<i32>() {
+                Ok(n) => Token::Num(n),
+                Err(_) => Token::Word(s),
+            })
+            .collect()
+    }
+  notes: |
+    Enums hold references exactly like structs — `Token<'a>` says a `Word`
+    can't outlive the input it borrows from. Zero-copy tokenizing like this is
+    a very common parser shape.
+  source: "book §10.3 + Rust by Example (lifetimes in enums)"
+  tags: [rust, lifetimes, enums, parsing]
+  tests: |
+    assert_eq!(
+        tokenize("add 2 and 40"),
+        vec![Token::Word("add"), Token::Num(2), Token::Word("and"), Token::Num(40)]
+    );
+
+- instruction: |
+    Define `struct Parser<'a> { input: &'a str }` with
+    `next_word(&mut self) -> Option<&'a str>`: return the next
+    whitespace-separated word and advance. Key: the return is `&'a str`
+    (borrowing the ORIGINAL input), not tied to `&mut self`.
+  starter: |
+    struct Parser<'a> {
+        input: &'a str,
+    }
+
+    impl<'a> Parser<'a> {
+        fn next_word(&mut self) -> Option<&'a str> {
+
+        }
+    }
+  solution: |
+    struct Parser<'a> {
+        input: &'a str,
+    }
+
+    impl<'a> Parser<'a> {
+        fn next_word(&mut self) -> Option<&'a str> {
+            let trimmed = self.input.trim_start();
+            if trimmed.is_empty() {
+                self.input = trimmed;
+                return None;
+            }
+            let end = trimmed.find(char::is_whitespace).unwrap_or(trimmed.len());
+            let (word, rest) = trimmed.split_at(end);
+            self.input = rest;
+            Some(word)
+        }
+    }
+  notes: |
+    If the return were elided it would borrow from `&mut self` (rule 3), locking
+    the parser while any word is alive. Naming `'a` says: the word borrows from
+    the original input — so you can collect many words AND keep parsing.
+  source: "book §10.3 (advanced elision) + common parser idiom"
+  tags: [rust, lifetimes, structs, parsing]
+  tests: |
+    let mut p = Parser { input: "one two  three" };
+    let a = p.next_word();
+    let b = p.next_word();
+    assert_eq!((a, b), (Some("one"), Some("two")));
+    assert_eq!(p.next_word(), Some("three"));
+    assert_eq!(p.next_word(), None);
+
+- type: concept
+  question: |
+    `&'static str` vs a generic bound `T: 'static` — what does each mean?
+  answer: |
+    `&'static str`: a reference valid for the whole program (string literals,
+    leaked memory).
+    `T: 'static`: T contains NO non-'static references — owned types like
+    `String` or `Vec<i32>` satisfy it. It does not mean "lives forever"; it
+    means "not borrowing anything short-lived" (required by `thread::spawn`,
+    `Box<dyn Error>`, etc.).
+  source: "book §10.3 + common misconception"
+  tags: [rust, lifetimes, static, concept]
+
+- instruction: |
+    Write `longest_with_ann<'a, T: std::fmt::Display>(x: &'a str, y: &'a str, ann: T) -> &'a str`:
+    print `"Announcement! {ann}"` then return the longer slice — generics,
+    trait bounds and lifetimes in one signature.
+  starter: |
+    use std::fmt::Display;
+
+    fn longest_with_ann<'a, T: Display>(x: &'a str, y: &'a str, ann: T) -> &'a str {
+
+    }
+  solution: |
+    use std::fmt::Display;
+
+    fn longest_with_ann<'a, T: Display>(x: &'a str, y: &'a str, ann: T) -> &'a str {
+        println!("Announcement! {ann}");
+        if x.len() > y.len() {
+            x
+        } else {
+            y
+        }
+    }
+  notes: |
+    Lifetimes are declared in the same `<>` list as type parameters, lifetimes
+    first by convention. They are just another kind of generic parameter.
+  source: "book §10.5 (generic type parameters, trait bounds, and lifetimes together)"
+  tags: [rust, lifetimes, generics, traits]
+  tests: |
+    assert_eq!(longest_with_ann("abcd", "xy", 42), "abcd");
+
+- instruction: |
+    Write `find_with_prefix<'a>(words: &'a [String], prefix: &str) -> Option<&'a str>`
+    returning the first word starting with `prefix`. The result borrows from
+    the slice, NOT from the prefix — annotate accordingly.
+  starter: |
+    fn find_with_prefix<'a>(words: &'a [String], prefix: &str) -> Option<&'a str> {
+
+    }
+  solution: |
+    fn find_with_prefix<'a>(words: &'a [String], prefix: &str) -> Option<&'a str> {
+        words
+            .iter()
+            .find(|w| w.starts_with(prefix))
+            .map(|w| w.as_str())
+    }
+  notes: |
+    Classic search-function shape: two reference inputs, output tied to the
+    collection only. The caller can build `prefix` in a temporary and still
+    keep the found item.
+  source: "book §10.3 (thinking in terms of lifetimes)"
+  tags: [rust, lifetimes, slices, option]
+  tests: |
+    let words = vec!["apple".to_string(), "banana".to_string()];
+    let found = {
+        let p = String::from("ban");
+        find_with_prefix(&words, &p)
+    };
+    assert_eq!(found, Some("banana"));
+    assert_eq!(find_with_prefix(&words, "zzz"), None);
+
+- instruction: |
+    Define `struct Grid { cells: Vec<i32> }` with
+    `positives(&self) -> impl Iterator<Item = &i32> + '_` yielding references
+    to the positive cells lazily.
+  starter: |
+    struct Grid {
+        cells: Vec<i32>,
+    }
+
+    impl Grid {
+
+    }
+  solution: |
+    struct Grid {
+        cells: Vec<i32>,
+    }
+
+    impl Grid {
+        fn positives(&self) -> impl Iterator<Item = &i32> + '_ {
+            self.cells.iter().filter(|&&x| x > 0)
+        }
+    }
+  notes: |
+    `+ '_` says: the returned (opaque) iterator borrows from `self`. Without
+    it, `impl Trait` in return position would be assumed not to borrow, and
+    the body wouldn't compile.
+  source: "book §10.3 + std (impl Trait capturing lifetimes)"
+  tags: [rust, lifetimes, iterators, impl-trait]
+  tests: |
+    let g = Grid { cells: vec![3, -1, 0, 7] };
+    let pos: Vec<i32> = g.positives().copied().collect();
+    assert_eq!(pos, vec![3, 7]);
+
+- type: concept
+  question: |
+    Since Rust 2018 (non-lexical lifetimes), when exactly does a borrow end?
+  answer: |
+    At the borrow's LAST USE, not at the end of its lexical scope. That's why
+    you can take `let first = &v[0];`, print it, and then mutate `v` in the same
+    block — the shared borrow is already over. Borrow-checker errors therefore
+    point at overlapping USES, not just overlapping scopes.
+  code: |
+    let mut v = vec![1, 2, 3];
+    let first = &v[0];
+    println!("{first}");  // last use of `first`
+    v.push(4);            // OK: shared borrow already ended
+  source: "Rust 2018 edition (NLL); book §4.2"
+  tags: [rust, lifetimes, borrowck, nll, concept]
+
+- instruction: |
+    Write `middle_third(v: &[u8]) -> &[u8]` returning the middle third of the
+    slice (start = len/3, end = 2*len/3). Sub-slices inherit the parent's
+    lifetime — no annotation needed.
+  starter: |
+    fn middle_third(v: &[u8]) -> &[u8] {
+
+    }
+  solution: |
+    fn middle_third(v: &[u8]) -> &[u8] {
+        &v[v.len() / 3..v.len() * 2 / 3]
+    }
+  notes: |
+    Slicing borrows THROUGH the input reference, so the result lives exactly as
+    long as `v`'s referent. Elision (rule 2) writes the lifetime for you.
+  source: "book §4.3 (slices) + §10.3"
+  tags: [rust, lifetimes, slices, elision]
+  tests: |
+    assert_eq!(middle_third(&[1, 2, 3, 4, 5, 6, 7, 8, 9]), &[4, 5, 6]);
+    assert_eq!(middle_third(&[]), &[] as &[u8]);
+
+- type: concept
+  question: |
+    Why does a struct that stores a reference need a lifetime parameter, while
+    a struct that stores a `String` doesn't?
+  answer: |
+    `String` is owned — the struct controls when it dies. A `&str` field points
+    at data OWNED ELSEWHERE, so the compiler must be able to prove the struct
+    instance never outlives that data. The lifetime parameter
+    (`struct S<'a> { r: &'a str }`) records that obligation in the type; owning
+    fields carry no such obligation.
+  source: "book §10.3 (structs holding references)"
+  tags: [rust, lifetimes, structs, ownership, concept]
+
+- instruction: |
+    Write `swap_halves(s: &mut [i32])` that swaps the first and second half of
+    a slice (odd middle element stays put), using `split_at_mut` — two
+    simultaneous mutable borrows, safely.
+  starter: |
+    fn swap_halves(s: &mut [i32]) {
+
+    }
+  solution: |
+    fn swap_halves(s: &mut [i32]) {
+        let mid = s.len() / 2;
+        let odd = s.len() % 2;
+        let (left, right) = s.split_at_mut(mid);
+        left.swap_with_slice(&mut right[odd..]);
+    }
+  notes: |
+    You normally can't hold two `&mut` into one slice; `split_at_mut` proves
+    the halves don't overlap and hands back two disjoint mutable borrows, each
+    tied to the original's lifetime.
+  source: "std slice::split_at_mut + book §4.2"
+  tags: [rust, lifetimes, borrowck, slices, mut]
+  tests: |
+    let mut v = [1, 2, 3, 4];
+    swap_halves(&mut v);
+    assert_eq!(v, [3, 4, 1, 2]);
+    let mut w = [1, 2, 3, 4, 5];
+    swap_halves(&mut w);
+    assert_eq!(w, [4, 5, 3, 1, 2]);
+
+- type: concept
+  question: |
+    What does the anonymous lifetime `'_` mean, and where is it typically used?
+  answer: |
+    A placeholder telling the compiler "elide/infer this lifetime" while still
+    signaling that a lifetime EXISTS. Typical spots: return types holding
+    borrows (`Excerpt<'_>`, `impl Iterator<Item = &str> + '_`) and impl blocks
+    (`impl Foo<'_>`) when the body never names the lifetime. It makes borrowing
+    visible without the `<'a>` ceremony.
+  source: "Rust 2018 idioms ('_)"
+  tags: [rust, lifetimes, elision, concept]
+
+- instruction: |
+    Write `select<'a>(flag: bool, a: &'a str, b: &'a str) -> &'a str` and note
+    in one sentence why the unified lifetime is REQUIRED here (unlike
+    `first_of`).
+  starter: |
+    fn select<'a>(flag: bool, a: &'a str, b: &'a str) -> &'a str {
+
+    }
+  solution: |
+    fn select<'a>(flag: bool, a: &'a str, b: &'a str) -> &'a str {
+        if flag {
+            a
+        } else {
+            b
+        }
+    }
+  notes: |
+    Because the return may borrow from EITHER input, both must share `'a`; the
+    result is then valid only while BOTH inputs are. Compare `first_of`, where
+    tying the output to one input is strictly more permissive for callers.
+  source: "book §10.3"
+  tags: [rust, lifetimes]
+  tests: |
+    assert_eq!(select(true, "a", "b"), "a");
+    assert_eq!(select(false, "a", "b"), "b");
+
+- type: concept
+  question: |
+    `thread::spawn` requires its closure to be `'static`. Why, and what are the
+    two standard ways to satisfy it?
+  answer: |
+    The new thread may outlive the function that spawned it, so the closure
+    must not borrow anything from that stack frame.
+    Satisfy it by: (1) `move` the data into the closure (transfer ownership),
+    or (2) share ownership via `Arc`. (Alternative: `std::thread::scope`, whose
+    scoped threads are guaranteed to finish, CAN borrow locals.)
+  source: "book §16.1 + std thread::scope"
+  tags: [rust, lifetimes, static, threads, concept]
+
+- instruction: |
+    Write `trim_matching<'a>(s: &'a str, junk: &str) -> &'a str` removing any
+    leading/trailing chars contained in `junk`, tying the result only to `s`
+    (use `trim_matches` with a closure).
+  starter: |
+    fn trim_matching<'a>(s: &'a str, junk: &str) -> &'a str {
+
+    }
+  solution: |
+    fn trim_matching<'a>(s: &'a str, junk: &str) -> &'a str {
+        s.trim_matches(|c| junk.contains(c))
+    }
+  notes: |
+    The closure borrows `junk`, but the RETURNED slice only borrows `s` — the
+    lifetimes stay independent. std's own signature for `trim_matches` is what
+    makes this possible.
+  source: "std str::trim_matches + book §10.3"
+  tags: [rust, lifetimes, strings, closures]
+  tests: |
+    let cleaned = {
+        let junk = String::from("#!");
+        trim_matching("##hello!!", &junk)
+    };
+    assert_eq!(cleaned, "hello");

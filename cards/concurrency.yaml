@@ -1,0 +1,490 @@
+# Concurrency — threads, move closures, channels, Mutex/RwLock, Arc,
+# Send/Sync, scoped threads, atomics. Solutions are clippy-clean.
+- instruction: |
+    Write `spawn_and_get() -> i32`: spawn a thread that computes `21 * 2`,
+    then join it and return the thread's result.
+  starter: |
+    use std::thread;
+
+    fn spawn_and_get() -> i32 {
+
+    }
+  solution: |
+    use std::thread;
+
+    fn spawn_and_get() -> i32 {
+        let handle = thread::spawn(|| 21 * 2);
+        handle.join().unwrap()
+    }
+  notes: |
+    `spawn` returns a `JoinHandle<T>`; `join()` blocks until the thread
+    finishes and yields `Result<T, ...>` (Err if the thread panicked). Without
+    `join`, `main` can exit and kill the thread mid-flight.
+  source: "book §16.1 (threads, join)"
+  tags: [rust, concurrency, threads]
+  tests: |
+    assert_eq!(spawn_and_get(), 42);
+
+- instruction: |
+    Write `sum_in_thread(v: Vec<i32>) -> i32` that moves the vector into a
+    spawned thread, sums it there, and returns the result.
+  starter: |
+    use std::thread;
+
+    fn sum_in_thread(v: Vec<i32>) -> i32 {
+
+    }
+  solution: |
+    use std::thread;
+
+    fn sum_in_thread(v: Vec<i32>) -> i32 {
+        let handle = thread::spawn(move || v.iter().sum());
+        handle.join().unwrap()
+    }
+  notes: |
+    The closure must be `'static`: the thread may outlive the caller's frame,
+    so borrowing `v` is forbidden — `move` transfers ownership into the
+    closure. This is the #1 compile error people hit with threads.
+  source: "book §16.1 (move closures with threads)"
+  tags: [rust, concurrency, threads, move]
+  tests: |
+    assert_eq!(sum_in_thread(vec![1, 2, 3, 4]), 10);
+
+- type: concept
+  question: |
+    Why does `thread::spawn(|| println!("{v:?}"))` fail to compile when `v` is
+    a local `Vec`, and what are the three ways out?
+  answer: |
+    The spawned thread may outlive the function, so the closure must be
+    `'static` — it can't borrow locals.
+    Ways out: (1) `move` the value in (single consumer), (2) clone/share via
+    `Arc` (many consumers), (3) `thread::scope` — scoped threads are joined
+    before the scope ends, so they MAY borrow locals.
+  source: "book §16.1 + std thread::scope"
+  tags: [rust, concurrency, threads, lifetimes, concept]
+
+- instruction: |
+    Write `parallel_sum(v: &[i32]) -> i64` splitting the slice in two halves
+    and summing them in two SCOPED threads (`thread::scope`) that borrow the
+    slice.
+  starter: |
+    use std::thread;
+
+    fn parallel_sum(v: &[i32]) -> i64 {
+
+    }
+  solution: |
+    use std::thread;
+
+    fn parallel_sum(v: &[i32]) -> i64 {
+        let (left, right) = v.split_at(v.len() / 2);
+        thread::scope(|s| {
+            let a = s.spawn(|| left.iter().map(|&x| x as i64).sum::<i64>());
+            let b = s.spawn(|| right.iter().map(|&x| x as i64).sum::<i64>());
+            a.join().unwrap() + b.join().unwrap()
+        })
+    }
+  notes: |
+    `thread::scope` guarantees every spawned thread joins before `scope`
+    returns, so the borrow of `v` provably ends in time — no `'static`, no
+    `Arc`, no clones.
+  source: "std thread::scope (1.63)"
+  tags: [rust, concurrency, threads, scoped]
+  tests: |
+    assert_eq!(parallel_sum(&[1, 2, 3, 4, 5]), 15);
+    assert_eq!(parallel_sum(&[]), 0);
+
+- instruction: |
+    Write `send_range(n: u32) -> Vec<u32>`: create an mpsc channel, spawn a
+    thread sending `0..n`, and collect everything received into a Vec.
+  starter: |
+    use std::sync::mpsc;
+    use std::thread;
+
+    fn send_range(n: u32) -> Vec<u32> {
+
+    }
+  solution: |
+    use std::sync::mpsc;
+    use std::thread;
+
+    fn send_range(n: u32) -> Vec<u32> {
+        let (tx, rx) = mpsc::channel();
+        thread::spawn(move || {
+            for i in 0..n {
+                tx.send(i).unwrap();
+            }
+        });
+        rx.into_iter().collect()
+    }
+  notes: |
+    The receiver is an iterator that yields until every sender is dropped —
+    here the thread's end drops `tx`, closing the channel and ending the
+    collect. No manual "done" signal needed.
+  source: "book §16.2 (channels)"
+  tags: [rust, concurrency, channels, mpsc]
+  tests: |
+    assert_eq!(send_range(4), vec![0, 1, 2, 3]);
+    assert_eq!(send_range(0), vec![]);
+
+- instruction: |
+    Write `fan_in(words: Vec<String>) -> usize`: one thread PER word sends the
+    word's length through a cloned sender; sum everything received. (Multiple
+    producers — that's the "m" in mpsc.)
+  starter: |
+    use std::sync::mpsc;
+    use std::thread;
+
+    fn fan_in(words: Vec<String>) -> usize {
+
+    }
+  solution: |
+    use std::sync::mpsc;
+    use std::thread;
+
+    fn fan_in(words: Vec<String>) -> usize {
+        let (tx, rx) = mpsc::channel();
+        for w in words {
+            let tx = tx.clone();
+            thread::spawn(move || tx.send(w.len()).unwrap());
+        }
+        drop(tx);
+        rx.into_iter().sum()
+    }
+  notes: |
+    Each producer gets its own `tx.clone()`. The crucial line is `drop(tx)`:
+    the ORIGINAL sender must go, or the channel never closes and the sum
+    blocks forever.
+  source: "book §16.2 (multiple producers)"
+  tags: [rust, concurrency, channels, mpsc]
+  tests: |
+    assert_eq!(fan_in(vec!["ab".into(), "cde".into()]), 5);
+    assert_eq!(fan_in(vec![]), 0);
+
+- type: concept
+  question: |
+    mpsc: what do `recv()`, `try_recv()`, and iterating the receiver each do?
+  answer: |
+    `recv()` — blocks until a value arrives; `Err` once the channel is closed
+    (all senders dropped).
+    `try_recv()` — never blocks; `Err(Empty)` right now vs `Err(Disconnected)`.
+    Iterating (`for v in rx`) — loops over values, blocking as needed, and ends
+    cleanly when all senders are dropped.
+  source: "book §16.2 + std mpsc"
+  tags: [rust, concurrency, channels, mpsc, concept]
+
+- instruction: |
+    Write `locked_increment(m: &Mutex<i32>)` adding 1 to the value inside the
+    mutex.
+  starter: |
+    use std::sync::Mutex;
+
+    fn locked_increment(m: &Mutex<i32>) {
+
+    }
+  solution: |
+    use std::sync::Mutex;
+
+    fn locked_increment(m: &Mutex<i32>) {
+        let mut guard = m.lock().unwrap();
+        *guard += 1;
+    }
+  notes: |
+    `lock()` blocks until acquired and returns a `MutexGuard` — a smart pointer
+    derefing to the data. The lock releases automatically when the guard drops
+    (RAII); `unwrap` covers lock poisoning (a panic while locked).
+  source: "book §16.3 (Mutex<T>)"
+  tags: [rust, concurrency, mutex]
+  tests: |
+    let m = Mutex::new(41);
+    locked_increment(&m);
+    assert_eq!(*m.lock().unwrap(), 42);
+
+- instruction: |
+    The book's classic: write `count_to_1000() -> i32` spawning 10 threads that
+    each add 1 to a shared `Arc<Mutex<i32>>` counter 100 times; join all and
+    return the final value.
+  starter: |
+    use std::sync::{Arc, Mutex};
+    use std::thread;
+
+    fn count_to_1000() -> i32 {
+
+    }
+  solution: |
+    use std::sync::{Arc, Mutex};
+    use std::thread;
+
+    fn count_to_1000() -> i32 {
+        let counter = Arc::new(Mutex::new(0));
+        let mut handles = vec![];
+        for _ in 0..10 {
+            let counter = Arc::clone(&counter);
+            handles.push(thread::spawn(move || {
+                for _ in 0..100 {
+                    *counter.lock().unwrap() += 1;
+                }
+            }));
+        }
+        for h in handles {
+            h.join().unwrap();
+        }
+        let result = *counter.lock().unwrap();
+        result
+    }
+  notes: |
+    The full shared-state recipe: `Arc` for shared ownership across threads,
+    `Mutex` for exclusive access, one `Arc::clone` per thread moved into its
+    closure, then join everything before reading.
+  source: "book §16.3 (Arc<Mutex<T>>)"
+  tags: [rust, concurrency, arc, mutex, threads]
+  tests: |
+    assert_eq!(count_to_1000(), 1000);
+
+- type: concept
+  question: |
+    What do the `Send` and `Sync` marker traits mean? Who implements them?
+  answer: |
+    `Send`: ownership of the type can MOVE to another thread.
+    `Sync`: `&T` can be shared between threads (T is Sync iff `&T` is Send).
+    They're auto-derived structurally — you almost never implement them by
+    hand; types composed of Send/Sync parts are Send/Sync. Notable exceptions:
+    `Rc` (neither), `RefCell`/`Cell` (Send, not Sync), raw pointers.
+  source: "book §16.4 (Send and Sync)"
+  tags: [rust, concurrency, send, sync, concept]
+
+- type: concept
+  question: |
+    Why is `Rc<T>` not `Send`, and what goes wrong if you need shared
+    ownership across threads?
+  answer: |
+    Its reference count is updated with plain (non-atomic) operations — two
+    threads cloning/dropping simultaneously could race the count and cause a
+    use-after-free or leak. The compiler rejects moving it into `thread::spawn`.
+    Use `Arc<T>` (atomic refcount) instead; pay the small atomic cost only when
+    you actually cross threads.
+  source: "book §16.4 + §15.4"
+  tags: [rust, concurrency, rc, arc, send, concept]
+
+- instruction: |
+    Write `read_heavy(store: &RwLock<Vec<i32>>) -> (i32, usize)`: take a READ
+    lock and return `(sum, len)` of the vector.
+  starter: |
+    use std::sync::RwLock;
+
+    fn read_heavy(store: &RwLock<Vec<i32>>) -> (i32, usize) {
+
+    }
+  solution: |
+    use std::sync::RwLock;
+
+    fn read_heavy(store: &RwLock<Vec<i32>>) -> (i32, usize) {
+        let v = store.read().unwrap();
+        (v.iter().sum(), v.len())
+    }
+  notes: |
+    `RwLock` allows MANY simultaneous readers or one writer — pick it over
+    `Mutex` when reads dominate. `read()`/`write()` mirror the borrow rules at
+    thread scale.
+  source: "std sync::RwLock"
+  tags: [rust, concurrency, rwlock]
+  tests: |
+    let store = RwLock::new(vec![1, 2, 3]);
+    assert_eq!(read_heavy(&store), (6, 3));
+    store.write().unwrap().push(4);
+    assert_eq!(read_heavy(&store), (10, 4));
+
+- instruction: |
+    Write `atomic_count(n: usize) -> usize`: spawn `n` scoped threads that each
+    `fetch_add(1)` on a shared `AtomicUsize`; return the final count. No Mutex.
+  starter: |
+    use std::sync::atomic::{AtomicUsize, Ordering};
+    use std::thread;
+
+    fn atomic_count(n: usize) -> usize {
+
+    }
+  solution: |
+    use std::sync::atomic::{AtomicUsize, Ordering};
+    use std::thread;
+
+    fn atomic_count(n: usize) -> usize {
+        let counter = AtomicUsize::new(0);
+        thread::scope(|s| {
+            for _ in 0..n {
+                s.spawn(|| {
+                    counter.fetch_add(1, Ordering::Relaxed);
+                });
+            }
+        });
+        counter.into_inner()
+    }
+  notes: |
+    Atomics mutate through `&self` (interior mutability, `Sync`), so scoped
+    threads can all borrow the same counter. For a simple counter,
+    `Ordering::Relaxed` suffices — you only need the count, not ordering of
+    other memory.
+  source: "std sync::atomic + thread::scope"
+  tags: [rust, concurrency, atomics, scoped]
+  tests: |
+    assert_eq!(atomic_count(8), 8);
+    assert_eq!(atomic_count(0), 0);
+
+- type: concept
+  question: |
+    When does a `MutexGuard` release its lock, and how does that cause the
+    classic self-deadlock?
+  answer: |
+    On drop — end of scope or explicit `drop(guard)`, not when you "stop using"
+    it. Locking the SAME mutex again while your own guard is alive blocks
+    forever:
+    `let a = m.lock().unwrap(); let b = m.lock().unwrap(); // deadlock`
+    Fixes: narrow the guard's scope with a block, or `drop(guard)` before
+    relocking. Watch for hidden guards kept alive inside long expressions.
+  source: "book §16.3 (Mutex pitfalls)"
+  tags: [rust, concurrency, mutex, deadlock, concept]
+
+- instruction: |
+    Write `worker_double(inputs: Vec<i32>) -> Vec<i32>`: send each input to a
+    worker thread through one channel, get each value doubled back through
+    another (request/response pipeline), preserving order.
+  starter: |
+    use std::sync::mpsc;
+    use std::thread;
+
+    fn worker_double(inputs: Vec<i32>) -> Vec<i32> {
+
+    }
+  solution: |
+    use std::sync::mpsc;
+    use std::thread;
+
+    fn worker_double(inputs: Vec<i32>) -> Vec<i32> {
+        let (job_tx, job_rx) = mpsc::channel();
+        let (result_tx, result_rx) = mpsc::channel();
+        let worker = thread::spawn(move || {
+            for x in job_rx {
+                result_tx.send(x * 2).unwrap();
+            }
+        });
+        for x in inputs {
+            job_tx.send(x).unwrap();
+        }
+        drop(job_tx);
+        let results = result_rx.into_iter().collect();
+        worker.join().unwrap();
+        results
+    }
+  notes: |
+    Two channels form a pipeline; dropping `job_tx` ends the worker's `for`
+    loop, which drops `result_tx`, which ends OUR collect. Shutdown cascades
+    through channel closure — no flags, no sleeps.
+  source: "book §16.2 + §21 (worker pattern)"
+  tags: [rust, concurrency, channels, pipeline]
+  tests: |
+    assert_eq!(worker_double(vec![1, 2, 3]), vec![2, 4, 6]);
+    assert_eq!(worker_double(vec![]), vec![]);
+
+- type: concept
+  question: |
+    Message passing (`mpsc`) vs shared state (`Arc<Mutex<T>>`) — when do you
+    reach for each?
+  answer: |
+    Channels: ownership of data flows one direction, producers/consumers,
+    pipelines, results collection — "share memory by communicating". No locks
+    to misuse.
+    Shared state: many parties read/update ONE value in place (counters,
+    caches, config). Cheaper for high-frequency small updates, but you own the
+    locking discipline.
+    Rust supports both; channels are usually the simpler-to-reason-about first
+    choice.
+  source: "book §16.2-16.3"
+  tags: [rust, concurrency, channels, mutex, design, concept]
+
+- instruction: |
+    Write `max_of_chunks(v: Vec<Vec<i32>>) -> Vec<i32>`: spawn one thread per
+    inner vec computing its max (0 if empty), joining in order so results line
+    up with inputs.
+  starter: |
+    use std::thread;
+
+    fn max_of_chunks(v: Vec<Vec<i32>>) -> Vec<i32> {
+
+    }
+  solution: |
+    use std::thread;
+
+    fn max_of_chunks(v: Vec<Vec<i32>>) -> Vec<i32> {
+        let handles: Vec<_> = v
+            .into_iter()
+            .map(|chunk| thread::spawn(move || chunk.into_iter().max().unwrap_or(0)))
+            .collect();
+        handles.into_iter().map(|h| h.join().unwrap()).collect()
+    }
+  notes: |
+    Fork-join: spawn ALL threads first (collect the handles!), then join in
+    order — joining inside one `map` chain still works here because `collect`
+    on the first map forces every spawn before the joins start.
+  source: "book §16.1 (fork-join with handles)"
+  tags: [rust, concurrency, threads, fork-join]
+  tests: |
+    assert_eq!(max_of_chunks(vec![vec![1, 9, 2], vec![5], vec![]]), vec![9, 5, 0]);
+
+- type: concept
+  question: |
+    What is mutex poisoning, and why does `lock()` return a `Result`?
+  answer: |
+    If a thread PANICS while holding the lock, the data may be in a broken
+    half-updated state, so the mutex is marked "poisoned" and later `lock()`
+    calls return `Err(PoisonError)`. Common handling: `.unwrap()` (propagate
+    the panic — fine for drills and most apps) or
+    `.unwrap_or_else(|e| e.into_inner())` to consciously accept the data
+    anyway.
+  source: "std sync::Mutex (poisoning)"
+  tags: [rust, concurrency, mutex, panics, concept]
+
+- instruction: |
+    Write `shared_map_insert(map: &Arc<Mutex<HashMap<String, i32>>>, key: &str, val: i32) -> usize`
+    inserting a key and returning the new size — the shape of every
+    thread-safe cache.
+  starter: |
+    use std::collections::HashMap;
+    use std::sync::{Arc, Mutex};
+
+    fn shared_map_insert(map: &Arc<Mutex<HashMap<String, i32>>>, key: &str, val: i32) -> usize {
+
+    }
+  solution: |
+    use std::collections::HashMap;
+    use std::sync::{Arc, Mutex};
+
+    fn shared_map_insert(map: &Arc<Mutex<HashMap<String, i32>>>, key: &str, val: i32) -> usize {
+        let mut m = map.lock().unwrap();
+        m.insert(key.to_string(), val);
+        m.len()
+    }
+  notes: |
+    Take the lock ONCE for insert + len — locking twice would let another
+    thread interleave between them (a TOCTOU race, even though each call is
+    individually safe).
+  source: "book §16.3 (Arc<Mutex<T>>)"
+  tags: [rust, concurrency, arc, mutex, hashmaps]
+  tests: |
+    let map = Arc::new(Mutex::new(HashMap::new()));
+    assert_eq!(shared_map_insert(&map, "a", 1), 1);
+    assert_eq!(shared_map_insert(&map, "b", 2), 2);
+    assert_eq!(map.lock().unwrap()["a"], 1);
+
+- type: concept
+  question: |
+    Rust is famous for "fearless concurrency". Which concurrency bugs does the
+    compiler prevent, and which can still happen?
+  answer: |
+    Prevented at compile time: data races (unsynchronized simultaneous
+    access), use-after-free across threads, sending non-thread-safe types
+    (`Send`/`Sync` violations).
+    Still possible: deadlocks, livelocks, channel-shutdown mistakes, and
+    logical race conditions (e.g. check-then-act across two separate `lock()`
+    calls). The type system guards memory, not your protocol.
+  source: "book §16 (intro + §16.3)"
+  tags: [rust, concurrency, safety, concept]

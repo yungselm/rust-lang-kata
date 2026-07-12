@@ -50,20 +50,25 @@ python build.py                 # writes output/CodeCards.apkg
 Import `output/CodeCards.apkg` into Anki (keep "Update notetypes" checked).
 Preview the look without Anki by opening `preview.html` in a browser.
 
-## Current decks (364 cards)
+## Current decks (484 cards)
 
-**Core Rust (214)** — idiomatic patterns to drill to fluency (decks under `Rust::Core::…`):
+**Core Rust (334)** — idiomatic patterns to drill to fluency (decks under `Rust::Core::…`):
 
 | File | Cards | Focus |
 |------|-------|-------|
-| `iterators.yaml` | 34 | map/filter/filter_map, collect into Result, fold, zip, flat_map, partition, scan, windows; `product`, capitalize, HashMap counting; iter vs into_iter, laziness |
+| `iterators.yaml` | 38 | map/filter/filter_map, collect into Result, fold, zip, flat_map, partition, scan, windows; `product`, capitalize, HashMap counting; iter vs into_iter, laziness |
 | `matching.yaml` | 25 | enums, `if let`/`while let`/`let else`, guards, `@` bindings, or/range/tuple/struct/slice patterns, match ergonomics, rich-enum dispatch |
 | `results.yaml` | 30 | `?`, unwrap_or family, map/map_err/and_then, ok_or, Option↔Result, custom error enum, `Box<dyn Error>`, `Result<Vec>` vs `Vec<Result>` |
 | `vectors.yaml` | 29 | build/access/mutate, sort/dedup/retain, slicing, windows/chunks, binary_search, drain, enum-in-Vec; `&[T]` vs `&Vec<T>` |
-| `hashmaps.yaml` | 26 | insert/get, entry API (or_insert/_with/_default/and_modify), iteration, accumulate structs, HashSet & set ops |
-| `generics.yaml` | 19 | rewrite a concrete fn to generic: PartialOrd/Copy/Clone/PartialEq/Display/Sum bounds, `where` clauses, `Fn` bound, generic struct; monomorphization |
+| `hashmaps.yaml` | 27 | insert/get, entry API (or_insert/_with/_default/and_modify), iteration, accumulate structs, HashSet & set ops |
+| `generics.yaml` | 20 | rewrite a concrete fn to generic: PartialOrd/Copy/Clone/PartialEq/Display/Sum bounds, `where` clauses, `Fn` bound, generic struct; monomorphization |
 | `traits.yaml` | 27 | implement Display/From/Default/PartialEq/Add/Iterator, custom traits, default methods, `derive`, `impl Trait`, `dyn` objects, supertraits, multiple bounds; Copy vs Clone & `.copied()`/`.cloned()` |
-| `datastructures.yaml` | 24 | Big-O of Vec/VecDeque/HashMap/BTreeMap, search/sort complexity, when-to-use, amortization |
+| `datastructures.yaml` | 28 | Big-O of Vec/VecDeque/HashMap/BTreeMap, search/sort complexity, when-to-use, amortization |
+| `closures.yaml` | 25 | Fn/FnMut/FnOnce, capture modes, `move`, returning closures, `Box<dyn Fn>`, closures in structs, fn pointers, choosing the right bound for APIs |
+| `lifetimes.yaml` | 22 | annotations vs elision (the three rules), structs/enums holding references, `'_`, `'static` vs `T: 'static`, `split_at_mut`, NLL, zero-copy parser shapes |
+| `smartpointers.yaml` | 21 | Box (recursive types, `dyn`), Deref & coercion, Drop, Rc/`Rc::clone`/counts, RefCell & interior mutability, Cell vs RefCell, Weak & cycles, get_mut |
+| `strings.yaml` | 22 | String vs &str, UTF-8 (bytes/chars/char_indices), building & joining, split/split_once/lines, find/replace/strip_prefix, parse pipelines, from_utf8 |
+| `concurrency.yaml` | 20 | thread::spawn/join, `move`, scoped threads, mpsc (fan-in, pipelines, shutdown via drop), Mutex/MutexGuard, Arc, RwLock, atomics, Send/Sync |
 
 **NeetCode 150 (150)** — interview problems grouped by pattern, nested under `Rust::Neetcode::…`:
 
@@ -122,7 +127,7 @@ authored easy→hard order.
 
 To apply: open Deck Options on **`Rust::Core`**, create a preset `Rust Core` with the
 values above, then the preset menu → **Save to all subdecks** (the parent's 14/day cap
-then bounds the daily total across the six core subdecks). Repeat from **`Rust::Neetcode`**
+then bounds the daily total across the thirteen core subdecks). Repeat from **`Rust::Neetcode`**
 with `Rust NeetCode` (1/day). Study the two groups as two separate daily sessions →
 14 random core cards + 1 NeetCode card in topic order. Change any number anytime.
 
@@ -186,6 +191,9 @@ snippets), wraps each in its own module in a generated crate, and runs two gates
 python check_cards.py                              # all cards (needs cargo; clippy via `rustup component add clippy`)
 python check_cards.py cards/neetcode__trees.yaml   # just one file
 ```
+
+A recent stable toolchain is assumed: a couple of solutions use newer std APIs
+(`Option::is_none_or` needs Rust ≥ 1.82, `is_multiple_of` needs ≥ 1.87).
 
 On failure, each block is in a module named `sol_<topic>_<n>` / `ex_<topic>_<n>`
 with a comment naming the card, so you can find the offending card fast. Run this

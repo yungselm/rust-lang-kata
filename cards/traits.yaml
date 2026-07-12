@@ -257,7 +257,7 @@
   notes: |
     Operators are traits: `+` is `Add`. You set the associated type `Output` and
     write `add`. The same pattern gives `-` (`Sub`), `*` (`Mul`), etc.
-  source: "Rust Book §19.x (Operator Overloading) · std::ops::Add"
+  source: "Rust Book §20.x (Operator Overloading) · std::ops::Add"
   tags: [rust, traits, operators]
   tests: |
     assert_eq!(
@@ -486,7 +486,7 @@
     `trait Loud: Display` means any `Loud` type must also be `Display`, so the
     default `shout` may rely on `{self}`. Supertraits express "requires another
     trait".
-  source: "Rust Book §19.x (Supertraits)"
+  source: "Rust Book §20.x (Supertraits)"
   tags: [rust, traits]
   tests: |
     assert_eq!(Dog.shout(), "woof!!!");
@@ -576,7 +576,7 @@
     once, with one `Item`. A generic trait parameter lets a type implement the
     trait MANY times with different parameters (e.g. `From<i32>` and `From<&str>`
     on the same type). Use an associated type when there's a single natural choice.
-  source: "Rust Book §19.x (Associated Types)"
+  source: "Rust Book §20.x (Associated Types)"
   tags: [rust, traits, concept]
 
 - type: concept
