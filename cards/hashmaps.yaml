@@ -566,3 +566,22 @@
     assert_eq!((eng.goals_scored, eng.goals_conceded), (4, 2));
     let fr = t.get("France").unwrap();
     assert_eq!((fr.goals_scored, fr.goals_conceded), (5, 5));
+
+- type: concept
+  question: |
+    On a `HashMap<String, V>`, when can you pass a `&str` directly and when do you
+    still need `.to_string()`?
+  answer: |
+    READS take a BORROWED key, so pass `&str` with no allocation: `get`, `get_mut`,
+    `contains_key`, and `remove` are generic over `&Q where String: Borrow<Q>`, and
+    `String: Borrow<str>` — so `map.get("foo")` or `map.contains_key(name)` just
+    work (no `.to_string()`).
+    WRITES that store a NEW key take it BY VALUE (`K = String`), so you must own it:
+    `insert(k, v)` and `entry(k)` need a `String` — hence `key.to_string()` (or
+    `key.to_owned()` / `String::from(key)`).
+    Rule of thumb: looking something UP -> `&str` is fine; putting a new key IN ->
+    you allocate the owned `String`. clippy's `unnecessary_to_owned` flags a
+    needless `.to_string()` on the lookup side, but can't remove the required one on
+    `insert` / `entry`.
+  source: "std collections::HashMap; std::borrow::Borrow"
+  tags: [rust, hashmap, borrow, concept]
