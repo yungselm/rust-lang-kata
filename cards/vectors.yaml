@@ -643,3 +643,87 @@
         Cell::Float(1.5),
     ];
     assert_eq!(sum_ints(&row), 7);
+
+- instruction: |
+    Write `rotate(v: &mut [i32], n: i32)`: rotate left if `n` is positive,
+    right if negative (both wrap around), using `rotate_left`/`rotate_right`.
+  starter: |
+    fn rotate(v: &mut [i32], n: i32) {
+
+    }
+  solution: |
+    fn rotate(v: &mut [i32], n: i32) {
+        if v.is_empty() {
+            return;
+        }
+        let k = (n.unsigned_abs() as usize) % v.len();
+        if n >= 0 {
+            v.rotate_left(k);
+        } else {
+            v.rotate_right(k);
+        }
+    }
+  notes: |
+    `rotate_left(k)`/`rotate_right(k)` shift elements around the ends in O(n)
+    with no extra allocation. `unsigned_abs() % len` turns any magnitude
+    (including one larger than the length) into a valid `0..len` shift count,
+    while the sign of `n` alone picks the direction.
+  source: "std slice::rotate_left / rotate_right"
+  tags: [rust, vec, slices]
+  tests: |
+    let mut v = vec![1, 2, 3, 4, 5];
+    rotate(&mut v, 2);
+    assert_eq!(v, vec![3, 4, 5, 1, 2]);
+    rotate(&mut v, -2);
+    assert_eq!(v, vec![1, 2, 3, 4, 5]);
+    let mut empty: Vec<i32> = Vec::new();
+    rotate(&mut empty, 3);
+    assert_eq!(empty, Vec::<i32>::new());
+
+- instruction: |
+    Write `split_around(v: &[i32], mid: usize) -> (&[i32], &[i32])` splitting a
+    slice into two borrowed halves at index `mid`, using `split_at`.
+  starter: |
+    fn split_around(v: &[i32], mid: usize) -> (&[i32], &[i32]) {
+
+    }
+  solution: |
+    fn split_around(v: &[i32], mid: usize) -> (&[i32], &[i32]) {
+        v.split_at(mid)
+    }
+  notes: |
+    `split_at(mid)` returns `(&v[..mid], &v[mid..])` in one call — both borrow
+    the original slice, no copying. `split_at_mut` is the exclusive-borrow
+    sibling, handing back two DISJOINT `&mut` halves (useful when you need to
+    mutate both sides at once, which two separate `&mut v[..]` calls couldn't
+    do).
+  source: "std slice::split_at"
+  tags: [rust, vec, slices]
+  tests: |
+    assert_eq!(split_around(&[1, 2, 3, 4], 2), (&[1, 2][..], &[3, 4][..]));
+    assert_eq!(split_around(&[1, 2, 3], 0), (&[][..], &[1, 2, 3][..]));
+    assert_eq!(split_around(&[1, 2, 3], 3), (&[1, 2, 3][..], &[][..]));
+
+- instruction: |
+    Write `sort_desc(mut v: Vec<i32>) -> Vec<i32>` sorting in DESCENDING order
+    using `sort_by` with a custom comparator (not `sort` + `reverse`).
+  starter: |
+    fn sort_desc(mut v: Vec<i32>) -> Vec<i32> {
+
+    }
+  solution: |
+    fn sort_desc(mut v: Vec<i32>) -> Vec<i32> {
+        v.sort_by(|a, b| b.cmp(a));
+        v
+    }
+  notes: |
+    `sort_by(|a, b| ...)` takes a full comparator returning `Ordering` — the
+    tool for orderings `sort_by_key` can't express. Flipping the argument order
+    (`b.cmp(a)` instead of `a.cmp(b)`) reverses the sort directly, cheaper than
+    sorting ascending then calling `.reverse()`.
+  source: "std slice::sort_by"
+  tags: [rust, vec, sorting]
+  tests: |
+    assert_eq!(sort_desc(vec![3, 1, 2]), vec![3, 2, 1]);
+    assert_eq!(sort_desc(vec![1]), vec![1]);
+    assert_eq!(sort_desc(Vec::new()), Vec::<i32>::new());

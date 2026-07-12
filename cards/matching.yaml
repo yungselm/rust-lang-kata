@@ -528,6 +528,110 @@
     assert_eq!(max_pair(&(4, 4)), 4);
     assert_eq!(max_pair(&(-1, -9)), -1);
 
+- type: concept
+  question: |
+    In a pattern, what's the difference between `_` and `..`, and can a pattern
+    use both?
+  answer: |
+    `_` ignores exactly ONE field or element — you need one per skipped
+    position. `..` ignores ANY NUMBER of remaining fields/elements in a single
+    marker, and may appear at most once per pattern. Yes, they combine freely:
+    `(a, _, c)` skips exactly the 3-tuple's middle; `[first, ..]` skips
+    everything after `first` regardless of length; `Point { x, .. }` skips
+    every other field no matter how many exist.
+  code: |
+    let t = (1, 2, 3);
+    let (a, _, c) = t; // `_` skips exactly one element
+    assert_eq!((a, c), (1, 3));
+    let v: &[i32] = &[1, 2, 3, 4, 5];
+    if let [first, ..] = v {
+        assert_eq!(*first, 1); // `..` skips any number of trailing elements
+    }
+  source: "book §19.3 (ignoring parts of a value)"
+  tags: [rust, matching, concept]
+
+- instruction: |
+    Write `classify_die(n: u32) -> String` for a 6-sided die: n @ (1 | 2) ->
+    "low: N", n @ (5 | 6) -> "high: N", else "mid: N". Combine an or-pattern
+    WITH an `@` binding in one arm (unlike `is_vowel`'s plain or-pattern).
+  starter: |
+    fn classify_die(n: u32) -> String {
+
+    }
+  solution: |
+    fn classify_die(n: u32) -> String {
+        match n {
+            n @ (1 | 2) => format!("low: {n}"),
+            n @ (5 | 6) => format!("high: {n}"),
+            n => format!("mid: {n}"),
+        }
+    }
+  notes: |
+    `n @ (1 | 2)` matches EITHER literal and binds whichever matched to `n` in
+    one arm — an or-pattern and an `@` binding together, one level up from
+    `is_vowel`'s plain (non-binding) or-pattern.
+  source: "book §19.3 (@ bindings + or-patterns)"
+  tags: [rust, matching, or-patterns, bindings]
+  tests: |
+    assert_eq!(classify_die(1), "low: 1");
+    assert_eq!(classify_die(2), "low: 2");
+    assert_eq!(classify_die(5), "high: 5");
+    assert_eq!(classify_die(6), "high: 6");
+    assert_eq!(classify_die(3), "mid: 3");
+    assert_eq!(classify_die(4), "mid: 4");
+
+- instruction: |
+    Given `struct Wrapper { id: u32, payload: Option<Event> }` (reusing the
+    `Event` enum: `Click { x, y }` / `Key(char)`), write
+    `click_coords(w: Wrapper) -> Option<(i32, i32)>` returning the click
+    coordinates only when the payload is a `Click` — in ONE nested pattern,
+    no nested `match`.
+  starter: |
+    enum Event {
+        Click { x: i32, y: i32 },
+        Key(char),
+    }
+
+    struct Wrapper {
+        id: u32,
+        payload: Option<Event>,
+    }
+
+    fn click_coords(w: Wrapper) -> Option<(i32, i32)> {
+
+    }
+  solution: |
+    enum Event {
+        Click { x: i32, y: i32 },
+        Key(char),
+    }
+
+    struct Wrapper {
+        id: u32,
+        payload: Option<Event>,
+    }
+
+    fn click_coords(w: Wrapper) -> Option<(i32, i32)> {
+        match w {
+            Wrapper { payload: Some(Event::Click { x, y }), .. } => Some((x, y)),
+            _ => None,
+        }
+    }
+  notes: |
+    Patterns nest through several layers at once: struct field -> `Option` ->
+    enum variant -> its named fields, all in a single arm. The trailing `..`
+    drops the unused `id` field. This is how you avoid a `match` nested inside
+    another `match`.
+  source: "book §19.3 (nested patterns)"
+  tags: [rust, matching, nested, structs, enums]
+  tests: |
+    let w = Wrapper { id: 1, payload: Some(Event::Click { x: 3, y: 4 }) };
+    assert_eq!(click_coords(w), Some((3, 4)));
+    let w2 = Wrapper { id: 2, payload: Some(Event::Key('a')) };
+    assert_eq!(click_coords(w2), None);
+    let w3 = Wrapper { id: 3, payload: None };
+    assert_eq!(click_coords(w3), None);
+
 # --- concept cards ---
 - type: concept
   question: |

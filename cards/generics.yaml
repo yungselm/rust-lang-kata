@@ -336,6 +336,114 @@
     q.swap();
     assert_eq!(q, Pair { first: "b", second: "a" });
 
+- instruction: |
+    Write `sum_array<const N: usize>(a: [i32; N]) -> i32` summing a fixed-size
+    array, generic over its LENGTH rather than its element type.
+  starter: |
+    fn sum_array<const N: usize>(a: [i32; N]) -> i32 {
+
+    }
+  solution: |
+    fn sum_array<const N: usize>(a: [i32; N]) -> i32 {
+        a.iter().sum()
+    }
+  notes: |
+    A const generic parameterizes over a VALUE (here an array length) instead of
+    a type. Before Rust 1.51 you'd need a separate impl per array size (or fall
+    back to slices); now one function covers every N, still monomorphized per N.
+  source: "Rust Book §appendix / RFC 2000 (const generics)"
+  tags: [rust, generics, const-generics]
+  tests: |
+    assert_eq!(sum_array([1, 2, 3]), 6);
+    assert_eq!(sum_array([1, 2, 3, 4, 5]), 15);
+
+- instruction: |
+    Rewrite `clamp` to be generic over any ordered, copyable type: return `x`
+    clamped between `lo` and `hi`. TWO bounds are needed — name why each is
+    required.
+  starter: |
+    fn clamp(x: i32, lo: i32, hi: i32) -> i32 {
+        if x < lo {
+            lo
+        } else if x > hi {
+            hi
+        } else {
+            x
+        }
+    }
+  solution: |
+    fn clamp<T: PartialOrd + Copy>(x: T, lo: T, hi: T) -> T {
+        if x < lo {
+            lo
+        } else if x > hi {
+            hi
+        } else {
+            x
+        }
+    }
+  notes: |
+    `PartialOrd` enables the `<`/`>` comparisons; `Copy` lets the function return
+    `lo`, `hi`, or `x` by value without consuming a borrowed input. Neither bound
+    alone is enough — this is the everyday shape of "needs two capabilities".
+    (std's own `Ord::clamp` additionally requires `Ord`, since it assumes a
+    total order and panics if `lo > hi`.)
+  source: "Rust Book §10.2 (multiple trait bounds)"
+  tags: [rust, generics, two-bounds]
+  tests: |
+    assert_eq!(clamp(5, 0, 10), 5);
+    assert_eq!(clamp(-5, 0, 10), 0);
+    assert_eq!(clamp(15, 0, 10), 10);
+    assert!((clamp(2.5_f64, 0.0, 1.0) - 1.0).abs() < 1e-9);
+
+- instruction: |
+    Add a method `map<U>(self, f: impl Fn(T) -> U) -> Pair<U>` to the generic
+    `Pair<T>` below, transforming both fields with `f`. The method introduces
+    its OWN type parameter `U`, separate from the struct's `T`.
+  starter: |
+    #[derive(PartialEq, Debug)]
+    struct Pair<T> {
+        first: T,
+        second: T,
+    }
+
+    impl<T> Pair<T> {
+        fn new(first: T, second: T) -> Self {
+            Pair { first, second }
+        }
+
+        // add `map` here
+    }
+  solution: |
+    #[derive(PartialEq, Debug)]
+    struct Pair<T> {
+        first: T,
+        second: T,
+    }
+
+    impl<T> Pair<T> {
+        fn new(first: T, second: T) -> Self {
+            Pair { first, second }
+        }
+
+        fn map<U>(self, f: impl Fn(T) -> U) -> Pair<U> {
+            Pair {
+                first: f(self.first),
+                second: f(self.second),
+            }
+        }
+    }
+  notes: |
+    A method can introduce a type parameter beyond the ones on its struct —
+    `impl<T> Pair<T>` fixes `T`, then `fn map<U>` adds `U` just for this call.
+    Consuming `self` lets the fields move into `f` without cloning. Same shape
+    as `Option::map`/`Result::map`, for a custom container.
+  source: "Rust Book §10.1 (generic methods) · std Option::map"
+  tags: [rust, generics, structs, methods]
+  tests: |
+    let p = Pair::new(1, 2);
+    let q = p.map(|x| x.to_string());
+    assert_eq!(q, Pair { first: "1".to_string(), second: "2".to_string() });
+
 # --- concept cards ---
 - type: concept
   question: |

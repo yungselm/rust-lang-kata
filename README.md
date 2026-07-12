@@ -50,20 +50,20 @@ python build.py                 # writes output/CodeCards.apkg
 Import `output/CodeCards.apkg` into Anki (keep "Update notetypes" checked).
 Preview the look without Anki by opening `preview.html` in a browser.
 
-## Current decks (484 cards)
+## Current decks (503 cards)
 
-**Core Rust (334)** — idiomatic patterns to drill to fluency (decks under `Rust::Core::…`):
+**Core Rust (353)** — idiomatic patterns to drill to fluency (decks under `Rust::Core::…`):
 
 | File | Cards | Focus |
 |------|-------|-------|
-| `iterators.yaml` | 38 | map/filter/filter_map, collect into Result, fold, zip, flat_map, partition, scan, windows; `product`, capitalize, HashMap counting; iter vs into_iter, laziness |
-| `matching.yaml` | 25 | enums, `if let`/`while let`/`let else`, guards, `@` bindings, or/range/tuple/struct/slice patterns, match ergonomics, rich-enum dispatch |
-| `results.yaml` | 30 | `?`, unwrap_or family, map/map_err/and_then, ok_or, Option↔Result, custom error enum, `Box<dyn Error>`, `Result<Vec>` vs `Vec<Result>` |
-| `vectors.yaml` | 29 | build/access/mutate, sort/dedup/retain, slicing, windows/chunks, binary_search, drain, enum-in-Vec; `&[T]` vs `&Vec<T>` |
-| `hashmaps.yaml` | 27 | insert/get, entry API (or_insert/_with/_default/and_modify), iteration, accumulate structs, HashSet & set ops |
-| `generics.yaml` | 20 | rewrite a concrete fn to generic: PartialOrd/Copy/Clone/PartialEq/Display/Sum bounds, `where` clauses, `Fn` bound, generic struct; monomorphization |
-| `traits.yaml` | 27 | implement Display/From/Default/PartialEq/Add/Iterator, custom traits, default methods, `derive`, `impl Trait`, `dyn` objects, supertraits, multiple bounds; Copy vs Clone & `.copied()`/`.cloned()` |
-| `datastructures.yaml` | 28 | Big-O of Vec/VecDeque/HashMap/BTreeMap, search/sort complexity, when-to-use, amortization |
+| `iterators.yaml` | 41 | map/filter/filter_map, collect into Result, fold, zip/unzip, flat_map, partition, scan, windows; `product`, capitalize, HashMap counting; reduce, peekable/peek; iter vs into_iter, laziness |
+| `matching.yaml` | 28 | enums, `if let`/`while let`/`let else`, guards, `@` bindings (incl. combined with or-patterns), or/range/tuple/struct/slice patterns, match ergonomics, rich-enum dispatch, deep nested destructuring |
+| `results.yaml` | 33 | `?`, unwrap_or family, map/map_err/and_then, ok_or, Option↔Result, transpose, or_else, zip, custom error enum, `Box<dyn Error>`, `Result<Vec>` vs `Vec<Result>` |
+| `vectors.yaml` | 32 | build/access/mutate, sort/dedup/retain, slicing, windows/chunks, binary_search, drain, enum-in-Vec, rotate_left/right, split_at, sort_by; `&[T]` vs `&Vec<T>` |
+| `hashmaps.yaml` | 30 | insert/get, entry API (or_insert/_with/_default/and_modify), literal construction, iteration, accumulate structs, HashSet & set ops (union/difference/intersection) |
+| `generics.yaml` | 23 | rewrite a concrete fn to generic: PartialOrd/Copy/Clone/PartialEq/Display/Sum bounds, `where` clauses, `Fn` bound, generic struct, const generics, generic methods; monomorphization |
+| `traits.yaml` | 29 | implement Display/From/TryFrom/Default/PartialEq/Add/Ord/Iterator, custom traits, default methods, `derive`, `impl Trait`, `dyn` objects, supertraits, multiple bounds, blanket impls; Copy vs Clone & `.copied()`/`.cloned()` |
+| `datastructures.yaml` | 27 | Big-O of Vec/VecDeque/HashMap/BTreeMap/BinaryHeap, search/sort complexity, recursion space, when-to-use cheat sheet, amortization |
 | `closures.yaml` | 25 | Fn/FnMut/FnOnce, capture modes, `move`, returning closures, `Box<dyn Fn>`, closures in structs, fn pointers, choosing the right bound for APIs |
 | `lifetimes.yaml` | 22 | annotations vs elision (the three rules), structs/enums holding references, `'_`, `'static` vs `T: 'static`, `split_at_mut`, NLL, zero-copy parser shapes |
 | `smartpointers.yaml` | 21 | Box (recursive types, `dyn`), Deref & coercion, Drop, Rc/`Rc::clone`/counts, RefCell & interior mutability, Cell vs RefCell, Weak & cycles, get_mut |

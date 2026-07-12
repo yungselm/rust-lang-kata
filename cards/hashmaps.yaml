@@ -20,6 +20,11 @@
     `insert(k, v)` adds or overwrites, returning the OLD value as `Option<V>`.
   source: "std HashMap::insert"
   tags: [rust, hashmap]
+  tests: |
+    let m = build();
+    assert_eq!(m.get("a"), Some(&1));
+    assert_eq!(m.get("b"), Some(&2));
+    assert_eq!(m.len(), 2);
 
 - instruction: |
     Write `lookup(m: &HashMap<String, i32>, key: &str) -> Option<i32>` returning
@@ -41,6 +46,11 @@
     `String`, because `String: Borrow<str>`.
   source: "std HashMap::get"
   tags: [rust, hashmap]
+  tests: |
+    let mut m = HashMap::new();
+    m.insert("a".to_string(), 1);
+    assert_eq!(lookup(&m, "a"), Some(1));
+    assert_eq!(lookup(&m, "z"), None);
 
 - instruction: |
     Write `has_key(m: &HashMap<String, i32>, key: &str) -> bool`.
@@ -58,6 +68,11 @@
     }
   source: "std HashMap::contains_key"
   tags: [rust, hashmap]
+  tests: |
+    let mut m = HashMap::new();
+    m.insert("a".to_string(), 1);
+    assert!(has_key(&m, "a"));
+    assert!(!has_key(&m, "z"));
 
 - instruction: |
     Write `char_counts(s: &str) -> HashMap<char, usize>` counting each character
@@ -83,6 +98,11 @@
     value — one lookup for the classic counter idiom.
   source: "std HashMap::entry"
   tags: [rust, hashmap, entry]
+  tests: |
+    let counts = char_counts("aab");
+    assert_eq!(counts.get(&'a'), Some(&2));
+    assert_eq!(counts.get(&'b'), Some(&1));
+    assert_eq!(counts.get(&'z'), None);
 
 - instruction: |
     Write `group_by_len(words: &[&str]) -> HashMap<usize, Vec<String>>` grouping
@@ -109,6 +129,14 @@
     `or_insert_with(Vec::new)`.)
   source: "std Entry::or_default"
   tags: [rust, hashmap, entry]
+  tests: |
+    let groups = group_by_len(&["a", "bb", "cc", "d"]);
+    let mut one = groups[&1].clone();
+    one.sort();
+    assert_eq!(one, vec!["a".to_string(), "d".to_string()]);
+    let mut two = groups[&2].clone();
+    two.sort();
+    assert_eq!(two, vec!["bb".to_string(), "cc".to_string()]);
 
 - instruction: |
     Write `add_to(m: &mut HashMap<String, i32>, key: &str, delta: i32)` adding
@@ -131,6 +159,13 @@
     `get_mut` returns `Option<&mut V>` to edit a value in place.
   source: "std HashMap::get_mut"
   tags: [rust, hashmap]
+  tests: |
+    let mut m = HashMap::new();
+    m.insert("a".to_string(), 10);
+    add_to(&mut m, "a", 5);
+    assert_eq!(m["a"], 15);
+    add_to(&mut m, "z", 5);
+    assert_eq!(m.get("z"), None);
 
 - instruction: |
     Write `take(m: &mut HashMap<String, i32>, key: &str) -> Option<i32>` removing
@@ -151,6 +186,11 @@
     `remove` returns the value as `Option<V>` (None if the key was absent).
   source: "std HashMap::remove"
   tags: [rust, hashmap]
+  tests: |
+    let mut m = HashMap::new();
+    m.insert("a".to_string(), 1);
+    assert_eq!(take(&mut m, "a"), Some(1));
+    assert_eq!(take(&mut m, "a"), None);
 
 - instruction: |
     Write `total(m: &HashMap<String, i32>) -> i32` summing all values.
@@ -171,6 +211,12 @@
     `(&K, &V)`.
   source: "std HashMap::values"
   tags: [rust, hashmap]
+  tests: |
+    let mut m = HashMap::new();
+    m.insert("a".to_string(), 3);
+    m.insert("b".to_string(), 4);
+    assert_eq!(total(&m), 7);
+    assert_eq!(total(&HashMap::new()), 0);
 
 - instruction: |
     Write `keys_sorted(m: &HashMap<String, i32>) -> Vec<String>`: the keys,
@@ -194,6 +240,11 @@
     output (or use a `BTreeMap`).
   source: "std HashMap::keys"
   tags: [rust, hashmap]
+  tests: |
+    let mut m = HashMap::new();
+    m.insert("b".to_string(), 1);
+    m.insert("a".to_string(), 2);
+    assert_eq!(keys_sorted(&m), vec!["a".to_string(), "b".to_string()]);
 
 - instruction: |
     Write `double_values(m: &mut HashMap<String, i32>)` doubling every value
@@ -216,6 +267,13 @@
     `values_mut()` yields `&mut V` for each value.
   source: "std HashMap::values_mut"
   tags: [rust, hashmap]
+  tests: |
+    let mut m = HashMap::new();
+    m.insert("a".to_string(), 2);
+    m.insert("b".to_string(), 3);
+    double_values(&mut m);
+    assert_eq!(m["a"], 4);
+    assert_eq!(m["b"], 6);
 
 - instruction: |
     Write `index_by_len(words: &[&str]) -> HashMap<usize, String>` mapping each
@@ -237,6 +295,10 @@
     keys keep the last value.
   source: "std FromIterator for HashMap"
   tags: [rust, hashmap]
+  tests: |
+    let m = index_by_len(&["a", "bb", "cc"]);
+    assert_eq!(m.get(&1), Some(&"a".to_string()));
+    assert_eq!(m.get(&2), Some(&"cc".to_string()));
 
 - instruction: |
     Write `count_with_default(s: &str) -> HashMap<char, i32>` returning how many
@@ -263,6 +325,10 @@
     `V: Default`.
   source: "std Entry::or_default"
   tags: [rust, hashmap, entry]
+  tests: |
+    let counts = count_with_default("aab");
+    assert_eq!(counts.get(&'a'), Some(&2));
+    assert_eq!(counts.get(&'b'), Some(&1));
 
 - instruction: |
     Write `bump(m: &mut HashMap<String, i32>, key: &str)`: increment the value,
@@ -284,6 +350,13 @@
     value when the key is new. Together: "update or initialize".
   source: "std Entry::and_modify"
   tags: [rust, hashmap, entry]
+  tests: |
+    let mut m = HashMap::new();
+    bump(&mut m, "a");
+    bump(&mut m, "a");
+    bump(&mut m, "b");
+    assert_eq!(m["a"], 2);
+    assert_eq!(m["b"], 1);
 
 - instruction: |
     Write `score(m: &HashMap<String, i32>, key: &str) -> i32` returning the
@@ -302,6 +375,11 @@
     }
   source: "std HashMap::get"
   tags: [rust, hashmap]
+  tests: |
+    let mut m = HashMap::new();
+    m.insert("a".to_string(), 9);
+    assert_eq!(score(&m, "a"), 9);
+    assert_eq!(score(&m, "z"), 0);
 
 - instruction: |
     Write `distinct_count(m: &HashMap<String, i32>) -> usize` returning how many
@@ -322,6 +400,12 @@
     `len()` is the entry count; `is_empty()` and `clear()` are the companions.
   source: "std HashMap::len"
   tags: [rust, hashmap]
+  tests: |
+    let mut m = HashMap::new();
+    m.insert("a".to_string(), 1);
+    m.insert("b".to_string(), 2);
+    assert_eq!(distinct_count(&m), 2);
+    assert_eq!(distinct_count(&HashMap::new()), 0);
 
 - instruction: |
     Write `merge(into: &mut HashMap<String, i32>, other: HashMap<String, i32>)`
@@ -343,6 +427,15 @@
     overwriting existing keys.
   source: "std HashMap::extend"
   tags: [rust, hashmap]
+  tests: |
+    let mut a = HashMap::new();
+    a.insert("x".to_string(), 1);
+    let mut b = HashMap::new();
+    b.insert("x".to_string(), 2);
+    b.insert("y".to_string(), 3);
+    merge(&mut a, b);
+    assert_eq!(a["x"], 2);
+    assert_eq!(a["y"], 3);
 
 - instruction: |
     Write `unique(v: &[i32]) -> HashSet<i32>` collecting the distinct values.
@@ -363,6 +456,10 @@
     iterator dedups automatically.
   source: "std FromIterator for HashSet"
   tags: [rust, hashset]
+  tests: |
+    let s = unique(&[1, 2, 2, 3, 1]);
+    assert_eq!(s.len(), 3);
+    assert!(s.contains(&1) && s.contains(&2) && s.contains(&3));
 
 - instruction: |
     Write `add_new(set: &mut HashSet<i32>, x: i32) -> bool` returning whether the
@@ -383,6 +480,10 @@
     `HashSet::insert` returns `true` if the value was not already present.
   source: "std HashSet::insert"
   tags: [rust, hashset]
+  tests: |
+    let mut s = HashSet::new();
+    assert!(add_new(&mut s, 1));
+    assert!(!add_new(&mut s, 1));
 
 - instruction: |
     Write `common(a: &HashSet<i32>, b: &HashSet<i32>) -> Vec<i32>` returning the
@@ -404,6 +505,12 @@
     iterators of `&T`.
   source: "std HashSet::intersection"
   tags: [rust, hashset]
+  tests: |
+    let a: HashSet<i32> = [1, 2, 3].into_iter().collect();
+    let b: HashSet<i32> = [2, 3, 4].into_iter().collect();
+    let mut c = common(&a, &b);
+    c.sort();
+    assert_eq!(c, vec![2, 3]);
 
 - instruction: |
     Write `count_unique(v: &[i32]) -> usize`: number of distinct values, via a
@@ -425,6 +532,9 @@
     in O(n).
   source: "std HashSet"
   tags: [rust, hashset]
+  tests: |
+    assert_eq!(count_unique(&[1, 2, 2, 3, 1]), 3);
+    assert_eq!(count_unique(&[]), 0);
 
 - instruction: |
     Write `most_common(s: &str) -> Option<char>`: the most frequent character
@@ -450,6 +560,102 @@
     the largest count; `map` keeps just the char.
   source: "std Iterator::max_by_key"
   tags: [rust, hashmap, iterators]
+  tests: |
+    assert_eq!(most_common("aab"), Some('a'));
+    assert_eq!(most_common(""), None);
+
+- instruction: |
+    Write `build_lit() -> HashMap<&'static str, i32>` using the
+    `HashMap::from([...])` array literal — no `mut`/`insert` chain.
+  starter: |
+    use std::collections::HashMap;
+
+    fn build_lit() -> HashMap<&'static str, i32> {
+
+    }
+  solution: |
+    use std::collections::HashMap;
+
+    fn build_lit() -> HashMap<&'static str, i32> {
+        HashMap::from([("a", 1), ("b", 2)])
+    }
+  notes: |
+    `HashMap::from([(k, v), ...])` builds a map straight from an array of
+    pairs — the most idiomatic way to write a small literal map, without a
+    `mut` binding and repeated `insert` calls.
+  source: "std HashMap::from"
+  tags: [rust, hashmap]
+  tests: |
+    let m = build_lit();
+    assert_eq!(m.get("a"), Some(&1));
+    assert_eq!(m.get("b"), Some(&2));
+    assert_eq!(m.len(), 2);
+
+- instruction: |
+    Write `first_seen(m: &mut HashMap<char, Vec<usize>>, c: char, idx: usize)`
+    recording `idx` under `c`; when `c` is new, pre-size the Vec with
+    `Vec::with_capacity(4)` via `or_insert_with` (a non-default initializer,
+    so `or_default()` wouldn't fit).
+  starter: |
+    use std::collections::HashMap;
+
+    fn first_seen(m: &mut HashMap<char, Vec<usize>>, c: char, idx: usize) {
+
+    }
+  solution: |
+    use std::collections::HashMap;
+
+    fn first_seen(m: &mut HashMap<char, Vec<usize>>, c: char, idx: usize) {
+        m.entry(c).or_insert_with(|| Vec::with_capacity(4)).push(idx);
+    }
+  notes: |
+    `or_insert_with(f)` calls `f` only when the key is absent — the right tool
+    when the default ISN'T simply `Default::default()` (here, a pre-sized
+    Vec). Reach for `or_default()` instead when the default really is the
+    type's `Default`.
+  source: "std Entry::or_insert_with"
+  tags: [rust, hashmap, entry]
+  tests: |
+    let mut m = HashMap::new();
+    first_seen(&mut m, 'a', 0);
+    first_seen(&mut m, 'a', 5);
+    first_seen(&mut m, 'b', 2);
+    assert_eq!(m[&'a'], vec![0, 5]);
+    assert_eq!(m[&'b'], vec![2]);
+
+- instruction: |
+    Write `all_and_only_a(a: &HashSet<i32>, b: &HashSet<i32>) -> (Vec<i32>, Vec<i32>)`
+    returning (sorted union, sorted values only in `a`), using `union` and
+    `difference`.
+  starter: |
+    use std::collections::HashSet;
+
+    fn all_and_only_a(a: &HashSet<i32>, b: &HashSet<i32>) -> (Vec<i32>, Vec<i32>) {
+
+    }
+  solution: |
+    use std::collections::HashSet;
+
+    fn all_and_only_a(a: &HashSet<i32>, b: &HashSet<i32>) -> (Vec<i32>, Vec<i32>) {
+        let mut all: Vec<i32> = a.union(b).copied().collect();
+        all.sort();
+        let mut only_a: Vec<i32> = a.difference(b).copied().collect();
+        only_a.sort();
+        (all, only_a)
+    }
+  notes: |
+    `union` yields every value in EITHER set (no duplicates); `difference`
+    yields values in `a` but NOT in `b` (order matters — swap the receiver and
+    argument for the reverse). Sort before comparing, since set iteration
+    order is unspecified.
+  source: "std HashSet::union / HashSet::difference"
+  tags: [rust, hashset]
+  tests: |
+    let a: HashSet<i32> = [1, 2, 3].into_iter().collect();
+    let b: HashSet<i32> = [2, 3, 4].into_iter().collect();
+    let (all, only_a) = all_and_only_a(&a, &b);
+    assert_eq!(all, vec![1, 2, 3, 4]);
+    assert_eq!(only_a, vec![1]);
 
 # --- concept cards ---
 - type: concept

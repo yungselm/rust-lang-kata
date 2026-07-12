@@ -689,3 +689,75 @@
     assert!(parse_then_sqrt("x").is_err());
     assert!(parse_then_sqrt("-1").is_err());
 
+- instruction: |
+    Write `flip(r: Result<Option<i32>, String>) -> Option<Result<i32, String>>`
+    using `transpose`.
+  starter: |
+    fn flip(r: Result<Option<i32>, String>) -> Option<Result<i32, String>> {
+
+    }
+  solution: |
+    fn flip(r: Result<Option<i32>, String>) -> Option<Result<i32, String>> {
+        r.transpose()
+    }
+  notes: |
+    `transpose()` swaps `Result<Option<T>, E>` and `Option<Result<T, E>>` —
+    handy after a fallible step that may also be absent (e.g. parsing an
+    optional field), so you can use `?` inside an `Option`-returning function.
+  source: "std Result::transpose / Option::transpose"
+  tags: [rust, results, option, transpose]
+  tests: |
+    assert_eq!(flip(Ok(Some(3))), Some(Ok(3)));
+    assert_eq!(flip(Ok(None)), None);
+    assert_eq!(flip(Err("e".to_string())), Some(Err("e".to_string())));
+
+- instruction: |
+    Write `first_available(primary: Option<i32>, compute_fallback: impl Fn() ->
+    Option<i32>) -> Option<i32>`: return `primary` if present, otherwise call
+    `compute_fallback`. Use `or_else` so the fallback only runs when needed.
+  starter: |
+    fn first_available(primary: Option<i32>, compute_fallback: impl Fn() -> Option<i32>) -> Option<i32> {
+
+    }
+  solution: |
+    fn first_available(primary: Option<i32>, compute_fallback: impl Fn() -> Option<i32>) -> Option<i32> {
+        primary.or_else(compute_fallback)
+    }
+  notes: |
+    `or_else(f)` is the lazy sibling of `or(other)`: `f` runs only when
+    `primary` is `None`. Prefer it whenever computing the fallback is
+    expensive or has side effects — the test below proves it's skipped when
+    `primary` is already `Some`.
+  source: "std Option::or_else"
+  tags: [rust, results, option, or_else]
+  tests: |
+    use std::cell::Cell;
+    let calls = Cell::new(0);
+    let fallback = || { calls.set(calls.get() + 1); Some(9) };
+    assert_eq!(first_available(Some(1), fallback), Some(1));
+    assert_eq!(calls.get(), 0);
+    assert_eq!(first_available(None, fallback), Some(9));
+    assert_eq!(calls.get(), 1);
+
+- instruction: |
+    Write `pair(a: Option<i32>, b: Option<&str>) -> Option<(i32, String)>`
+    combining both into a tuple only if BOTH are present, using `zip`.
+  starter: |
+    fn pair(a: Option<i32>, b: Option<&str>) -> Option<(i32, String)> {
+
+    }
+  solution: |
+    fn pair(a: Option<i32>, b: Option<&str>) -> Option<(i32, String)> {
+        a.zip(b).map(|(n, s)| (n, s.to_string()))
+    }
+  notes: |
+    `Option::zip` combines two Options into `Option<(A, B)>` — `Some` only
+    when both are `Some`, else `None`. Chain `.map` to reshape the pair
+    afterward.
+  source: "std Option::zip"
+  tags: [rust, results, option, zip]
+  tests: |
+    assert_eq!(pair(Some(1), Some("a")), Some((1, "a".to_string())));
+    assert_eq!(pair(None, Some("a")), None);
+    assert_eq!(pair(Some(1), None), None);
+

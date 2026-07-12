@@ -16,6 +16,9 @@
     `collect()` rebuilds. The return type tells `collect` to make a Vec.
   source: "std Iterator::map"
   tags: [rust, iterators]
+  tests: |
+    assert_eq!(double(vec![1, 2, 3]), vec![2, 4, 6]);
+    assert_eq!(double(vec![]), Vec::<i32>::new());
 
 - instruction: |
     Write `evens(v: &[i32]) -> Vec<i32>` returning copies of the even elements.
@@ -32,6 +35,9 @@
     a plain `|&x|` instead of the awkward `|&&x|`.
   source: "std Iterator::filter"
   tags: [rust, iterators]
+  tests: |
+    assert_eq!(evens(&[1, 2, 3, 4]), vec![2, 4]);
+    assert_eq!(evens(&[]), Vec::<i32>::new());
 
 - instruction: |
     Write `sum_of_squares(v: &[i32]) -> i32` (sum of each element squared).
@@ -47,6 +53,9 @@
     `sum()` consumes the iterator; the return type fixes the sum's type.
   source: "std Iterator::sum"
   tags: [rust, iterators]
+  tests: |
+    assert_eq!(sum_of_squares(&[1, 2, 3]), 14);
+    assert_eq!(sum_of_squares(&[]), 0);
 
 - instruction: |
     Write `parse_all(items: &[&str]) -> Result<Vec<i32>, std::num::ParseIntError>`:
@@ -64,6 +73,9 @@
     `Err`. The return type lets `parse` infer its target without a turbofish.
   source: "std FromIterator for Result"
   tags: [rust, iterators, results]
+  tests: |
+    assert_eq!(parse_all(&["1", "2", "3"]), Ok(vec![1, 2, 3]));
+    assert!(parse_all(&["1", "x"]).is_err());
 
 - instruction: |
     Write `parse_ok(items: &[&str]) -> Vec<i32>`: parse to i32 but silently
@@ -81,6 +93,9 @@
     `Result<i32, _>` into `Option<i32>`. The Vec return type drives inference.
   source: "std Iterator::filter_map"
   tags: [rust, iterators]
+  tests: |
+    assert_eq!(parse_ok(&["1", "x", "3"]), vec![1, 3]);
+    assert_eq!(parse_ok(&[]), Vec::<i32>::new());
 
 - instruction: |
     Write `indexed(v: &[char]) -> Vec<(usize, char)>` pairing each element
@@ -98,6 +113,9 @@
     clean `|(i, c)|`. (`enumerate` yields `(index, item)`.)
   source: "std Iterator::enumerate"
   tags: [rust, iterators]
+  tests: |
+    assert_eq!(indexed(&['a', 'b']), vec![(0, 'a'), (1, 'b')]);
+    assert_eq!(indexed(&[]), Vec::<(usize, char)>::new());
 
 - instruction: |
     Write `pair_sums(a: &[i32], b: &[i32]) -> Vec<i32>`: element-wise sums,
@@ -116,6 +134,9 @@
     `Add` impl.
   source: "std Iterator::zip"
   tags: [rust, iterators]
+  tests: |
+    assert_eq!(pair_sums(&[1, 2, 3], &[10, 20]), vec![11, 22]);
+    assert_eq!(pair_sums(&[], &[1]), Vec::<i32>::new());
 
 - instruction: |
     Write `poly_eval(coeffs: &[f64], x: f64) -> f64` evaluating a polynomial at
@@ -134,6 +155,9 @@
     clippy will tell you; Horner's `acc * x + c` genuinely needs fold.)
   source: "std Iterator::fold"
   tags: [rust, iterators]
+  tests: |
+    assert!((poly_eval(&[1.0, 0.0, -1.0], 2.0) - 3.0).abs() < 1e-9);
+    assert!((poly_eval(&[], 5.0) - 0.0).abs() < 1e-9);
 
 - instruction: |
     Write `longest_len(words: &[&str]) -> usize`: length of the longest word,
@@ -151,6 +175,9 @@
     default. To compare by a key instead, use `max_by_key`.
   source: "std Iterator::max"
   tags: [rust, iterators]
+  tests: |
+    assert_eq!(longest_len(&["a", "bbb", "cc"]), 3);
+    assert_eq!(longest_len(&[]), 0);
 
 - instruction: |
     Write `first_negative_index(v: &[i32]) -> Option<usize>`: index of the
@@ -168,6 +195,9 @@
     element itself.
   source: "std Iterator::position"
   tags: [rust, iterators]
+  tests: |
+    assert_eq!(first_negative_index(&[1, 2, -3, 4]), Some(2));
+    assert_eq!(first_negative_index(&[1, 2]), None);
 
 - instruction: |
     Write `all_positive(v: &[i32]) -> bool`: true iff every element is > 0.
@@ -184,6 +214,10 @@
     iterator `all` is true and `any` is false.
   source: "std Iterator::all"
   tags: [rust, iterators]
+  tests: |
+    assert!(all_positive(&[1, 2, 3]));
+    assert!(!all_positive(&[1, -2, 3]));
+    assert!(all_positive(&[]));
 
 - instruction: |
     Write `count_vowels(s: &str) -> usize` counting ascii vowels.
@@ -200,6 +234,9 @@
     takes it directly (a `char` is a valid `str` pattern). `count()` consumes.
   source: "std Iterator::count"
   tags: [rust, iterators]
+  tests: |
+    assert_eq!(count_vowels("hello world"), 3);
+    assert_eq!(count_vowels(""), 0);
 
 - instruction: |
     Write `first_three(v: &[i32]) -> Vec<i32>`: copies of up to the first 3.
@@ -215,6 +252,9 @@
     `take(n)` yields at most n items. Its partner `skip(n)` drops the first n.
   source: "std Iterator::take"
   tags: [rust, iterators]
+  tests: |
+    assert_eq!(first_three(&[1, 2, 3, 4, 5]), vec![1, 2, 3]);
+    assert_eq!(first_three(&[1]), vec![1]);
 
 - instruction: |
     Write `leading_positives(v: &[i32]) -> Vec<i32>`: copy elements from the
@@ -232,6 +272,9 @@
     which tests every one). Partner: `skip_while`.
   source: "std Iterator::take_while"
   tags: [rust, iterators]
+  tests: |
+    assert_eq!(leading_positives(&[1, 2, -1, 3]), vec![1, 2]);
+    assert_eq!(leading_positives(&[-1, 2]), Vec::<i32>::new());
 
 - instruction: |
     Write `concat(a: &[i32], b: &[i32]) -> Vec<i32>` joining the two in order.
@@ -248,6 +291,9 @@
     `IntoIterator`, so no `.iter()` needed.
   source: "std Iterator::chain"
   tags: [rust, iterators]
+  tests: |
+    assert_eq!(concat(&[1, 2], &[3, 4]), vec![1, 2, 3, 4]);
+    assert_eq!(concat(&[], &[1]), vec![1]);
 
 - instruction: |
     Write `reversed(v: &[i32]) -> Vec<i32>` (elements in reverse order).
@@ -263,6 +309,9 @@
     `rev()` needs a DoubleEndedIterator (slices/Vec qualify).
   source: "std Iterator::rev"
   tags: [rust, iterators]
+  tests: |
+    assert_eq!(reversed(&[1, 2, 3]), vec![3, 2, 1]);
+    assert_eq!(reversed(&[]), Vec::<i32>::new());
 
 - instruction: |
     Write `flatten(vv: Vec<Vec<i32>>) -> Vec<i32>` concatenating all inner vecs.
@@ -278,6 +327,9 @@
     `flatten()` turns an iterator-of-iterables into one flat stream.
   source: "std Iterator::flatten"
   tags: [rust, iterators]
+  tests: |
+    assert_eq!(flatten(vec![vec![1, 2], vec![3], vec![]]), vec![1, 2, 3]);
+    assert_eq!(flatten(vec![]), Vec::<i32>::new());
 
 - instruction: |
     Write `repeat_each(v: &[i32]) -> Vec<i32>`: each element duplicated, e.g.
@@ -295,6 +347,9 @@
     `IntoIterator` (2021 edition) yielding owned values.
   source: "std Iterator::flat_map"
   tags: [rust, iterators]
+  tests: |
+    assert_eq!(repeat_each(&[1, 2]), vec![1, 1, 2, 2]);
+    assert_eq!(repeat_each(&[]), Vec::<i32>::new());
 
 - instruction: |
     Write `shout(s: &str) -> String` uppercasing each ascii character.
@@ -310,6 +365,9 @@
     An iterator of `char` collects directly into a `String`.
   source: "std str::chars"
   tags: [rust, iterators]
+  tests: |
+    assert_eq!(shout("hi"), "HI");
+    assert_eq!(shout(""), "");
 
 - instruction: |
     Write `char_positions(s: &str) -> HashMap<char, usize>` mapping each char
@@ -331,6 +389,11 @@
     keys overwrite earlier ones, recording the last index.
   source: "std FromIterator for HashMap"
   tags: [rust, iterators, hashmap]
+  tests: |
+    let m = char_positions("abcb");
+    assert_eq!(m.get(&'b'), Some(&3));
+    assert_eq!(m.get(&'a'), Some(&0));
+    assert_eq!(m.get(&'z'), None);
 
 - instruction: |
     Write `split_parity(v: &[i32]) -> (Vec<i32>, Vec<i32>)` returning
@@ -348,6 +411,9 @@
     type tells it to build two `Vec<i32>`.
   source: "std Iterator::partition"
   tags: [rust, iterators]
+  tests: |
+    assert_eq!(split_parity(&[1, 2, 3, 4]), (vec![2, 4], vec![1, 3]));
+    assert_eq!(split_parity(&[]), (Vec::<i32>::new(), Vec::<i32>::new()));
 
 - instruction: |
     Write `running_sum(v: &[i32]) -> Vec<i32>`: the running cumulative total,
@@ -368,6 +434,9 @@
     `None` would end iteration early.
   source: "std Iterator::scan"
   tags: [rust, iterators]
+  tests: |
+    assert_eq!(running_sum(&[1, 2, 3, 4]), vec![1, 3, 6, 10]);
+    assert_eq!(running_sum(&[]), Vec::<i32>::new());
 
 - instruction: |
     Write `every_other(v: &[i32]) -> Vec<i32>`: copies of elements at indices
@@ -384,6 +453,9 @@
     `step_by(n)` yields the first element then every nth after it.
   source: "std Iterator::step_by"
   tags: [rust, iterators]
+  tests: |
+    assert_eq!(every_other(&[1, 2, 3, 4, 5]), vec![1, 3, 5]);
+    assert_eq!(every_other(&[]), Vec::<i32>::new());
 
 - instruction: |
     Domain: write `step_distances(pts: &[(f64, f64)]) -> Vec<f64>` giving the
@@ -403,6 +475,11 @@
     along a centerline. See `chunks` for non-overlapping groups.
   source: "std slice::windows"
   tags: [rust, iterators, domain]
+  tests: |
+    let d = step_distances(&[(0.0, 0.0), (3.0, 4.0)]);
+    assert_eq!(d.len(), 1);
+    assert!((d[0] - 5.0).abs() < 1e-9);
+    assert_eq!(step_distances(&[(0.0, 0.0)]), Vec::<f64>::new());
 
 - instruction: |
     Write `sum_parsed(items: &[&str]) -> Result<i32, std::num::ParseIntError>`:
@@ -424,6 +501,91 @@
     The `Vec<i32>` binding lets `parse` infer its target.
   source: "std FromIterator for Result"
   tags: [rust, iterators, results]
+  tests: |
+    assert_eq!(sum_parsed(&["1", "2", "3"]), Ok(6));
+    assert!(sum_parsed(&["1", "x"]).is_err());
+
+- instruction: |
+    Write `split_pairs(pairs: Vec<(i32, char)>) -> (Vec<i32>, Vec<char>)`
+    splitting a Vec of tuples into two parallel Vecs, using `unzip`.
+  starter: |
+    fn split_pairs(pairs: Vec<(i32, char)>) -> (Vec<i32>, Vec<char>) {
+
+    }
+  solution: |
+    fn split_pairs(pairs: Vec<(i32, char)>) -> (Vec<i32>, Vec<char>) {
+        pairs.into_iter().unzip()
+    }
+  notes: |
+    `unzip()` is the inverse of `zip`: an iterator of `(A, B)` pairs becomes a
+    `(Collection<A>, Collection<B>)` in one pass.
+  source: "std Iterator::unzip"
+  tags: [rust, iterators, unzip]
+  tests: |
+    let (nums, chars) = split_pairs(vec![(1, 'a'), (2, 'b'), (3, 'c')]);
+    assert_eq!(nums, vec![1, 2, 3]);
+    assert_eq!(chars, vec!['a', 'b', 'c']);
+    let (n2, c2): (Vec<i32>, Vec<char>) = split_pairs(vec![]);
+    assert!(n2.is_empty() && c2.is_empty());
+
+- instruction: |
+    Write `overall_max(v: &[i32]) -> Option<i32>` returning the maximum via
+    `reduce` (not `.max()`), using `i32::max` as the combiner.
+  starter: |
+    fn overall_max(v: &[i32]) -> Option<i32> {
+
+    }
+  solution: |
+    fn overall_max(v: &[i32]) -> Option<i32> {
+        v.iter().copied().reduce(i32::max)
+    }
+  notes: |
+    `reduce(f)` is `fold` without a separate initial value: it uses the first
+    item as the seed, then combines the rest with `f`, returning `None` on an
+    empty iterator (unlike `fold`, which always returns something). Prefer the
+    built-in `.max()`/`.sum()` when they exist; reach for `reduce` when the
+    combining rule is custom.
+  source: "std Iterator::reduce"
+  tags: [rust, iterators, reduce]
+  tests: |
+    assert_eq!(overall_max(&[3, 7, 2, 9, 4]), Some(9));
+    assert_eq!(overall_max(&[]), None);
+
+- instruction: |
+    Write `count_leading_dupes(v: &[i32]) -> usize`: how many times the FIRST
+    value repeats consecutively at the start (e.g. [5, 5, 5, 2, 5] -> 3), using
+    a `Peekable` iterator with `peek`.
+  starter: |
+    fn count_leading_dupes(v: &[i32]) -> usize {
+
+    }
+  solution: |
+    fn count_leading_dupes(v: &[i32]) -> usize {
+        let mut it = v.iter().peekable();
+        let Some(&first) = it.next() else {
+            return 0;
+        };
+        let mut count = 1;
+        while let Some(&&next) = it.peek() {
+            if next != first {
+                break;
+            }
+            count += 1;
+            it.next();
+        }
+        count
+    }
+  notes: |
+    `peekable()` wraps an iterator so you can look at the next item with
+    `peek()` WITHOUT consuming it — essential when whether you advance depends
+    on what's next.
+  source: "std Iterator::peekable"
+  tags: [rust, iterators, peekable]
+  tests: |
+    assert_eq!(count_leading_dupes(&[5, 5, 5, 2, 5]), 3);
+    assert_eq!(count_leading_dupes(&[1, 2, 3]), 1);
+    assert_eq!(count_leading_dupes(&[]), 0);
+    assert_eq!(count_leading_dupes(&[7, 7, 7]), 3);
 
 # --- concept cards ---
 - type: concept
