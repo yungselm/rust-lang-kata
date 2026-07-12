@@ -1,0 +1,589 @@
+# Advanced features (book ch.20): unsafe Rust, extern/FFI, static state,
+# macro_rules!, type aliases, the never type, and fully qualified syntax.
+# Operator overloading, supertraits, associated types, and DSTs/Sized are
+# already covered in traits.yaml/generics.yaml, so not repeated here.
+- type: concept
+  question: |
+    What five things does an `unsafe` block let you do that safe Rust
+    otherwise forbids?
+  answer: |
+    Dereference a raw pointer (`*const T`/`*mut T`). Call an `unsafe fn`
+    (including calling a function across an FFI boundary). Read or write a
+    mutable `static` variable. Implement an `unsafe trait`. Access a field of
+    a `union`. None of these make the CODE INSIDE the block magically safe
+    from bugs — `unsafe` just tells the compiler "trust me, I've manually
+    verified the invariant the borrow checker would otherwise check for you"
+    for these five specific operations; everything else (borrowing rules,
+    move semantics, etc.) is still enforced exactly as in safe code.
+  source: "book §20.1 (unsafe superpowers)"
+  tags: [rust, unsafe, concept]
+
+- instruction: |
+    Given `let mut num = 5;`, create both a `*const i32` and a `*mut i32`
+    raw pointer to it (safe — creating a raw pointer needs no `unsafe`), then
+    inside an `unsafe` block read through the `*const` pointer, write `10`
+    through the `*mut` pointer, and return `(the value read, the final
+    value of num)`.
+  starter: |
+    fn demo_raw_pointers() -> (i32, i32) {
+        let mut num = 5;
+
+        let r1 = &num as *const i32;
+        let r2 = &mut num as *mut i32;
+
+        unsafe {
+
+        }
+    }
+  solution: |
+    fn demo_raw_pointers() -> (i32, i32) {
+        let mut num = 5;
+
+        let r1 = &num as *const i32;
+        let r2 = &mut num as *mut i32;
+
+        unsafe {
+            let read_val = *r1;
+            *r2 = 10;
+            (read_val, num)
+        }
+    }
+  notes: |
+    Creating `r1` and `r2` — a `*const` and a `*mut` pointer to the SAME
+    location, at the same time — compiles even though two live references
+    could never coexist like that: raw pointers carry no aliasing
+    guarantees, so the compiler doesn't track them. Dereferencing either one
+    is where the actual memory access happens, which is why only that part
+    needs `unsafe`.
+  source: "book §20.1 (dereferencing a raw pointer)"
+  tags: [rust, unsafe]
+  tests: |
+    assert_eq!(demo_raw_pointers(), (5, 10));
+
+- type: concept
+  question: |
+    Why can you create a raw pointer (`&x as *const i32`) in completely safe
+    code, but dereferencing it (`*ptr`) requires `unsafe`?
+  answer: |
+    Creating a raw pointer just copies an address into a value — it can't
+    violate memory safety by itself, so the compiler allows it anywhere,
+    even letting you create a `*const T` and a `*mut T` to the SAME location
+    simultaneously (something two live references could never do).
+    DEREFERENCING is where an actual memory access happens, and raw pointers
+    carry none of the guarantees the borrow checker normally verifies for
+    references — no guarantee the pointer is non-null, aligned, pointing at
+    valid initialized memory of the right type, or that no other code is
+    mutating that memory concurrently — so reading through one requires the
+    programmer to manually vouch for all of that via `unsafe`.
+  source: "book §20.1 (dereferencing a raw pointer)"
+  tags: [rust, unsafe, concept]
+
+- instruction: |
+    Reimplement `fn split_at_mut_i32(slice: &mut [i32], mid: usize) ->
+    (&mut [i32], &mut [i32])` — splitting a mutable slice into two
+    non-overlapping mutable halves — using `unsafe` raw-pointer arithmetic
+    internally (this can't be written in safe Rust: the borrow checker
+    can't see that the two halves don't overlap). Panic (via `assert!`) if
+    `mid > slice.len()`.
+  starter: |
+    fn split_at_mut_i32(slice: &mut [i32], mid: usize) -> (&mut [i32], &mut [i32]) {
+        let len = slice.len();
+        assert!(mid <= len);
+
+        let ptr = slice.as_mut_ptr();
+
+        unsafe {
+
+        }
+    }
+  solution: |
+    fn split_at_mut_i32(slice: &mut [i32], mid: usize) -> (&mut [i32], &mut [i32]) {
+        let len = slice.len();
+        assert!(mid <= len);
+
+        let ptr = slice.as_mut_ptr();
+
+        unsafe {
+            (
+                std::slice::from_raw_parts_mut(ptr, mid),
+                std::slice::from_raw_parts_mut(ptr.add(mid), len - mid),
+            )
+        }
+    }
+  notes: |
+    `ptr.add(mid)` advances the pointer by `mid` elements (unsafe: it trusts
+    that doing so stays within the allocation), and
+    `slice::from_raw_parts_mut` builds a `&mut [i32]` out of a raw pointer
+    plus a length (unsafe: it trusts the memory is valid, initialized, and —
+    critically — that the two resulting slices don't alias each other,
+    which is true here since `mid <= len` was checked first). This is
+    essentially how the real `std` `split_at_mut` is implemented.
+  source: "book §20.1 (unsafe code and the split_at_mut example)"
+  tags: [rust, unsafe]
+  tests: |
+    let mut v = vec![1, 2, 3, 4, 5];
+    let (a, b) = split_at_mut_i32(&mut v, 2);
+    assert_eq!(a.to_vec(), vec![1, 2]);
+    assert_eq!(b.to_vec(), vec![3, 4, 5]);
+    a[0] = 100;
+    b[0] = 200;
+    assert_eq!(v, vec![100, 2, 200, 4, 5]);
+
+- type: concept
+  question: |
+    In the slice-splitting example above, why is it okay for a SAFE
+    function's implementation to use `unsafe` internally?
+  answer: |
+    Rust's safety guarantees are about the language's public API surface,
+    not "no unsafe code ever": the caller of `split_at_mut_i32` only sees an
+    ordinary, safe function signature and can't observe (or need to know)
+    that raw pointers were used internally. The `unsafe` block is a promise
+    from the FUNCTION'S AUTHOR — verified by them, not the compiler — that
+    the specific operation performed (here, that the two halves genuinely
+    don't overlap, since `mid <= len` was checked first) upholds the
+    invariants the borrow checker would otherwise enforce automatically.
+    This "safe abstraction over an unsafe implementation" pattern is exactly
+    how much of `std` itself (`Vec`, `String`, the real `split_at_mut`) is
+    actually built.
+  source: "book §20.1 (creating a safe abstraction over unsafe code)"
+  tags: [rust, unsafe, concept]
+
+- instruction: |
+    Write `#[no_mangle] pub extern "C" fn kata_ffi_add(a: i32, b: i32) ->
+    i32` — a function using the C calling convention, exposed under its
+    exact symbol name (no Rust name-mangling) so another language could call
+    it via FFI — then call it directly from Rust to confirm it still
+    behaves like an ordinary function.
+  starter: |
+    #[no_mangle]
+    pub extern "C" fn kata_ffi_add(a: i32, b: i32) -> i32 {
+
+    }
+  solution: |
+    #[no_mangle]
+    pub extern "C" fn kata_ffi_add(a: i32, b: i32) -> i32 {
+        a + b
+    }
+  notes: |
+    `extern "C"` picks the C ABI (argument/return-value calling convention)
+    instead of Rust's own unstable internal one, and `#[no_mangle]` disables
+    Rust's usual name-mangling so the compiled symbol is literally
+    `kata_ffi_add` — both are needed for a function meant to be called FROM
+    another language; calling it from ordinary Rust code, as the test does,
+    works exactly like calling any other function.
+  source: "book §20.2 (using extern functions to call external code)"
+  tags: [rust, ffi]
+  tests: |
+    assert_eq!(kata_ffi_add(2, 3), 5);
+    assert_eq!(kata_ffi_add(-1, 1), 0);
+
+- type: concept
+  question: |
+    Why is `static mut COUNTER: i32 = 0;` considered unsafe to read or
+    write, and what's the modern safe alternative for shared mutable global
+    state?
+  answer: |
+    A `static` lives for the entire program and can be reached from
+    multiple threads simultaneously; reading or writing a `static mut`
+    directly has NO synchronization at all, so concurrent access is a data
+    race — undefined behavior — which is why every access requires
+    `unsafe` (recent Rust editions go further, making implicit `static mut`
+    references a hard error outside `unsafe`, nudging the pattern toward
+    extinction). The safe replacement is an atomic type from `std::sync::
+    atomic` (`AtomicU32`, etc., for simple counters/flags) or a `Mutex`/
+    `RwLock`-wrapped value behind a `std::sync::OnceLock` for more complex
+    shared global state — both give the same "one shared global" shape with
+    actual synchronization instead of a bare, unchecked memory location.
+  source: "book §20.1 (accessing or modifying a mutable static variable)"
+  tags: [rust, unsafe, concurrency, concept]
+
+- instruction: |
+    Implement a global request counter SAFELY using `std::sync::atomic::
+    AtomicU32` (with `Ordering::SeqCst`) instead of `static mut` — `fn
+    bump_counter() -> u32` increments it and returns the NEW value on every
+    call.
+  starter: |
+    use std::sync::atomic::{AtomicU32, Ordering};
+
+    static COUNTER: AtomicU32 = AtomicU32::new(0);
+
+    fn bump_counter() -> u32 {
+
+    }
+  solution: |
+    use std::sync::atomic::{AtomicU32, Ordering};
+
+    static COUNTER: AtomicU32 = AtomicU32::new(0);
+
+    fn bump_counter() -> u32 {
+        COUNTER.fetch_add(1, Ordering::SeqCst) + 1
+    }
+  notes: |
+    `fetch_add` atomically adds 1 and returns the value the counter had
+    BEFORE the add — adding 1 to that gives the new value — with the
+    hardware guaranteeing no other thread's concurrent `fetch_add` can be
+    lost or torn, unlike a bare `static mut COUNTER: i32` incremented with
+    `COUNTER += 1`.
+  source: "std::sync::atomic docs (a safe alternative to static mut)"
+  tags: [rust, unsafe, concurrency]
+  tests: |
+    assert_eq!(bump_counter(), 1);
+    assert_eq!(bump_counter(), 2);
+    assert_eq!(bump_counter(), 3);
+
+- type: concept
+  question: |
+    What does marking a trait `unsafe trait` (and its impls `unsafe impl`)
+    signal, using `Send`/`Sync` as the classic example?
+  answer: |
+    `Send`/`Sync` are `unsafe trait`s because the compiler can't verify
+    their contract by construction the way it verifies ordinary trait
+    bounds — implementing one is a promise, checked by the AUTHOR, that a
+    type really is safe to send across threads (`Send`) or share by
+    reference across threads (`Sync`). Both are normally auto-derived for
+    types built entirely out of `Send`/`Sync` pieces; you only write
+    `unsafe impl Send for MyType {}` yourself when a type contains something
+    the compiler conservatively assumes ISN'T thread-safe (like a raw
+    pointer) but you've manually verified your actual usage is — at which
+    point you, not the compiler, are vouching for the invariant.
+  source: "book §20.1 (implementing an unsafe trait) + std::marker::Send/Sync"
+  tags: [rust, unsafe, concurrency, concept]
+
+- type: concept
+  question: |
+    Why does Rust have declarative macros (`macro_rules!`) at all, given it
+    already has functions and generics?
+  answer: |
+    A macro operates on SYNTAX (a token stream) before types are resolved,
+    which lets it do things a function fundamentally can't: accept a
+    VARIABLE number of arguments (`vec![1, 2, 3]` vs `vec![1, 2, 3, 4, 5]` —
+    no function overload set could do this in a language without
+    overloading), and generate different CODE STRUCTURES — not just
+    different values — depending on its arguments, such as defining several
+    functions or trait impls from one invocation. The cost is that macro
+    definitions are harder to read and debug than functions, and errors
+    surface in terms of EXPANDED code rather than the macro's own source —
+    so macros are reached for only when a function or generic genuinely
+    can't express what's needed.
+  source: "book §20.4 (macros vs functions)"
+  tags: [rust, macros, concept]
+
+- instruction: |
+    Write a declarative macro `max_of!` accepting 1 to 3 comma-separated
+    integer expressions (three match arms, one per arity), expanding to the
+    maximum of whichever were given, then use it to compute a few values.
+  starter: |
+    macro_rules! max_of {
+        ($a:expr) => {
+
+        };
+        ($a:expr, $b:expr) => {
+
+        };
+        ($a:expr, $b:expr, $c:expr) => {
+
+        };
+    }
+
+    fn max_examples() -> (i32, i32, i32) {
+        (max_of!(5), max_of!(3, 9), max_of!(4, 8, 2))
+    }
+  solution: |
+    macro_rules! max_of {
+        ($a:expr) => {
+            $a
+        };
+        ($a:expr, $b:expr) => {
+            std::cmp::max($a, $b)
+        };
+        ($a:expr, $b:expr, $c:expr) => {
+            std::cmp::max(std::cmp::max($a, $b), $c)
+        };
+    }
+
+    fn max_examples() -> (i32, i32, i32) {
+        (max_of!(5), max_of!(3, 9), max_of!(4, 8, 2))
+    }
+  notes: |
+    Each arm's pattern (`$a:expr`, `$a:expr, $b:expr`, ...) matches a
+    different NUMBER of comma-separated arguments — the macro picks whichever
+    arm matches the call site, the same idea `vec![...]` uses to accept any
+    number of elements.
+  source: "book §20.4 (declarative macros with macro_rules!)"
+  tags: [rust, macros]
+  tests: |
+    assert_eq!(max_examples(), (5, 9, 8));
+
+- type: concept
+  question: |
+    What does "macro hygiene" mean for `macro_rules!`, and what problem does
+    it prevent?
+  answer: |
+    Hygiene means identifiers introduced INSIDE a macro's expansion (a
+    temporary `let` binding the macro creates internally, for instance)
+    don't accidentally collide with or capture identifiers from the
+    CALLER's surrounding code, and vice versa — each macro expansion gets
+    its own effectively-invisible naming context. Without hygiene, a macro
+    that internally does `let x = ...;` could silently shadow a variable
+    named `x` at the call site, or a variable the macro's own pattern
+    expects to reference (like `$a` in `max_of!` above) could accidentally
+    resolve to something unrelated the macro's author never intended —
+    hygiene is what makes macros usable without meticulously renaming every
+    internal temporary to dodge clashes.
+  source: "book §20.4 (macro hygiene)"
+  tags: [rust, macros, concept]
+
+- type: concept
+  question: |
+    What does `type Kilometers = i32;` actually do, and how is a type ALIAS
+    different from the newtype pattern (`struct Kilometers(i32);`)?
+  answer: |
+    A type alias is just another NAME for an existing type — `Kilometers`
+    and `i32` are completely interchangeable everywhere, with no new
+    type-checking distinction (you can pass a `Kilometers` anywhere an
+    `i32` is expected and vice versa, add them together, and so on). Its
+    main purpose is READABILITY: giving a long or repetitive type
+    (`Box<dyn Fn(i32) -> i32>`, `Result<T, std::io::Error>`) a short,
+    meaningful name used consistently across a codebase. The newtype
+    pattern (`struct Kilometers(i32)`) instead creates a genuinely
+    DIFFERENT type that happens to wrap an `i32` — the compiler rejects
+    mixing a `Kilometers` and a plain `i32` (or a `Meters`) without an
+    explicit conversion, which is the whole point when you want the type
+    system to catch unit-confusion bugs.
+  source: "book §20.3 (type aliases vs the newtype pattern)"
+  tags: [rust, types, concept]
+
+- instruction: |
+    Given the repetitive signature `Box<dyn Fn(i32) -> i32>` used in
+    multiple places, introduce `type IntOp = Box<dyn Fn(i32) -> i32>;` and
+    use it to simplify `fn apply(op: &IntOp, x: i32) -> i32` and `fn
+    make_adder(n: i32) -> IntOp`.
+  starter: |
+    type IntOp = Box<dyn Fn(i32) -> i32>;
+
+    fn apply(op: &IntOp, x: i32) -> i32 {
+
+    }
+
+    fn make_adder(n: i32) -> IntOp {
+
+    }
+  solution: |
+    type IntOp = Box<dyn Fn(i32) -> i32>;
+
+    fn apply(op: &IntOp, x: i32) -> i32 {
+        op(x)
+    }
+
+    fn make_adder(n: i32) -> IntOp {
+        Box::new(move |x| x + n)
+    }
+  notes: |
+    `IntOp` is nothing more than shorthand for `Box<dyn Fn(i32) -> i32>` —
+    both signatures below could be written with the full type spelled out
+    and behave identically; the alias only saves repetition and makes the
+    intent ("this is a stored integer operation") more obvious at a glance.
+  source: "book §20.3 (creating type synonyms with type aliases)"
+  tags: [rust, types]
+  tests: |
+    let add5 = make_adder(5);
+    assert_eq!(apply(&add5, 10), 15);
+    assert_eq!(apply(&add5, 0), 5);
+
+- type: concept
+  question: |
+    What is the never type `!`, and where does it typically show up?
+  answer: |
+    `!` is the type of an expression that NEVER produces a value because
+    control flow diverges before it would — `panic!()`, a bare `continue`
+    or `break`, an infinite `loop {}` with no `break`, and `std::process::
+    exit(1)` all have type `!`. Because `!` can coerce into ANY other type
+    (there's no value of type `!` to be wrong about), an arm of a `match`
+    that panics or `continue`s can sit alongside arms that produce, say, an
+    `i32`, and the whole `match` still type-checks as `i32` — the diverging
+    arm simply never contributes a value to unify with the rest.
+  source: "book §20.3 (the never type that never returns)"
+  tags: [rust, types, concept]
+
+- instruction: |
+    Write `fn parse_or_default(s: &str, default: i32) -> i32` (parses `s` as
+    `i32`, matching on the `Result` with `Err` giving `default`), and `fn
+    parse_or_skip(items: &[&str]) -> Vec<i32>` that, in a loop, uses
+    `continue` (type `!`) in the `Err` arm of an inner `match` to skip
+    unparseable entries.
+  starter: |
+    fn parse_or_default(s: &str, default: i32) -> i32 {
+
+    }
+
+    fn parse_or_skip(items: &[&str]) -> Vec<i32> {
+        let mut out = Vec::new();
+        for item in items {
+            let n = match item.parse::<i32>() {
+                Ok(n) => n,
+
+            };
+            out.push(n);
+        }
+        out
+    }
+  solution: |
+    fn parse_or_default(s: &str, default: i32) -> i32 {
+        match s.parse::<i32>() {
+            Ok(n) => n,
+            Err(_) => default,
+        }
+    }
+
+    fn parse_or_skip(items: &[&str]) -> Vec<i32> {
+        let mut out = Vec::new();
+        for item in items {
+            let n = match item.parse::<i32>() {
+                Ok(n) => n,
+                Err(_) => continue,
+            };
+            out.push(n);
+        }
+        out
+    }
+  notes: |
+    In `parse_or_skip`, the `Ok(n) => n` arm produces an `i32`, and the
+    `Err(_) => continue` arm has type `!` — coercing to `i32` so the `match`
+    still type-checks as a whole, even though that arm never actually
+    "returns" a value; it jumps straight to the next loop iteration instead.
+  source: "book §20.3 (the never type in match arms)"
+  tags: [rust, types]
+  tests: |
+    assert_eq!(parse_or_default("42", 0), 42);
+    assert_eq!(parse_or_default("nope", 0), 0);
+    assert_eq!(parse_or_skip(&["1", "x", "3"]), vec![1, 3]);
+
+- type: concept
+  question: |
+    Two traits, `Pilot` and `Wizard`, both define a `fly(&self)` method, and
+    a type implements both PLUS has its own inherent `fly` method — how do
+    you call each one specifically?
+  answer: |
+    Rust resolves an ambiguous method name with FULLY QUALIFIED SYNTAX:
+    `<Type as Trait>::method(&value)` (or `Type::method(&value)` for the
+    inherent method; plain `Trait::method(&value)` also works when only one
+    trait providing that method is in scope). Plain `value.fly()` prefers
+    the INHERENT method if one exists, and is a compile error ("multiple
+    applicable items in scope") if two TRAITS both apply with no inherent
+    method to prefer — fully qualified syntax is the one unambiguous way to
+    pick exactly which one you mean.
+  source: "book §20.2 (fully qualified syntax for disambiguation)"
+  tags: [rust, traits, concept]
+
+- instruction: |
+    Define traits `Pilot` and `Wizard`, both with `fly(&self) -> &'static
+    str`, implement both for `struct Human;` (which also has its own
+    inherent `fly(&self) -> &'static str`), then write `all_three(h: &Human)
+    -> (&'static str, &'static str, &'static str)` calling the inherent
+    method plainly, `Pilot`'s via `Pilot::fly(h)`, and `Wizard`'s via the
+    fully qualified `<Human as Wizard>::fly(h)`.
+  starter: |
+    trait Pilot {
+        fn fly(&self) -> &'static str;
+    }
+
+    trait Wizard {
+        fn fly(&self) -> &'static str;
+    }
+
+    struct Human;
+
+    impl Pilot for Human {
+        fn fly(&self) -> &'static str {
+            "This is your captain speaking."
+        }
+    }
+
+    impl Wizard for Human {
+        fn fly(&self) -> &'static str {
+            "Up!"
+        }
+    }
+
+    impl Human {
+        fn fly(&self) -> &'static str {
+            "*waving arms furiously*"
+        }
+    }
+
+    fn all_three(h: &Human) -> (&'static str, &'static str, &'static str) {
+
+    }
+  solution: |
+    trait Pilot {
+        fn fly(&self) -> &'static str;
+    }
+
+    trait Wizard {
+        fn fly(&self) -> &'static str;
+    }
+
+    struct Human;
+
+    impl Pilot for Human {
+        fn fly(&self) -> &'static str {
+            "This is your captain speaking."
+        }
+    }
+
+    impl Wizard for Human {
+        fn fly(&self) -> &'static str {
+            "Up!"
+        }
+    }
+
+    impl Human {
+        fn fly(&self) -> &'static str {
+            "*waving arms furiously*"
+        }
+    }
+
+    fn all_three(h: &Human) -> (&'static str, &'static str, &'static str) {
+        (h.fly(), Pilot::fly(h), <Human as Wizard>::fly(h))
+    }
+  notes: |
+    `h.fly()` picks the INHERENT `impl Human` method automatically (inherent
+    methods always win over trait methods in a plain method call).
+    `Pilot::fly(h)` is the shorthand fully qualified form (works because
+    only `Pilot` provides a matching `fly` at that call). `<Human as
+    Wizard>::fly(h)` is the fully explicit form, spelling out both the type
+    and the trait — always unambiguous, and the only option when even the
+    shorthand trait-qualified form would still be ambiguous.
+  source: "book §20.2 (fully qualified syntax for disambiguation)"
+  tags: [rust, traits]
+  tests: |
+    let h = Human;
+    assert_eq!(
+        all_three(&h),
+        (
+            "*waving arms furiously*",
+            "This is your captain speaking.",
+            "Up!"
+        )
+    );
+
+- type: concept
+  question: |
+    Macros, `unsafe`, and the advanced-types tools (type aliases, `!`, fully
+    qualified syntax) all live in the same "advanced features" chapter —
+    what's the common thread for when to reach for each?
+  answer: |
+    Each is an escape hatch from the ordinary tools, used deliberately
+    rather than by default. Macros: reach for them only when a function or
+    generic genuinely can't express what's needed (variable argument
+    counts, generating code structure itself) — prefer a plain function
+    whenever one will do. `unsafe`: reach for it only for the small, fixed
+    set of operations the borrow checker can't verify by construction (raw
+    pointer deref, FFI calls, mutable statics, unsafe traits) — and wrap it
+    in the smallest possible SAFE api so callers never need to think about
+    it, the way `split_at_mut_i32` above does. Type aliases, `!`, and fully
+    qualified syntax are lower-stakes readability and disambiguation tools
+    with no special caution required — reach for them anytime they make an
+    already-safe program clearer.
+  source: "book ch.20 (advanced features, in summary)"
+  tags: [rust, unsafe, macros, concept]

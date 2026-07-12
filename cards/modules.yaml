@@ -1,0 +1,612 @@
+# Modules, packages, crates, paths, and visibility (book ch.7). Cross-file
+# module separation is described in prose, since this harness compiles every
+# card as one generated file — the visibility/path rules it teaches apply
+# identically whether the code lives in one file or many.
+- type: concept
+  question: |
+    What do "package", "crate", and "module" each mean in Rust's project
+    vocabulary?
+  answer: |
+    A CRATE is the smallest unit the compiler compiles at once — either a
+    binary crate (has `fn main`) or a library crate. A PACKAGE is one or more
+    crates described by a single `Cargo.toml`: at most ONE library crate, but
+    any number of binary crates (each needs its own `src/bin/*.rs`, or the
+    single default `src/main.rs`). A MODULE (`mod`) is a unit of
+    organization and privacy WITHIN a single crate — it groups related items
+    and controls what's visible where, but doesn't produce a separate
+    compiled artifact the way a crate does.
+  source: "book §7.1 (packages and crates)"
+  tags: [rust, modules, concept]
+
+- instruction: |
+    Define a module `math` containing `pub fn square(n: i32) -> i32 { n * n
+    }`, and call it from outside the module using the full path
+    `math::square(...)`.
+  starter: |
+    mod math {
+
+    }
+
+    fn use_it(n: i32) -> i32 {
+
+    }
+  solution: |
+    mod math {
+        pub fn square(n: i32) -> i32 {
+            n * n
+        }
+    }
+
+    fn use_it(n: i32) -> i32 {
+        math::square(n)
+    }
+  notes: |
+    `math::square` is an ABSOLUTE-style path relative to the current module —
+    since `use_it` and `math` are siblings under the same parent, no `use`
+    statement is required at all; the full path always works.
+  source: "book §7.3 (paths for referring to an item in the module tree)"
+  tags: [rust, modules]
+  tests: |
+    assert_eq!(use_it(5), 25);
+    assert_eq!(use_it(0), 0);
+
+- type: concept
+  question: |
+    What is Rust's default visibility rule, and how does it interact with
+    nested modules?
+  answer: |
+    Every item (fn, struct, enum, module, ...) is PRIVATE by default —
+    visible only inside the module that defines it and that module's
+    DESCENDANTS. A child module can always see its ancestors' private items
+    (since it's nested inside their scope), but an ancestor can NOT see a
+    private item defined in a child module unless that item is explicitly
+    marked `pub` (or a narrower `pub(...)` that still reaches the ancestor).
+    This is the opposite of what people sometimes expect from other
+    languages' package-private defaults.
+  source: "book §7.3 (paths for referring to an item in the module tree)"
+  tags: [rust, modules, concept]
+
+- instruction: |
+    In a module `internal`, define `pub(crate) fn secret() -> i32 { 7 }`
+    (visible anywhere in THIS crate, but never from an external crate that
+    depends on it), and call it from a function at the crate root.
+  starter: |
+    mod internal {
+
+    }
+
+    fn reveal() -> i32 {
+
+    }
+  solution: |
+    mod internal {
+        pub(crate) fn secret() -> i32 {
+            7
+        }
+    }
+
+    fn reveal() -> i32 {
+        internal::secret()
+    }
+  notes: |
+    `pub(crate)` is the middle ground between fully private and fully `pub`:
+    every module inside the same crate can use it, but it's invisible
+    outside — ideal for internal helpers shared across your own modules that
+    should never become part of the crate's public API.
+  source: "book §7.3 (pub(crate))"
+  tags: [rust, modules]
+  tests: |
+    assert_eq!(reveal(), 7);
+
+- instruction: |
+    Nest a module `outer::inner` where `inner` has `pub(super) fn helper() ->
+    i32 { 3 }` (visible to `outer` but not beyond), and have `outer` expose a
+    `pub fn call_helper() -> i32` that calls it.
+  starter: |
+    mod outer {
+        mod inner {
+
+        }
+
+        pub fn call_helper() -> i32 {
+
+        }
+    }
+  solution: |
+    mod outer {
+        mod inner {
+            pub(super) fn helper() -> i32 {
+                3
+            }
+        }
+
+        pub fn call_helper() -> i32 {
+            inner::helper()
+        }
+    }
+  notes: |
+    `pub(super)` exposes an item only to its DIRECT parent module (and,
+    transitively, wherever the parent re-exposes it) — narrower than
+    `pub(crate)`, useful when a submodule has one specific piece of internal
+    API meant only for its immediate parent to call, not the whole crate.
+  source: "book §7.3 (pub(super))"
+  tags: [rust, modules]
+  tests: |
+    assert_eq!(outer::call_helper(), 3);
+
+- type: concept
+  question: |
+    What's the difference between an absolute path and a relative path when
+    referring to an item in the module tree, and what does `super::` do?
+  answer: |
+    An ABSOLUTE path starts from the crate root, spelled `crate::...` (or,
+    for a different crate, that crate's name). A RELATIVE path starts from
+    the CURRENT module and can begin with `self::` (the current module —
+    usually omitted, since a bare name already means that) or `super::` to
+    step up to the PARENT module, the same way `..` steps up a directory in
+    a filesystem path. Both forms are valid; a relative path is often
+    shorter when calling something nearby, while an absolute path is more
+    stable if you move the calling code to a different part of the tree.
+  source: "book §7.3 (paths for referring to an item in the module tree)"
+  tags: [rust, modules, concept]
+
+- instruction: |
+    Define a `pub fn circle_area(r: f64) -> f64` (using `std::f64::consts::
+    PI`) inside a module `shapes`, bring it into scope with a `use`
+    statement, and call it by its SHORT name (no module prefix).
+  starter: |
+    mod shapes {
+
+    }
+
+    // add the use statement here
+
+    fn area_of(r: f64) -> f64 {
+
+    }
+  solution: |
+    mod shapes {
+        pub fn circle_area(r: f64) -> f64 {
+            std::f64::consts::PI * r * r
+        }
+    }
+
+    use shapes::circle_area;
+
+    fn area_of(r: f64) -> f64 {
+        circle_area(r)
+    }
+  notes: |
+    `use` creates a local alias for a path so you don't have to spell the
+    full path out every time — it doesn't move or copy the item, just
+    shortens how you refer to it from that point in the file onward.
+  source: "book §7.4 (bringing paths into scope with the use keyword)"
+  tags: [rust, modules]
+  tests: |
+    assert!((area_of(2.0) - 12.566370614359172).abs() < 1e-9);
+    assert_eq!(area_of(0.0), 0.0);
+
+- type: concept
+  question: |
+    When bringing a function into scope with `use`, why is importing the
+    ENCLOSING module (`use some_module::some_function;`, then calling
+    `some_module::some_function()`) the idiomatic style, while types are
+    usually imported by their FULL path (`use std::collections::HashMap;`,
+    then just `HashMap::new()`)?
+  answer: |
+    Importing a function's enclosing module and calling it as
+    `module::function()` keeps a visual reminder at the call site that it's
+    not a locally-defined function — reducing confusion about where it comes
+    from. Importing the full path for a type/struct/enum/trait is preferred
+    instead, since repeating the enclosing module name at every use
+    (`collections::HashMap`) adds noise without much extra clarity — this is
+    convention, not a compiler rule, and either form always compiles.
+  source: "book §7.4 (idiomatic use paths)"
+  tags: [rust, modules, concept]
+
+- instruction: |
+    Two types happen to share the name `Ordering` — `std::cmp::Ordering` and
+    your own `game::Ordering` enum (`Win`/`Lose`/`Draw`). `use` BOTH into
+    scope, renaming one with `as` to avoid the collision, and write a
+    function using each.
+  starter: |
+    mod game {
+        #[derive(Debug, PartialEq)]
+        pub enum Ordering {
+            Win,
+            Lose,
+            Draw,
+        }
+    }
+
+    // add the two (renamed) use statements here
+
+    fn compare_nums(a: i32, b: i32) -> StdOrdering {
+
+    }
+
+    fn describe(o: GameOrdering) -> &'static str {
+
+    }
+  solution: |
+    mod game {
+        #[derive(Debug, PartialEq)]
+        pub enum Ordering {
+            Win,
+            Lose,
+            Draw,
+        }
+    }
+
+    use game::Ordering as GameOrdering;
+    use std::cmp::Ordering as StdOrdering;
+
+    fn compare_nums(a: i32, b: i32) -> StdOrdering {
+        a.cmp(&b)
+    }
+
+    fn describe(o: GameOrdering) -> &'static str {
+        match o {
+            GameOrdering::Win => "win",
+            GameOrdering::Lose => "lose",
+            GameOrdering::Draw => "draw",
+        }
+    }
+  notes: |
+    `as` gives an imported path a new local name — the classic case is two
+    types sharing a name (the book's own example is `std::fmt::Result` vs
+    `std::io::Result`), where importing both under their real name wouldn't
+    even compile.
+  source: "book §7.4 (providing new names with the as keyword)"
+  tags: [rust, modules]
+  tests: |
+    assert_eq!(compare_nums(1, 2), std::cmp::Ordering::Less);
+    assert_eq!(describe(game::Ordering::Win), "win");
+    assert_eq!(describe(game::Ordering::Draw), "draw");
+
+- instruction: |
+    Define a function two levels deep (`front_of_house::hosting::
+    add_to_waitlist`), then re-export the `hosting` module at the crate root
+    with `pub use`, so callers can reach it via the SHORT path `hosting::
+    add_to_waitlist()` instead of the full nested one.
+  starter: |
+    mod front_of_house {
+        pub mod hosting {
+            pub fn add_to_waitlist() -> &'static str {
+                "added"
+            }
+        }
+    }
+
+    // add the pub use re-export here
+
+    fn book_table() -> &'static str {
+
+    }
+  solution: |
+    mod front_of_house {
+        pub mod hosting {
+            pub fn add_to_waitlist() -> &'static str {
+                "added"
+            }
+        }
+    }
+
+    pub use front_of_house::hosting;
+
+    fn book_table() -> &'static str {
+        hosting::add_to_waitlist()
+    }
+  notes: |
+    `pub use` re-exports an imported path as part of THIS module's own
+    public API — external callers can use the shorter/renamed path exposed
+    here without needing to know (or depend on) the true internal module
+    structure being re-exported.
+  source: "book §7.4 (re-exporting names with pub use)"
+  tags: [rust, modules]
+  tests: |
+    assert_eq!(book_table(), "added");
+    assert_eq!(hosting::add_to_waitlist(), "added");
+
+- type: concept
+  question: |
+    What do nested-path `use` (`use std::{cmp::Ordering, collections::
+    HashMap};`) and glob `use std::collections::*;` each do, and when is a
+    glob import appropriate?
+  answer: |
+    A nested-path `use` combines several `use` statements sharing a common
+    prefix into one line — purely a formatting convenience, no behavior
+    change. A GLOB import brings EVERY public item from a path into scope at
+    once; it's handy in a `#[cfg(test)] mod tests { use super::*; ... }`
+    block (grab everything from the parent module for testing, where it's
+    obvious what's in scope) but is generally discouraged in ordinary code,
+    since it makes it unclear which module a given name actually came from
+    and can silently introduce naming collisions as the target module grows.
+  source: "book §7.4 (nested paths and the glob operator)"
+  tags: [rust, modules, concept]
+
+- type: concept
+  question: |
+    How do you split a module's implementation into its OWN file, and what
+    stays behind in the parent?
+  answer: |
+    Write `mod front_of_house;` (a module declaration with NO body/braces) in
+    the parent file; the compiler then looks for the implementation in a
+    sibling file `front_of_house.rs` (or the older `front_of_house/mod.rs`
+    style), and the module tree — along with every visibility rule — behaves
+    identically to writing the body inline. Only the top-level declaration
+    (`mod front_of_house;`) lives in the parent; everything defined inside
+    that module lives in the separate file. This deck's harness compiles
+    every card as a single generated file, so this pattern is described here
+    rather than demonstrated literally — but the module-tree/visibility
+    rules covered by the other cards apply unchanged whether the code is in
+    one file or split across many.
+  source: "book §7.5 (separating modules into different files)"
+  tags: [rust, modules, concept]
+
+- instruction: |
+    Define `pub struct Order { pub id: u32, total: f64 }` inside a module
+    `shop`, where `id` is public but `total` is private (with a constructor
+    and a `total()` getter), demonstrating PER-FIELD visibility — external
+    code reads/writes `id` directly but must go through the getter for
+    `total`.
+  starter: |
+    mod shop {
+        pub struct Order {
+
+        }
+
+        impl Order {
+            pub fn new(id: u32, total: f64) -> Order {
+
+            }
+
+            pub fn total(&self) -> f64 {
+
+            }
+        }
+    }
+
+    use shop::Order;
+
+    fn describe(order: &Order) -> (u32, f64) {
+
+    }
+  solution: |
+    mod shop {
+        pub struct Order {
+            pub id: u32,
+            total: f64,
+        }
+
+        impl Order {
+            pub fn new(id: u32, total: f64) -> Order {
+                Order { id, total }
+            }
+
+            pub fn total(&self) -> f64 {
+                self.total
+            }
+        }
+    }
+
+    use shop::Order;
+
+    fn describe(order: &Order) -> (u32, f64) {
+        (order.id, order.total())
+    }
+  notes: |
+    Struct visibility is per-field, not all-or-nothing: `pub struct` alone
+    only makes the STRUCT itself nameable from outside — each field still
+    needs its own `pub` to be directly readable/writable, which is how
+    `total` stays an implementation detail even though `Order` and `id` are
+    public.
+  source: "book §7.3 (struct fields and visibility)"
+  tags: [rust, modules]
+  tests: |
+    let o = Order::new(1, 42.5);
+    assert_eq!(describe(&o), (1, 42.5));
+
+- instruction: |
+    Define `pub enum Direction { North, South, East, West }` (deriving
+    `Debug, PartialEq`) inside a module `nav`, and from outside, write
+    `opposite(d: Direction) -> Direction` matching on and constructing every
+    variant — without marking any variant individually `pub` (Rust doesn't
+    even allow that), showing variants automatically inherit the enum's own
+    visibility.
+  starter: |
+    mod nav {
+        #[derive(Debug, PartialEq)]
+        pub enum Direction {
+            North,
+            South,
+            East,
+            West,
+        }
+    }
+
+    use nav::Direction;
+
+    fn opposite(d: Direction) -> Direction {
+
+    }
+  solution: |
+    mod nav {
+        #[derive(Debug, PartialEq)]
+        pub enum Direction {
+            North,
+            South,
+            East,
+            West,
+        }
+    }
+
+    use nav::Direction;
+
+    fn opposite(d: Direction) -> Direction {
+        match d {
+            Direction::North => Direction::South,
+            Direction::South => Direction::North,
+            Direction::East => Direction::West,
+            Direction::West => Direction::East,
+        }
+    }
+  notes: |
+    Unlike struct fields, enum variants have no separate visibility of their
+    own — marking the `enum` itself `pub` makes every variant just as public,
+    since a caller couldn't usefully match on or construct only SOME variants
+    of a type it can otherwise see.
+  source: "book §7.3 (enums and visibility)"
+  tags: [rust, modules]
+  tests: |
+    assert_eq!(opposite(nav::Direction::North), nav::Direction::South);
+    assert_eq!(opposite(nav::Direction::East), nav::Direction::West);
+    assert_eq!(opposite(nav::Direction::West), nav::Direction::East);
+
+- type: concept
+  question: |
+    Can a single package contain more than one crate? If so, what's the
+    constraint?
+  answer: |
+    Yes — a package's `Cargo.toml` can produce AT MOST one library crate
+    (`src/lib.rs`), but any number of binary crates: the default `src/
+    main.rs` plus additional ones under `src/bin/*.rs`, each compiled as its
+    own separate binary crate. There is no limit on binary crates, only on
+    library crates (zero or one). A package with neither `src/lib.rs` nor
+    any binary entry point isn't valid — Cargo needs at least one crate to
+    build.
+  source: "book §7.1 (packages and crates)"
+  tags: [rust, modules, concept]
+
+- instruction: |
+    Nest two SIBLING modules `a` and `b` under a parent `shapes`, where `b`
+    calls a `pub fn` in `a` using a RELATIVE path (`super::a::...`) — no
+    `use` statement at all.
+  starter: |
+    mod shapes {
+        pub mod a {
+            pub fn unit() -> i32 {
+                1
+            }
+        }
+
+        pub mod b {
+            pub fn double_unit() -> i32 {
+
+            }
+        }
+    }
+  solution: |
+    mod shapes {
+        pub mod a {
+            pub fn unit() -> i32 {
+                1
+            }
+        }
+
+        pub mod b {
+            pub fn double_unit() -> i32 {
+                super::a::unit() * 2
+            }
+        }
+    }
+  notes: |
+    From inside `b`, `super::` steps up to `shapes` (the shared parent),
+    then back down into the sibling module `a` — a relative path is often
+    the natural choice for reaching something nearby in the tree without
+    needing a `use` import at all.
+  source: "book §7.3 (starting relative paths with super)"
+  tags: [rust, modules]
+  tests: |
+    assert_eq!(shapes::b::double_unit(), 2);
+
+- type: concept
+  question: |
+    Why do many Rust projects keep `src/main.rs` nearly empty (just wiring or
+    CLI parsing) and put the real logic in `src/lib.rs`?
+  answer: |
+    A binary crate (`src/main.rs` only) has no public API for anything
+    outside it to link against, which rules out integration tests
+    (`tests/*.rs`, which link against the crate's PUBLIC API) and rules out
+    reusing that logic from a second binary in the same package. Splitting
+    into a thin `main.rs` that just calls into a full `lib.rs` gives you
+    both: integration tests can exercise the library crate directly, and any
+    additional `src/bin/*.rs` binaries in the same package can share the same
+    logic instead of duplicating it.
+  source: "book §11.3 (test organization) + §7.1 (packages and crates)"
+  tags: [rust, modules, concept]
+
+- instruction: |
+    Restrict a function's visibility to a SPECIFIC ancestor module (not just
+    the immediate parent) with `pub(in path)`: three levels deep
+    (`outer::middle::inner`), give `inner` a fn visible only within `outer`
+    (using a path relative to `inner`), and have `middle` call it.
+  starter: |
+    mod outer {
+        pub mod middle {
+            pub mod inner {
+
+            }
+
+            pub fn call_restricted() -> i32 {
+
+            }
+        }
+    }
+  solution: |
+    mod outer {
+        pub mod middle {
+            pub mod inner {
+                pub(in super::super) fn restricted() -> i32 {
+                    9
+                }
+            }
+
+            pub fn call_restricted() -> i32 {
+                inner::restricted()
+            }
+        }
+    }
+  notes: |
+    `pub(in path)` is the most precise visibility form: the path (here
+    `super::super`, relative to `inner` itself — two levels up is `outer`)
+    names exactly which ancestor module (and its descendants) may use the
+    item, narrower than `pub(crate)` but not limited to only the direct
+    parent the way `pub(super)` is.
+  source: "book §7.3 (pub(in path))"
+  tags: [rust, modules]
+  tests: |
+    assert_eq!(outer::middle::call_restricted(), 9);
+
+- type: concept
+  question: |
+    What's a good mental model for the "module tree", and how does it map
+    onto a path like `crate::front_of_house::hosting::add_to_waitlist`?
+  answer: |
+    Think of it like a filesystem: the CRATE ROOT is the root directory
+    (spelled `crate` in a path), each `mod` is a subdirectory, and each item
+    (fn/struct/enum/...) is a file inside its module — a path like `crate::
+    front_of_house::hosting::add_to_waitlist` reads exactly like a
+    filesystem path from the root down through nested directories to a
+    specific file. `super::` is the module-tree equivalent of `..`, stepping
+    up to the parent, and privacy propagates down the tree the same way a
+    private directory keeps its contents hidden from outside, but visible to
+    everything nested inside it.
+  source: "book §7.2 (defining modules to control scope and privacy)"
+  tags: [rust, modules, concept]
+
+- type: concept
+  question: |
+    What's the full range of visibility levels available on an item, from
+    most to least restrictive?
+  answer: |
+    Private (default, no keyword) — visible only in the defining module and
+    its descendants. `pub(in some::path)` — visible only within the named
+    ancestor module (and ITS descendants). `pub(super)` — visible to the
+    direct parent module (and its descendants). `pub(crate)` — visible
+    anywhere in the current crate, never outside it. `pub` — visible to
+    anyone who can reach the item's path, including external crates that
+    depend on this one. Each level is a strict widening of the one before
+    it.
+  source: "book §7.3 (exposing paths with the pub keyword)"
+  tags: [rust, modules, concept]

@@ -50,9 +50,9 @@ python build.py                 # writes output/CodeCards.apkg
 Import `output/CodeCards.apkg` into Anki (keep "Update notetypes" checked).
 Preview the look without Anki by opening `preview.html` in a browser.
 
-## Current decks (503 cards)
+## Current decks (602 cards)
 
-**Core Rust (353)** — idiomatic patterns to drill to fluency (decks under `Rust::Core::…`):
+**Core Rust (452)** — idiomatic patterns to drill to fluency (decks under `Rust::Core::…`), covering the full book front-to-back:
 
 | File | Cards | Focus |
 |------|-------|-------|
@@ -61,14 +61,19 @@ Preview the look without Anki by opening `preview.html` in a browser.
 | `results.yaml` | 33 | `?`, unwrap_or family, map/map_err/and_then, ok_or, Option↔Result, transpose, or_else, zip, custom error enum, `Box<dyn Error>`, `Result<Vec>` vs `Vec<Result>` |
 | `vectors.yaml` | 32 | build/access/mutate, sort/dedup/retain, slicing, windows/chunks, binary_search, drain, enum-in-Vec, rotate_left/right, split_at, sort_by; `&[T]` vs `&Vec<T>` |
 | `hashmaps.yaml` | 30 | insert/get, entry API (or_insert/_with/_default/and_modify), literal construction, iteration, accumulate structs, HashSet & set ops (union/difference/intersection) |
-| `generics.yaml` | 23 | rewrite a concrete fn to generic: PartialOrd/Copy/Clone/PartialEq/Display/Sum bounds, `where` clauses, `Fn` bound, generic struct, const generics, generic methods; monomorphization |
 | `traits.yaml` | 29 | implement Display/From/TryFrom/Default/PartialEq/Add/Ord/Iterator, custom traits, default methods, `derive`, `impl Trait`, `dyn` objects, supertraits, multiple bounds, blanket impls; Copy vs Clone & `.copied()`/`.cloned()` |
 | `datastructures.yaml` | 27 | Big-O of Vec/VecDeque/HashMap/BTreeMap/BinaryHeap, search/sort complexity, recursion space, when-to-use cheat sheet, amortization |
 | `closures.yaml` | 25 | Fn/FnMut/FnOnce, capture modes, `move`, returning closures, `Box<dyn Fn>`, closures in structs, fn pointers, choosing the right bound for APIs |
+| `testing.yaml` | 21 | `#[test]`, assert!/assert_eq!/assert_ne!, custom failure messages, `#[should_panic]` (+ `expected`), tests returning `Result`, `#[ignore]`, unit vs integration tests, private-function testing, doc-tests, table-driven tests, `--nocapture` |
+| `async.yaml` | 21 | async fns are lazy state machines, `Future`/`Poll`/`Waker`, hand-rolled `block_on`, chained/multi-poll futures, a join combinator, `#[tokio::main]`, `spawn`, `join!`/`select!`, blocking pitfalls, async-vs-threads tradeoffs, Pin/Unpin |
+| `generics.yaml` | 23 | rewrite a concrete fn to generic: PartialOrd/Copy/Clone/PartialEq/Display/Sum bounds, `where` clauses, `Fn` bound, generic struct, const generics, generic methods; monomorphization |
 | `lifetimes.yaml` | 22 | annotations vs elision (the three rules), structs/enums holding references, `'_`, `'static` vs `T: 'static`, `split_at_mut`, NLL, zero-copy parser shapes |
 | `smartpointers.yaml` | 21 | Box (recursive types, `dyn`), Deref & coercion, Drop, Rc/`Rc::clone`/counts, RefCell & interior mutability, Cell vs RefCell, Weak & cycles, get_mut |
 | `strings.yaml` | 22 | String vs &str, UTF-8 (bytes/chars/char_indices), building & joining, split/split_once/lines, find/replace/strip_prefix, parse pipelines, from_utf8 |
 | `concurrency.yaml` | 20 | thread::spawn/join, `move`, scoped threads, mpsc (fan-in, pipelines, shutdown via drop), Mutex/MutexGuard, Arc, RwLock, atomics, Send/Sync |
+| `modules.yaml` | 20 | packages/crates, module tree, `mod`, `pub`/`pub(crate)`/`pub(in path)`, `use`, re-exports, paths (`self`/`super`/`crate`), splitting modules across files |
+| `oop.yaml` | 18 | encapsulation, trait objects (`dyn`), default methods, the state pattern (`Post`/`Draft`/`Published`), typestate pattern, object safety (`where Self: Sized`), builder pattern, trait objects vs enum match |
+| `advanced.yaml` | 19 | unsafe superpowers (raw pointers, unsafe fn, FFI/`extern "C"`, statics, unsafe traits), `macro_rules!`, macro hygiene, newtype vs type alias, the never type `!`, fully-qualified syntax for disambiguation |
 
 **NeetCode 150 (150)** — interview problems grouped by pattern, nested under `Rust::Neetcode::…`:
 
@@ -127,7 +132,7 @@ authored easy→hard order.
 
 To apply: open Deck Options on **`Rust::Core`**, create a preset `Rust Core` with the
 values above, then the preset menu → **Save to all subdecks** (the parent's 14/day cap
-then bounds the daily total across the thirteen core subdecks). Repeat from **`Rust::Neetcode`**
+then bounds the daily total across the eighteen core subdecks). Repeat from **`Rust::Neetcode`**
 with `Rust NeetCode` (1/day). Study the two groups as two separate daily sessions →
 14 random core cards + 1 NeetCode card in topic order. Change any number anytime.
 

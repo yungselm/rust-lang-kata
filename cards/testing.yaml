@@ -1,0 +1,558 @@
+# Automated tests — #[test], assertions, should_panic, Result-returning tests,
+# controlling execution, unit vs integration tests. Solutions are clippy-clean.
+- type: concept
+  question: |
+    What does the `#[test]` attribute do, and what makes a test pass or fail?
+  answer: |
+    It marks a function as a test that `cargo test` discovers and runs, each in
+    its own thread. A test PASSES if the function returns normally and FAILS if
+    it panics — from a failed `assert!`/`assert_eq!`/`assert_ne!`, an
+    `unwrap()` on `None`/`Err`, or an explicit `panic!`. `cargo test` compiles a
+    special test binary that includes every `#[cfg(test)]` item and every
+    `#[test]` function.
+  source: "book §11.1"
+  tags: [rust, testing, concept]
+
+- instruction: |
+    Given `struct Rectangle { width: u32, height: u32 }` with a `can_hold(&self,
+    other: &Rectangle) -> bool` method (holds another iff both of its own
+    dimensions are >= the other's), add a nested, `#[cfg(test)]`-gated test
+    module (name it `rect_tests`) with one `#[test]` fn asserting a bigger
+    rectangle can hold a smaller one, and the smaller CANNOT hold the bigger
+    one.
+  starter: |
+    struct Rectangle {
+        width: u32,
+        height: u32,
+    }
+
+    impl Rectangle {
+        fn can_hold(&self, other: &Rectangle) -> bool {
+            self.width >= other.width && self.height >= other.height
+        }
+    }
+
+    // add the test module here
+  solution: |
+    struct Rectangle {
+        width: u32,
+        height: u32,
+    }
+
+    impl Rectangle {
+        fn can_hold(&self, other: &Rectangle) -> bool {
+            self.width >= other.width && self.height >= other.height
+        }
+    }
+
+    #[cfg(test)]
+    mod rect_tests {
+        use super::*;
+
+        #[test]
+        fn larger_can_hold_smaller() {
+            let larger = Rectangle { width: 8, height: 7 };
+            let smaller = Rectangle { width: 5, height: 1 };
+            assert!(larger.can_hold(&smaller));
+            assert!(!smaller.can_hold(&larger));
+        }
+    }
+  notes: |
+    `#[cfg(test)]` compiles the module only for test builds; `use super::*;`
+    pulls in the parent module's items — even PRIVATE ones, since visibility
+    extends to descendant modules. The module's name is a free choice (`tests`
+    is just the usual convention).
+  source: "book §11.1 (the anatomy of a test function)"
+  tags: [rust, testing]
+  tests: |
+    let larger = Rectangle { width: 8, height: 7 };
+    let smaller = Rectangle { width: 5, height: 1 };
+    assert!(larger.can_hold(&smaller));
+    assert!(!smaller.can_hold(&larger));
+
+- type: concept
+  question: |
+    What do `assert!`, `assert_eq!`, and `assert_ne!` each require of their
+    arguments, and what do the latter two print on failure?
+  answer: |
+    `assert!(cond)` needs only a `bool`. `assert_eq!(a, b)`/`assert_ne!(a, b)`
+    need `a`/`b` to implement `PartialEq` (to compare) AND `Debug` (to print);
+    on failure they show both values via `{:?}` — much more informative than
+    `assert!(a == b)`, which only reports that the condition was false.
+  source: "book §11.1 (assert_eq!/assert_ne!)"
+  tags: [rust, testing, concept]
+
+- instruction: |
+    Write `greeting(name: &str) -> String` returning a message that CONTAINS
+    the name (any wording), then add a `#[test]` fn (module `greeting_tests`)
+    that checks the greeting contains "Carol", failing with a CUSTOM message
+    that prints the actual greeting produced if it doesn't.
+  starter: |
+    fn greeting(name: &str) -> String {
+
+    }
+
+    // add the test module here
+  solution: |
+    fn greeting(name: &str) -> String {
+        format!("Hello {name}!")
+    }
+
+    #[cfg(test)]
+    mod greeting_tests {
+        use super::*;
+
+        #[test]
+        fn contains_name() {
+            let result = greeting("Carol");
+            assert!(
+                result.contains("Carol"),
+                "greeting did not contain name, value was `{result}`"
+            );
+        }
+    }
+  notes: |
+    `assert!` accepts extra `format!`-style arguments after the condition as a
+    custom failure message — priceless when the boolean alone wouldn't say WHY
+    it failed (here, showing the actual generated greeting).
+  source: "book §11.1 (custom failure messages)"
+  tags: [rust, testing]
+  tests: |
+    assert!(greeting("Carol").contains("Carol"));
+    assert!(greeting("Bob").contains("Bob"));
+
+- instruction: |
+    Define `struct Guess { value: i32 }` with `Guess::new(value: i32) -> Guess`
+    that panics with a message if `value` is outside 1..=100, otherwise stores
+    it. Add a `#[test]` (module `guess_tests`) with `#[should_panic]` proving
+    `Guess::new(200)` panics.
+  starter: |
+    struct Guess {
+        value: i32,
+    }
+
+    impl Guess {
+        fn new(value: i32) -> Guess {
+
+        }
+    }
+
+    // add the test module here
+  solution: |
+    struct Guess {
+        value: i32,
+    }
+
+    impl Guess {
+        fn new(value: i32) -> Guess {
+            if !(1..=100).contains(&value) {
+                panic!("Guess value must be between 1 and 100, got {value}.");
+            }
+            Guess { value }
+        }
+    }
+
+    #[cfg(test)]
+    mod guess_tests {
+        use super::*;
+
+        #[test]
+        #[should_panic]
+        fn rejects_out_of_range() {
+            Guess::new(200);
+        }
+    }
+  notes: |
+    `#[should_panic]` inverts the pass/fail rule for one test: it PASSES only
+    if the function panics, and fails if it returns normally. It's the
+    idiomatic way to test that invalid input is rejected via `panic!`.
+  source: "book §11.1 (#[should_panic])"
+  tags: [rust, testing, should_panic]
+  tests: |
+    assert_eq!(Guess::new(50).value, 50);
+    assert_eq!(Guess::new(1).value, 1);
+    assert_eq!(Guess::new(100).value, 100);
+
+- type: concept
+  question: |
+    `#[should_panic]` vs `#[should_panic(expected = "substring")]` — why add
+    the `expected` string?
+  answer: |
+    Bare `#[should_panic]` passes on ANY panic, even one from a totally
+    unrelated bug that happens to also panic — a false sense of security.
+    `expected = "substring"` additionally checks that the panic MESSAGE
+    contains that text, so the test only passes if the code failed for the
+    reason you intended.
+  source: "book §11.1 (expected panic messages)"
+  tags: [rust, testing, should_panic, concept]
+
+- instruction: |
+    Write `parse_and_double(s: &str) -> Result<i32, String>` (parse then
+    double, mapping the parse error to a `String`), then a `#[test]` fn
+    (module `parse_tests`) that RETURNS `Result<(), String>`, uses `?` to
+    propagate a parse failure, and asserts the doubled value, ending with
+    `Ok(())`.
+  starter: |
+    fn parse_and_double(s: &str) -> Result<i32, String> {
+
+    }
+
+    // add the test module here
+  solution: |
+    fn parse_and_double(s: &str) -> Result<i32, String> {
+        s.parse::<i32>().map(|n| n * 2).map_err(|e| e.to_string())
+    }
+
+    #[cfg(test)]
+    mod parse_tests {
+        use super::*;
+
+        #[test]
+        fn doubles_a_parsed_number() -> Result<(), String> {
+            let doubled = parse_and_double("21")?;
+            assert_eq!(doubled, 42);
+            Ok(())
+        }
+    }
+  notes: |
+    A test may return `Result<(), E>` instead of `()`: `Ok(())` passes,
+    `Err(e)` fails (printing `e`). This lets you use `?` inside tests for
+    fallible setup steps instead of `.unwrap()`ing everything.
+  source: "book §11.1 (using Result<T, E> in tests)"
+  tags: [rust, testing, results]
+  tests: |
+    assert_eq!(parse_and_double("21"), Ok(42));
+    assert!(parse_and_double("x").is_err());
+
+- type: concept
+  question: |
+    Why can't a test that returns `Result<(), E>` also use `#[should_panic]`?
+  answer: |
+    `#[should_panic]` inspects whether the function PANICKED; a
+    `Result`-returning test signals failure by returning `Err(e)`, not by
+    panicking — there's nothing for `#[should_panic]` to catch. To assert an
+    expected failure with this style, return early with `Err(...)` (or just
+    assert the operation produces the expected `Err` value directly) instead
+    of combining the two.
+  source: "book §11.1"
+  tags: [rust, testing, concept]
+
+- instruction: |
+    Add two tests in module `perf_tests`: a fast one asserting `1 + 1 == 2`,
+    and a SLOW one (simulate with a comment, no real sleep) marked `#[ignore]`
+    so `cargo test` skips it by default.
+  starter: |
+    // add the test module here
+  solution: |
+    fn add(a: i32, b: i32) -> i32 {
+        a + b
+    }
+
+    #[cfg(test)]
+    mod perf_tests {
+        use super::*;
+
+        #[test]
+        fn fast_check() {
+            assert_eq!(add(1, 1), 2);
+        }
+
+        #[test]
+        #[ignore]
+        fn slow_check() {
+            // pretend this does something expensive
+            assert_eq!(add(2, 2), 4);
+        }
+    }
+  notes: |
+    `#[ignore]` skips a test in the normal `cargo test` run without deleting
+    it; run just the ignored ones later with `cargo test -- --ignored`, or
+    every test (ignored included) with `cargo test -- --include-ignored`.
+  source: "book §11.2 (ignoring tests)"
+  tags: [rust, testing, ignore]
+  tests: |
+    assert_eq!(add(1, 1), 2);
+
+- type: concept
+  question: |
+    Name three `cargo test` command-line options and what each controls.
+  answer: |
+    `cargo test <substring>` runs only tests whose (module-qualified) name
+    contains `<substring>`.
+    `cargo test -- --test-threads=1` forces tests to run sequentially instead
+    of the default parallel threads — useful when tests share mutable state.
+    `cargo test -- --nocapture` shows `println!`/stdout output even for
+    PASSING tests (normally captured/hidden unless a test fails).
+  source: "book §11.2 (controlling how tests are run)"
+  tags: [rust, testing, concept]
+
+- type: concept
+  question: |
+    Why does `cargo test` run tests in parallel by default, and what's the
+    classic footgun that causes?
+  answer: |
+    Parallel by default is FASTER — tests run concurrently across threads
+    with no coordination needed as long as they're independent. The footgun:
+    tests that share mutable external state (the same file, a shared global,
+    the same env var, the same DB row) can interfere with each other
+    nondeterministically. Fix by making tests independent (unique temp
+    files/ports per test) or, if that's not possible, forcing single-threaded
+    execution with `--test-threads=1`.
+  source: "book §11.2 (tests and parallel execution)"
+  tags: [rust, testing, concept]
+
+- instruction: |
+    Write a PRIVATE function `internal_adder(a: i32, b: i32) -> i32` (no
+    `pub`) and a `#[cfg(test)] mod adder_tests` verifying it via
+    `use super::*;`, proving private functions are directly testable.
+  starter: |
+    fn internal_adder(a: i32, b: i32) -> i32 {
+
+    }
+
+    // add the test module here
+  solution: |
+    fn internal_adder(a: i32, b: i32) -> i32 {
+        a + b
+    }
+
+    #[cfg(test)]
+    mod adder_tests {
+        use super::*;
+
+        #[test]
+        fn adds_two_numbers() {
+            assert_eq!(internal_adder(2, 2), 4);
+        }
+    }
+  notes: |
+    Rust's privacy rule is "visible in the defining module and its
+    descendants", not "visible only in the same file" — since `mod
+    adder_tests` is a CHILD of the module defining `internal_adder`, it can
+    call the private function directly. This is exactly how unit tests reach
+    non-`pub` implementation details that integration tests never could.
+  source: "book §11.3 (testing private functions)"
+  tags: [rust, testing, visibility]
+  tests: |
+    assert_eq!(internal_adder(2, 2), 4);
+    assert_eq!(internal_adder(-1, 1), 0);
+
+- type: concept
+  question: |
+    Unit tests (in `src/`, under `#[cfg(test)]`) vs integration tests (files
+    in `tests/`) — what can each see, and which crate kinds support
+    integration tests?
+  answer: |
+    Unit tests live alongside the code they test and can reach PRIVATE items
+    (same-crate visibility). Integration tests are separate files under
+    `tests/`, each compiled as its OWN crate that depends on yours through its
+    PUBLIC API only — so they test the crate the way an external user would.
+    Integration tests require a library target (`src/lib.rs`); a pure binary
+    crate (`src/main.rs` only) has no public API for them to link against,
+    unless it's split into a thin `main.rs` plus a real `lib.rs`.
+  source: "book §11.3 (test organization)"
+  tags: [rust, testing, concept]
+
+- type: concept
+  question: |
+    What is `tests/common/mod.rs` for, and why is it named that way instead of
+    `tests/common.rs`?
+  answer: |
+    It holds setup/helper code SHARED by multiple integration test files (e.g.
+    a `setup()` fixture). Cargo treats every direct `.rs` file under `tests/`
+    as its own independent test crate with its own test-runner output section
+    — a plain `tests/common.rs` would show up as an (empty) test suite of its
+    own. The old `mod.rs` naming (a submodule, not a test-crate root) opts it
+    out of that treatment, so `common` is just a shared helper module other
+    test files can `mod common;` and reuse.
+  source: "book §11.3 (submodules in integration tests)"
+  tags: [rust, testing, concept]
+
+- instruction: |
+    Write `classify(n: i32) -> &'static str` ("neg"/"zero"/"pos"), then a
+    table-driven `#[test]` fn (module `classify_tests`) looping over several
+    `(input, expected)` pairs and asserting each with `assert_eq!` inside the
+    loop.
+  starter: |
+    fn classify(n: i32) -> &'static str {
+
+    }
+
+    // add the test module here
+  solution: |
+    use std::cmp::Ordering;
+
+    fn classify(n: i32) -> &'static str {
+        match n.cmp(&0) {
+            Ordering::Less => "neg",
+            Ordering::Equal => "zero",
+            Ordering::Greater => "pos",
+        }
+    }
+
+    #[cfg(test)]
+    mod classify_tests {
+        use super::*;
+
+        #[test]
+        fn covers_every_case() {
+            let cases = [(-5, "neg"), (0, "zero"), (7, "pos")];
+            for (input, expected) in cases {
+                assert_eq!(classify(input), expected, "classify({input}) was wrong");
+            }
+        }
+    }
+  notes: |
+    One test looping over a table of `(input, expected)` pairs scales better
+    than a separate `#[test]` fn per case, and the custom message (with the
+    loop's own `input`) still tells you exactly which case failed.
+  source: "book §11.1 idioms (table-driven tests)"
+  tags: [rust, testing]
+  tests: |
+    assert_eq!(classify(-5), "neg");
+    assert_eq!(classify(0), "zero");
+    assert_eq!(classify(7), "pos");
+
+- type: concept
+  question: |
+    What is a "doc test", and why does it help keep documentation honest?
+  answer: |
+    A code block inside a `///` doc comment (fenced with triple backticks) on
+    a public item. `cargo test` compiles and RUNS every doc example as its own
+    tiny test — so if an API changes and an example stops compiling or
+    returning what it claims, `cargo test` fails immediately, catching stale
+    documentation the same way it catches broken code.
+  code: |
+    /// Adds one to the given number.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let arg = 5;
+    /// let answer = arg + 1;
+    /// assert_eq!(6, answer);
+    /// ```
+    pub fn add_one(x: i32) -> i32 {
+        x + 1
+    }
+  source: "book §14.2 (documentation comments as tests)"
+  tags: [rust, testing, docs, concept]
+
+- type: concept
+  question: |
+    By default, does `cargo test` show a passing test's `println!` output?
+  answer: |
+    No — stdout from every test is captured and DISCARDED for tests that
+    PASS, and shown only for tests that FAIL (so failure output isn't
+    buried). Pass `--nocapture` (`cargo test -- --nocapture`) to see it for
+    every test, passing or not — handy while debugging, noisy to leave on
+    permanently.
+  source: "book §11.2 (showing function output)"
+  tags: [rust, testing, concept]
+
+- instruction: |
+    Write `divide(a: f64, b: f64) -> Option<f64>` (None if `b` is 0.0), then a
+    `#[test]` fn (module `divide_tests`) with a custom `assert!` message that
+    reports the actual `Option` value on failure.
+  starter: |
+    fn divide(a: f64, b: f64) -> Option<f64> {
+
+    }
+
+    // add the test module here
+  solution: |
+    fn divide(a: f64, b: f64) -> Option<f64> {
+        if b == 0.0 {
+            None
+        } else {
+            Some(a / b)
+        }
+    }
+
+    #[cfg(test)]
+    mod divide_tests {
+        use super::*;
+
+        #[test]
+        fn zero_denominator_is_none() {
+            let result = divide(4.0, 0.0);
+            assert!(result.is_none(), "expected None, got {result:?}");
+        }
+    }
+  notes: |
+    Interpolating the ACTUAL failing value into the custom message
+    (`{result:?}` here) turns a bare "assertion failed" into a message that
+    tells you what actually happened — worth the extra few characters on any
+    nontrivial check.
+  source: "book §11.1 (custom failure messages)"
+  tags: [rust, testing]
+  tests: |
+    assert_eq!(divide(10.0, 2.0), Some(5.0));
+    assert_eq!(divide(4.0, 0.0), None);
+
+- type: concept
+  question: |
+    Why should tests be independent of each other and of execution order?
+  answer: |
+    `cargo test` runs tests in parallel, in no guaranteed order, by default. A
+    test that depends on another test having already run (or not run yet) —
+    via shared global state, a shared file, or a fixed ordering assumption —
+    becomes FLAKY: it passes or fails depending on scheduling, not on whether
+    the code is actually correct. Each test should set up everything it needs
+    and clean up after itself.
+  source: "book §11.2 (running tests in parallel)"
+  tags: [rust, testing, concept]
+
+- instruction: |
+    Write `first_vowel(s: &str) -> Option<char>` (the first ascii vowel, or
+    None), then a `#[test]` fn (module `vowel_tests`) using
+    `assert!(matches!(...))` to check both the `Some` and `None` cases without
+    needing to spell out the full expected value with `assert_eq!`.
+  starter: |
+    fn first_vowel(s: &str) -> Option<char> {
+
+    }
+
+    // add the test module here
+  solution: |
+    fn first_vowel(s: &str) -> Option<char> {
+        s.chars().find(|c| "aeiouAEIOU".contains(*c))
+    }
+
+    #[cfg(test)]
+    mod vowel_tests {
+        use super::*;
+
+        #[test]
+        fn finds_or_reports_absence() {
+            assert!(matches!(first_vowel("hello"), Some('e')));
+            assert!(matches!(first_vowel("rhythm"), None));
+        }
+    }
+  notes: |
+    `assert!(matches!(value, pattern))` checks a value against a PATTERN
+    rather than a fixed value — handy when you only care about the shape
+    (e.g. "is it `Some(_)`?") or when the compared type doesn't implement
+    `PartialEq`.
+  source: "std matches! macro + book §11.1"
+  tags: [rust, testing, matching]
+  tests: |
+    assert_eq!(first_vowel("rhythm"), None);
+    assert_eq!(first_vowel("hello"), Some('e'));
+
+- type: concept
+  question: |
+    When should you reach for `#[should_panic]`, a test returning
+    `Result<(), E>`, or a plain `assert!`/`assert_eq!` to verify an expected
+    FAILURE?
+  answer: |
+    `#[should_panic]` — the code under test signals failure by PANICKING (an
+    invariant violation, an `unwrap()` you expect to blow up).
+    A `Result`-returning test — the code under test signals failure by
+    returning `Err(...)`; assert the `Err` value directly (or use `?` for the
+    success path) rather than panicking to fail the test.
+    Plain `assert!`/`assert_eq!` — you already have a concrete value (an
+    `Option`/`Result`/bool) and just need to compare it; no special attribute
+    needed.
+  source: "book §11.1 (choosing a failure-testing style)"
+  tags: [rust, testing, concept]

@@ -1,0 +1,765 @@
+# OOP features and the state pattern (book ch.18) — encapsulation, trait-object
+# polymorphism (a second angle beyond traits.yaml's intro), the classic state
+# pattern, its typestate alternative, object safety, and the builder pattern.
+- type: concept
+  question: |
+    Which classic OOP hallmarks (encapsulation, polymorphism, inheritance)
+    does Rust actually have, and which does it deliberately leave out?
+  answer: |
+    ENCAPSULATION — yes: structs/modules with private fields and a public
+    method API give you this directly (book §18.1). POLYMORPHISM — yes: via
+    generics (static, monomorphized dispatch) and `dyn Trait` (dynamic,
+    vtable-based dispatch), without needing any class hierarchy at all
+    (§18.2). INHERITANCE, specifically one concrete type automatically
+    inheriting another's fields and method implementations — no, and
+    deliberately so: Rust substitutes default trait methods plus composition
+    instead of struct inheritance.
+  source: "book §18.1-18.2 (characteristics of object-oriented languages)"
+  tags: [rust, oop, concept]
+
+- type: concept
+  question: |
+    How does Rust achieve encapsulation without a `private`/`public` keyword
+    pair on individual methods the way some OOP languages have?
+  answer: |
+    Through the same module-privacy system covered in ch.7: a struct's
+    fields are private by default (visible only inside the defining module
+    and its descendants) unless marked `pub`, so a module can expose a small
+    set of `pub` methods as its API while keeping fields — and the invariants
+    those fields must satisfy — entirely hidden from callers. There's no
+    separate "encapsulation" mechanism; it falls directly out of the
+    ordinary privacy rules applied to structs and their `impl` blocks.
+  source: "book §18.1 (encapsulation that hides implementation details)"
+  tags: [rust, oop, concept]
+
+- instruction: |
+    Define `struct Account { balance: i32 }` (private field) with `Account::
+    new(initial: i32) -> Result<Account, String>` (an `Err` if `initial` is
+    negative), `deposit(&mut self, amount: u32)`, and `balance(&self) ->
+    i32`, so external code can never directly construct or mutate an
+    `Account` into an invalid (negative) balance.
+  starter: |
+    struct Account {
+        balance: i32,
+    }
+
+    impl Account {
+        fn new(initial: i32) -> Result<Account, String> {
+
+        }
+
+        fn deposit(&mut self, amount: u32) {
+
+        }
+
+        fn balance(&self) -> i32 {
+
+        }
+    }
+  solution: |
+    struct Account {
+        balance: i32,
+    }
+
+    impl Account {
+        fn new(initial: i32) -> Result<Account, String> {
+            if initial < 0 {
+                Err("initial balance cannot be negative".to_string())
+            } else {
+                Ok(Account { balance: initial })
+            }
+        }
+
+        fn deposit(&mut self, amount: u32) {
+            self.balance += amount as i32;
+        }
+
+        fn balance(&self) -> i32 {
+            self.balance
+        }
+    }
+  notes: |
+    Because `balance` is private and every path that changes it
+    (`new`/`deposit`) is written to keep it valid, external code literally
+    cannot construct an `Account` that violates the invariant — the type
+    itself enforces it, instead of relying on callers to "remember" not to
+    set a negative balance.
+  source: "book §18.1 (encapsulation protecting invariants)"
+  tags: [rust, oop]
+  tests: |
+    assert!(Account::new(-5).is_err());
+    let mut a = Account::new(10).unwrap();
+    a.deposit(5);
+    assert_eq!(a.balance(), 15);
+
+- instruction: |
+    Define a `Shape` trait with `area(&self) -> f64` and `name(&self) ->
+    &'static str`, implement it for `Circle { radius: f64 }` and `Square {
+    side: f64 }`, then write `total_area(shapes: &[Box<dyn Shape>]) -> f64`
+    summing the area of a mixed collection.
+  starter: |
+    trait Shape {
+        fn area(&self) -> f64;
+        fn name(&self) -> &'static str;
+    }
+
+    struct Circle {
+        radius: f64,
+    }
+
+    struct Square {
+        side: f64,
+    }
+
+    fn total_area(shapes: &[Box<dyn Shape>]) -> f64 {
+
+    }
+  solution: |
+    trait Shape {
+        fn area(&self) -> f64;
+        fn name(&self) -> &'static str;
+    }
+
+    struct Circle {
+        radius: f64,
+    }
+
+    impl Shape for Circle {
+        fn area(&self) -> f64 {
+            std::f64::consts::PI * self.radius * self.radius
+        }
+
+        fn name(&self) -> &'static str {
+            "circle"
+        }
+    }
+
+    struct Square {
+        side: f64,
+    }
+
+    impl Shape for Square {
+        fn area(&self) -> f64 {
+            self.side * self.side
+        }
+
+        fn name(&self) -> &'static str {
+            "square"
+        }
+    }
+
+    fn total_area(shapes: &[Box<dyn Shape>]) -> f64 {
+        shapes.iter().map(|s| s.area()).sum()
+    }
+  notes: |
+    `Vec<Box<dyn Shape>>` is exactly the kind of heterogeneous collection
+    classic OOP polymorphism is used for: the caller of `total_area` doesn't
+    need to know (or match on) which concrete shape each element is — every
+    element just answers `.area()` through the trait's vtable.
+  source: "book §18.2 (using trait objects that allow for values of
+    different types)"
+  tags: [rust, oop, traits]
+  tests: |
+    let shapes: Vec<Box<dyn Shape>> = vec![
+        Box::new(Circle { radius: 1.0 }),
+        Box::new(Square { side: 2.0 }),
+    ];
+    assert!((total_area(&shapes) - (std::f64::consts::PI + 4.0)).abs() < 1e-9);
+    assert_eq!(shapes[0].name(), "circle");
+    assert_eq!(shapes[1].name(), "square");
+
+- type: concept
+  question: |
+    Rust has no struct inheritance — how do you share behavior across
+    multiple types without it?
+  answer: |
+    Mainly two tools. DEFAULT TRAIT METHODS share one implementation across
+    every type implementing the trait, while letting individual types
+    override it — covering the "reuse behavior" half of inheritance.
+    COMPOSITION — a struct holding another struct as a field and delegating
+    to it, rather than "is-a" subclassing — covers the "build bigger things
+    out of smaller things" half. Neither gives you the classic OOP mechanism
+    of one concrete struct automatically inheriting another concrete
+    struct's fields and overriding its methods; Rust's designers considered
+    that specific mechanism a common source of fragile coupling and left it
+    out on purpose.
+  source: "book §18.1 (inheritance as a type system and as code sharing)"
+  tags: [rust, oop, concept]
+
+- instruction: |
+    Define a `Greet` trait with an abstract `name(&self) -> String` and a
+    default `greeting(&self) -> String` built from it. Implement it for
+    `Person` (using the default `greeting`) and for `Robot` (overriding
+    `greeting` with its own wording).
+  starter: |
+    trait Greet {
+        fn name(&self) -> String;
+
+        fn greeting(&self) -> String {
+            format!("Hello, {}!", self.name())
+        }
+    }
+
+    struct Person {
+        name: String,
+    }
+
+    struct Robot;
+  solution: |
+    trait Greet {
+        fn name(&self) -> String;
+
+        fn greeting(&self) -> String {
+            format!("Hello, {}!", self.name())
+        }
+    }
+
+    struct Person {
+        name: String,
+    }
+
+    impl Greet for Person {
+        fn name(&self) -> String {
+            self.name.clone()
+        }
+    }
+
+    struct Robot;
+
+    impl Greet for Robot {
+        fn name(&self) -> String {
+            "Robot".to_string()
+        }
+
+        fn greeting(&self) -> String {
+            format!("BEEP BOOP {}", self.name())
+        }
+    }
+  notes: |
+    `Person` gets `greeting` for free just by implementing `name` — the
+    default method body is reused verbatim. `Robot` implements the same
+    trait but supplies its OWN `greeting`, which entirely replaces the
+    default rather than extending it (there's no `super.greeting()`-style
+    call to the default from an override).
+  source: "book §10.2 (default implementations)"
+  tags: [rust, oop, traits]
+  tests: |
+    let p = Person { name: "Ada".to_string() };
+    assert_eq!(p.greeting(), "Hello, Ada!");
+    let r = Robot;
+    assert_eq!(r.greeting(), "BEEP BOOP Robot");
+
+- type: concept
+  question: |
+    What problem does the "state pattern" solve, and how is it usually
+    implemented in Rust?
+  answer: |
+    A type has several STATES, each allowing a different set of operations
+    or behaving differently for the same operation (a blog post is a Draft,
+    then Pending Review, then Published — only a Published post's content is
+    visible). The classic Rust implementation gives each state its own
+    struct implementing a shared `State` trait, and the main type holds a
+    `Box<dyn State>` it swaps out on each transition — so state-specific
+    logic lives inside each state's own `impl` rather than being scattered
+    across `if`/`match` arms checking "what state am I in?" throughout the
+    rest of the code.
+  source: "book §18.3 (the state pattern)"
+  tags: [rust, oop, concept]
+
+- instruction: |
+    Implement the classic blog-post state pattern: a `Post` holds text plus
+    a `Box<dyn State>`, starting as `Draft`. `add_text` appends text
+    unconditionally. `content()` returns the text only once `Published`
+    (empty string in every other state). `request_review()` transitions
+    Draft→PendingReview; `approve()` transitions PendingReview→Published;
+    both are no-ops in any other state.
+  starter: |
+    trait State {
+        fn request_review(self: Box<Self>) -> Box<dyn State>;
+        fn approve(self: Box<Self>) -> Box<dyn State>;
+        fn content<'a>(&self, _post: &'a Post) -> &'a str {
+            ""
+        }
+    }
+
+    struct Draft;
+    struct PendingReview;
+    struct Published;
+
+    struct Post {
+        state: Option<Box<dyn State>>,
+        text: String,
+    }
+
+    impl Post {
+        fn new() -> Post {
+            Post {
+                state: Some(Box::new(Draft)),
+                text: String::new(),
+            }
+        }
+
+        fn add_text(&mut self, text: &str) {
+            self.text.push_str(text);
+        }
+
+        fn content(&self) -> &str {
+            self.state.as_ref().unwrap().content(self)
+        }
+
+        fn request_review(&mut self) {
+
+        }
+
+        fn approve(&mut self) {
+
+        }
+    }
+  solution: |
+    trait State {
+        fn request_review(self: Box<Self>) -> Box<dyn State>;
+        fn approve(self: Box<Self>) -> Box<dyn State>;
+        fn content<'a>(&self, _post: &'a Post) -> &'a str {
+            ""
+        }
+    }
+
+    struct Draft;
+
+    impl State for Draft {
+        fn request_review(self: Box<Self>) -> Box<dyn State> {
+            Box::new(PendingReview)
+        }
+
+        fn approve(self: Box<Self>) -> Box<dyn State> {
+            self
+        }
+    }
+
+    struct PendingReview;
+
+    impl State for PendingReview {
+        fn request_review(self: Box<Self>) -> Box<dyn State> {
+            self
+        }
+
+        fn approve(self: Box<Self>) -> Box<dyn State> {
+            Box::new(Published)
+        }
+    }
+
+    struct Published;
+
+    impl State for Published {
+        fn request_review(self: Box<Self>) -> Box<dyn State> {
+            self
+        }
+
+        fn approve(self: Box<Self>) -> Box<dyn State> {
+            self
+        }
+
+        fn content<'a>(&self, post: &'a Post) -> &'a str {
+            &post.text
+        }
+    }
+
+    struct Post {
+        state: Option<Box<dyn State>>,
+        text: String,
+    }
+
+    impl Post {
+        fn new() -> Post {
+            Post {
+                state: Some(Box::new(Draft)),
+                text: String::new(),
+            }
+        }
+
+        fn add_text(&mut self, text: &str) {
+            self.text.push_str(text);
+        }
+
+        fn content(&self) -> &str {
+            self.state.as_ref().unwrap().content(self)
+        }
+
+        fn request_review(&mut self) {
+            if let Some(s) = self.state.take() {
+                self.state = Some(s.request_review());
+            }
+        }
+
+        fn approve(&mut self) {
+            if let Some(s) = self.state.take() {
+                self.state = Some(s.approve());
+            }
+        }
+    }
+  notes: |
+    `self: Box<Self>` lets a transition method CONSUME the old boxed state
+    and return a different (possibly different-typed) boxed state — `Post`
+    uses `Option::take` on its `state` field so it can move the old
+    `Box<dyn State>` out by value (required to call a `self: Box<Self>`
+    method) while leaving a valid `Post` behind in between.
+  source: "book §18.3 (the state pattern, in full)"
+  tags: [rust, oop, state-pattern]
+  tests: |
+    let mut post = Post::new();
+    post.add_text("Hello, world!");
+    assert_eq!(post.content(), "");
+    post.request_review();
+    assert_eq!(post.content(), "");
+    post.approve();
+    assert_eq!(post.content(), "Hello, world!");
+
+- type: concept
+  question: |
+    What are the costs of the `Box<dyn State>`-based state pattern compared
+    to a plain `enum` with a `match`?
+  answer: |
+    Every transition heap-allocates a new `Box<dyn State>`, and adding a new
+    state means writing a whole new struct plus a full `impl State for
+    NewState` — more ceremony than adding one `enum` variant and one `match`
+    arm. The payoff is that each state's logic lives entirely inside its own
+    `impl` instead of being scattered across `match` arms wherever the type
+    is used — though in Rust specifically, since `match` on an enum is
+    already exhaustively checked by the compiler, this "don't forget a case"
+    benefit over `match` is smaller than the same argument would be in a
+    classical OOP language where `switch` isn't exhaustively checked.
+  source: "book §18.3 (trade-offs of the state pattern)"
+  tags: [rust, oop, concept]
+
+- instruction: |
+    Implement a "typestate" door: `struct LockedDoor;` and `struct
+    UnlockedDoor;`, where `LockedDoor::unlock(self) -> UnlockedDoor` and
+    `UnlockedDoor::lock(self) -> LockedDoor` transition between them, and
+    ONLY `UnlockedDoor` has an `open(&self) -> &'static str` method — there's
+    no `is_locked()` check anywhere; the type system alone prevents opening
+    a locked door.
+  starter: |
+    struct LockedDoor;
+    struct UnlockedDoor;
+
+    impl LockedDoor {
+        fn unlock(self) -> UnlockedDoor {
+
+        }
+    }
+
+    impl UnlockedDoor {
+        fn lock(self) -> LockedDoor {
+
+        }
+
+        fn open(&self) -> &'static str {
+
+        }
+    }
+  solution: |
+    struct LockedDoor;
+    struct UnlockedDoor;
+
+    impl LockedDoor {
+        fn unlock(self) -> UnlockedDoor {
+            UnlockedDoor
+        }
+    }
+
+    impl UnlockedDoor {
+        fn lock(self) -> LockedDoor {
+            LockedDoor
+        }
+
+        fn open(&self) -> &'static str {
+            "creak..."
+        }
+    }
+  notes: |
+    This is the "typestate" pattern: instead of one type whose internal
+    state varies at runtime, each state is its OWN type, and transitions
+    consume `self` by value, returning the next state's type. Calling
+    `.open()` on a `LockedDoor` isn't a runtime error — it's a COMPILE
+    error, since `LockedDoor` has no such method at all.
+  source: "typestate pattern (Rust API design idiom, extends book §18.3)"
+  tags: [rust, oop, typestate]
+  tests: |
+    let door = LockedDoor;
+    let door = door.unlock();
+    assert_eq!(door.open(), "creak...");
+    let door = door.lock();
+    let door = door.unlock();
+    assert_eq!(door.open(), "creak...");
+
+- type: concept
+  question: |
+    What's the key trade-off between the typestate pattern (a distinct type
+    per state, consumed on transition) and the trait-object state pattern
+    (one type, swapping an internal `Box<dyn State>`)?
+  answer: |
+    Typestate turns invalid operations into COMPILE errors (a `LockedDoor`
+    simply has no `open` method — there's nothing to check at runtime), but
+    a collection like `Vec<Door>` can't hold "any door regardless of lock
+    state", since `LockedDoor` and `UnlockedDoor` are different types — that
+    needs an enum wrapping both, or trait objects, to store a heterogeneous
+    mix. The trait-object state pattern keeps ONE nameable type (`Post`)
+    whose behavior varies at runtime, so it fits naturally into collections
+    and function signatures that only mention `Post`, at the cost of
+    catching invalid-transition bugs only at runtime (or, as written above,
+    not catching them at all — an out-of-order call just silently no-ops).
+  source: "book §18.3 + typestate pattern comparison"
+  tags: [rust, oop, concept]
+
+- type: concept
+  question: |
+    What makes a trait usable as a trait object (`dyn Trait`), and what
+    commonly disqualifies one?
+  answer: |
+    A trait is "object safe" (dyn-compatible) roughly when every method
+    could be called through an unsized, type-erased pointer: no method may
+    return `Self` by value (the concrete size is erased once you have a
+    `dyn Trait`), and no method may be GENERIC (a `dyn Trait`'s vtable has
+    one fixed slot per method, so it can't hold infinitely many
+    monomorphized versions). Associated constants and associated functions
+    with no `self` parameter (like a constructor) also aren't reachable
+    through `dyn Trait`, since there's no instance to dispatch on. A method
+    can opt out of the check entirely with a `where Self: Sized` bound,
+    making it callable only when the concrete type is statically known —
+    never through `dyn Trait` — which restores object safety for the rest
+    of the trait.
+  source: "Rust reference (object safety) + book §18.2"
+  tags: [rust, oop, concept]
+
+- instruction: |
+    A trait `Cloneable` has `describe(&self) -> String` and `duplicate(&self)
+    -> Self` — the latter makes the trait NOT object safe (`Self` by value
+    can't be returned through `dyn Cloneable`). Fix it by adding `where
+    Self: Sized` to just that one method, then implement the trait for
+    `Widget { id: u32 }` and use `Box<dyn Cloneable>` for `describe` only.
+  starter: |
+    trait Cloneable {
+        fn describe(&self) -> String;
+        fn duplicate(&self) -> Self;
+    }
+
+    struct Widget {
+        id: u32,
+    }
+
+    fn describe_all(items: &[Box<dyn Cloneable>]) -> Vec<String> {
+
+    }
+  solution: |
+    trait Cloneable {
+        fn describe(&self) -> String;
+        fn duplicate(&self) -> Self
+        where
+            Self: Sized;
+    }
+
+    struct Widget {
+        id: u32,
+    }
+
+    impl Cloneable for Widget {
+        fn describe(&self) -> String {
+            format!("widget #{}", self.id)
+        }
+
+        fn duplicate(&self) -> Self {
+            Widget { id: self.id }
+        }
+    }
+
+    fn describe_all(items: &[Box<dyn Cloneable>]) -> Vec<String> {
+        items.iter().map(|i| i.describe()).collect()
+    }
+  notes: |
+    `where Self: Sized` on `duplicate` tells the compiler "only offer this
+    method when the concrete type is known" — which a `dyn Cloneable`
+    (type-erased) never satisfies, so it's simply left out of the vtable.
+    `describe`, having no such restriction, remains callable through
+    `Box<dyn Cloneable>`, so the trait as a whole stays object safe.
+  source: "Rust reference (Self: Sized escape hatch for object safety)"
+  tags: [rust, oop, concept]
+  tests: |
+    let items: Vec<Box<dyn Cloneable>> = vec![
+        Box::new(Widget { id: 1 }),
+        Box::new(Widget { id: 2 }),
+    ];
+    assert_eq!(
+        describe_all(&items),
+        vec!["widget #1".to_string(), "widget #2".to_string()]
+    );
+    let w = Widget { id: 7 };
+    assert_eq!(w.duplicate().id, 7);
+
+- type: concept
+  question: |
+    What problem does the builder pattern solve, and when is it worth
+    reaching for in Rust?
+  answer: |
+    Constructing a struct with many fields — especially ones that are
+    optional or have sensible defaults — either forces one giant constructor
+    call with placeholder values for everything, or many overloaded
+    constructors, which Rust doesn't support (no function overloading). A
+    BUILDER separates "accumulate configuration, one step at a time" (each
+    `with_x(mut self, ...) -> Self` returns `self` for chaining) from
+    "produce the final value" (`build(self) -> Target`), letting callers set
+    only the fields they care about, in any order, with a clear call site
+    (`Request::builder().timeout(...).retries(...).build()`).
+  source: "builder pattern (common Rust API design idiom)"
+  tags: [rust, oop, concept]
+
+- instruction: |
+    Implement `RequestBuilder` for building `Request { url: String,
+    timeout_ms: u32, retries: u32 }`, where `timeout_ms` defaults to 30_000
+    and `retries` defaults to 0 unless overridden, using chained
+    `with_timeout`/`with_retries` methods and a final `build(self) ->
+    Request`.
+  starter: |
+    struct Request {
+        url: String,
+        timeout_ms: u32,
+        retries: u32,
+    }
+
+    struct RequestBuilder {
+        url: String,
+        timeout_ms: u32,
+        retries: u32,
+    }
+
+    impl RequestBuilder {
+        fn new(url: &str) -> RequestBuilder {
+
+        }
+
+        fn with_timeout(mut self, timeout_ms: u32) -> RequestBuilder {
+
+        }
+
+        fn with_retries(mut self, retries: u32) -> RequestBuilder {
+
+        }
+
+        fn build(self) -> Request {
+
+        }
+    }
+  solution: |
+    struct Request {
+        url: String,
+        timeout_ms: u32,
+        retries: u32,
+    }
+
+    struct RequestBuilder {
+        url: String,
+        timeout_ms: u32,
+        retries: u32,
+    }
+
+    impl RequestBuilder {
+        fn new(url: &str) -> RequestBuilder {
+            RequestBuilder {
+                url: url.to_string(),
+                timeout_ms: 30_000,
+                retries: 0,
+            }
+        }
+
+        fn with_timeout(mut self, timeout_ms: u32) -> RequestBuilder {
+            self.timeout_ms = timeout_ms;
+            self
+        }
+
+        fn with_retries(mut self, retries: u32) -> RequestBuilder {
+            self.retries = retries;
+            self
+        }
+
+        fn build(self) -> Request {
+            Request {
+                url: self.url,
+                timeout_ms: self.timeout_ms,
+                retries: self.retries,
+            }
+        }
+    }
+  notes: |
+    Each `with_*` method takes `mut self` BY VALUE and returns `Self`,
+    letting calls chain (`.with_timeout(..).with_retries(..)`) without any
+    extra ceremony; `build` also takes `self` by value since the builder is
+    consumed — it can't be reused after producing the final `Request`.
+  source: "builder pattern (common Rust API design idiom)"
+  tags: [rust, oop, builder]
+  tests: |
+    let r = RequestBuilder::new("https://example.com").build();
+    assert_eq!(r.timeout_ms, 30_000);
+    assert_eq!(r.retries, 0);
+
+    let r2 = RequestBuilder::new("https://example.com")
+        .with_timeout(5_000)
+        .with_retries(3)
+        .build();
+    assert_eq!(r2.timeout_ms, 5_000);
+    assert_eq!(r2.retries, 3);
+    assert_eq!(r2.url, "https://example.com");
+
+- type: concept
+  question: |
+    How do Rust traits compare to "interfaces" in classic OOP languages like
+    Java or C#?
+  answer: |
+    Both describe a set of methods a type must implement, but Rust traits
+    can additionally supply DEFAULT method bodies (closer to an abstract
+    base class than a pure interface), can be implemented for types you
+    don't own as long as either the trait or the type is local to your
+    crate (the orphan rule), and require no shared base "object" type — any
+    type, including primitives like `i32`, can implement any trait.
+    Dispatch is also opt-in: calling a trait method through a generic
+    parameter (`fn f<T: Trait>(x: T)`) is statically resolved at compile
+    time (monomorphized, like C++ templates), and only `dyn Trait`
+    explicitly opts into the vtable-based dynamic dispatch that's implicit
+    for every interface method call in languages like Java.
+  source: "book §10.2 + §18.2 (traits vs interfaces)"
+  tags: [rust, oop, traits, concept]
+
+- type: concept
+  question: |
+    Given Rust's exhaustive `match`, when does reaching for `Box<dyn
+    Trait>`-style polymorphism (as in the state-pattern `Post`) actually pay
+    off over an enum with a `match`?
+  answer: |
+    An enum + `match` is usually simpler and just as safe when the full set
+    of variants is known and closed (you own every case and won't add new
+    ones from outside this crate), and the per-variant logic is small enough
+    to stay readable scattered across `match` arms. Trait objects earn their
+    keep when the set of implementing types is OPEN — other crates, or
+    other parts of a large codebase, need to add a new state/shape/handler
+    without your code changing at all (a plugin system, or a library
+    exposing a trait for its users to implement) — something a fixed `enum`
+    can never support, since every variant must be known where the enum
+    itself is defined.
+  source: "book §18.2-18.3 (choosing between enums and trait objects)"
+  tags: [rust, oop, concept]
+
+- type: concept
+  question: |
+    So — is Rust an "object-oriented" language?
+  answer: |
+    It depends which hallmark you mean. ENCAPSULATION: yes, directly, via
+    module/field privacy. POLYMORPHISM: yes, via generics (static dispatch)
+    and `dyn Trait` (dynamic dispatch), without needing any class hierarchy.
+    INHERITANCE, specifically one concrete type automatically inheriting
+    another's fields and method bodies: no, deliberately — Rust substitutes
+    default trait methods and composition instead, judging classical
+    implementation inheritance a common source of fragile coupling. Whether
+    that adds up to "OOP" is mostly a semantic argument; more useful in
+    practice is knowing which of the three you actually need for a given
+    design, since Rust gives you two of them directly and asks you to reach
+    for different, often safer, tools for the third.
+  source: "book §18.1-18.3 (is Rust object-oriented?)"
+  tags: [rust, oop, concept]
