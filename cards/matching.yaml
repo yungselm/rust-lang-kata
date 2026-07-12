@@ -29,6 +29,10 @@
     variant must be covered.
   source: "book §6.2 (match)"
   tags: [rust, matching, enums]
+  tests: |
+    assert!((area(Shape::Circle(1.0)) - std::f64::consts::PI).abs() < 1e-9);
+    assert!((area(Shape::Rect(2.0, 3.0)) - 6.0).abs() < 1e-9);
+    assert!((area(Shape::Rect(0.0, 5.0)) - 0.0).abs() < 1e-9);
 
 - instruction: |
     Write `describe(x: Option<i32>) -> String`: "got N" for `Some(n)`,
@@ -48,6 +52,10 @@
     `Option` is an enum (`Some`/`None`). Inline `{n}` capture works on Rust 2021.
   source: "book §6.2 (Option in match)"
   tags: [rust, matching, option]
+  tests: |
+    assert_eq!(describe(Some(5)), "got 5");
+    assert_eq!(describe(Some(-3)), "got -3");
+    assert_eq!(describe(None), "nothing");
 
 - instruction: |
     Write `status(r: Result<i32, String>) -> String`: "ok: N" or "err: E".
@@ -64,6 +72,10 @@
     }
   source: "book §9.2 (Result)"
   tags: [rust, matching, results]
+  tests: |
+    assert_eq!(status(Ok(42)), "ok: 42");
+    assert_eq!(status(Ok(-1)), "ok: -1");
+    assert_eq!(status(Err("boom".to_string())), "err: boom");
 
 - instruction: |
     Write `double_or_zero(x: Option<i32>) -> i32` using `if let`/`else`:
@@ -85,6 +97,10 @@
     with a single arm plus `_`.
   source: "book §6.3 (if let)"
   tags: [rust, matching, if-let]
+  tests: |
+    assert_eq!(double_or_zero(Some(4)), 8);
+    assert_eq!(double_or_zero(Some(-3)), -6);
+    assert_eq!(double_or_zero(None), 0);
 
 - instruction: |
     Write `drain_sum(v: &mut Vec<i32>) -> i32` using `while let` to pop every
@@ -107,6 +123,12 @@
     the length.)
   source: "book §19.1 (while let)"
   tags: [rust, matching, while-let]
+  tests: |
+    let mut v = vec![1, 2, 3];
+    assert_eq!(drain_sum(&mut v), 6);
+    assert!(v.is_empty());
+    let mut empty: Vec<i32> = Vec::new();
+    assert_eq!(drain_sum(&mut empty), 0);
 
 - instruction: |
     Write `parse_or_zero(s: &str) -> i32` using `let ... else` to return 0 early
@@ -127,6 +149,11 @@
     to diverge (return/break/panic), keeping `n` in scope afterward.
   source: "book §6.3 (let else)"
   tags: [rust, matching, let-else]
+  tests: |
+    assert_eq!(parse_or_zero("42"), 42);
+    assert_eq!(parse_or_zero("-7"), -7);
+    assert_eq!(parse_or_zero("abc"), 0);
+    assert_eq!(parse_or_zero(""), 0);
 
 - instruction: |
     Write `sign(n: i32) -> &'static str` using a match GUARD for the positive
@@ -148,6 +175,10 @@
     toward exhaustiveness, so you still need a catch-all.
   source: "book §19.3 (match guards)"
   tags: [rust, matching, guards]
+  tests: |
+    assert_eq!(sign(5), "positive");
+    assert_eq!(sign(0), "zero");
+    assert_eq!(sign(-2), "negative");
 
 - instruction: |
     Write `classify(n: i32) -> String` using an `@` binding: for 0..=9 return
@@ -167,6 +198,11 @@
     `name @ pattern` tests the pattern AND binds the matched value to `name`.
   source: "book §19.3 (@ bindings)"
   tags: [rust, matching, bindings]
+  tests: |
+    assert_eq!(classify(0), "single digit: 0");
+    assert_eq!(classify(9), "single digit: 9");
+    assert_eq!(classify(10), "big: 10");
+    assert_eq!(classify(-1), "big: -1");
 
 - instruction: |
     Write `is_vowel(c: char) -> bool` testing membership of a small set, using an
@@ -185,6 +221,11 @@
     is an or-pattern.
   source: "std matches! macro"
   tags: [rust, matching, or-patterns]
+  tests: |
+    assert!(is_vowel('a'));
+    assert!(is_vowel('u'));
+    assert!(!is_vowel('z'));
+    assert!(!is_vowel('A'));
 
 - instruction: |
     Write `grade(score: u32) -> char` using inclusive RANGE patterns:
@@ -207,6 +248,11 @@
     patterns for integers/chars).
   source: "book §19.3 (range patterns)"
   tags: [rust, matching, ranges]
+  tests: |
+    assert_eq!(grade(90), 'A');
+    assert_eq!(grade(89), 'B');
+    assert_eq!(grade(70), 'C');
+    assert_eq!(grade(69), 'F');
 
 - instruction: |
     Write `quadrant(p: (i32, i32)) -> u8`: 1 if both coords > 0, 2 if x<0 & y>0,
@@ -226,6 +272,11 @@
     }
   source: "book §19.3 (tuple patterns)"
   tags: [rust, matching, tuples, guards]
+  tests: |
+    assert_eq!(quadrant((0, 0)), 0);
+    assert_eq!(quadrant((3, 4)), 1);
+    assert_eq!(quadrant((-3, 4)), 2);
+    assert_eq!(quadrant((3, -4)), 9);
 
 - instruction: |
     Given `struct Point { x: i32, y: i32 }`, write `on_axis(p: Point) -> bool`:
@@ -253,6 +304,11 @@
     or-pattern `|` covers either axis. (clippy prefers this over match->bool.)
   source: "book §19.3 (struct patterns)"
   tags: [rust, matching, structs]
+  tests: |
+    assert!(on_axis(Point { x: 0, y: 5 }));
+    assert!(on_axis(Point { x: 3, y: 0 }));
+    assert!(on_axis(Point { x: 0, y: 0 }));
+    assert!(!on_axis(Point { x: 2, y: 3 }));
 
 - instruction: |
     Given `enum Event { Click { x: i32, y: i32 }, Key(char) }`, write
@@ -284,6 +340,10 @@
     Struct variants destructure with `{ field, .. }`; tuple variants with `(..)`.
   source: "book §19.3 (enum variants)"
   tags: [rust, matching, enums]
+  tests: |
+    assert_eq!(describe(Event::Click { x: 1, y: 2 }), "click at 1,2");
+    assert_eq!(describe(Event::Key('a')), "key a");
+    assert_eq!(describe(Event::Click { x: -5, y: 0 }), "click at -5,0");
 
 - instruction: |
     Write `describe_slice(v: &[i32]) -> String` using SLICE patterns: "empty",
@@ -305,6 +365,11 @@
     middle elements. These arms cover lengths 0, 1, and >= 2 — exhaustive.
   source: "book §19.3 (slice patterns)"
   tags: [rust, matching, slices]
+  tests: |
+    assert_eq!(describe_slice(&[]), "empty");
+    assert_eq!(describe_slice(&[7]), "one: 7");
+    assert_eq!(describe_slice(&[1, 2]), "first 1, last 2");
+    assert_eq!(describe_slice(&[3, 9, 9, 5]), "first 3, last 5");
 
 - instruction: |
     Write `first_char(s: &Option<String>) -> Option<char>`: the first char of
@@ -325,6 +390,10 @@
     automatically (default binding modes), so you don't move out of the borrow.
   source: "book §19.3 (binding modes)"
   tags: [rust, matching, ergonomics]
+  tests: |
+    assert_eq!(first_char(&Some("hello".to_string())), Some('h'));
+    assert_eq!(first_char(&Some(String::new())), None);
+    assert_eq!(first_char(&None), None);
 
 - instruction: |
     Write `to_num(word: &str) -> i32` matching string literals "one"/"two"/
@@ -344,6 +413,11 @@
     }
   source: "book §6.2 (literal patterns)"
   tags: [rust, matching, strings]
+  tests: |
+    assert_eq!(to_num("one"), 1);
+    assert_eq!(to_num("three"), 3);
+    assert_eq!(to_num("four"), -1);
+    assert_eq!(to_num(""), -1);
 
 - instruction: |
     Write `http_text(code: u32) -> &'static str` mapping a status code to text:
@@ -368,6 +442,11 @@
     `let_and_return`).
   source: "book §6.2 (match is an expression)"
   tags: [rust, matching]
+  tests: |
+    assert_eq!(http_text(200), "OK");
+    assert_eq!(http_text(404), "Not Found");
+    assert_eq!(http_text(500), "Server Error");
+    assert_eq!(http_text(418), "Unknown");
 
 - instruction: |
     Write `flatten_opt(x: Option<Option<i32>>) -> i32`: the inner value or 0,
@@ -387,6 +466,10 @@
     Patterns nest: `Some(Some(n))` matches only when both layers are present.
   source: "book §19.3 (nested patterns)"
   tags: [rust, matching, option]
+  tests: |
+    assert_eq!(flatten_opt(Some(Some(7))), 7);
+    assert_eq!(flatten_opt(Some(None)), 0);
+    assert_eq!(flatten_opt(None), 0);
 
 - instruction: |
     Given `enum Temp { C(f64), F(f64) }`, write `is_freezing(t: Temp) -> bool`
@@ -414,6 +497,11 @@
     }
   source: "book §6.2 (match on enum)"
   tags: [rust, matching, enums]
+  tests: |
+    assert!(is_freezing(Temp::C(0.0)));
+    assert!(!is_freezing(Temp::C(0.1)));
+    assert!(is_freezing(Temp::F(32.0)));
+    assert!(!is_freezing(Temp::F(33.0)));
 
 - instruction: |
     Write `max_pair(p: &(i32, i32)) -> i32` returning the larger element, matching
@@ -434,6 +522,11 @@
     compares them and `*a` copies out the `i32`.
   source: "book §19.3 (binding modes)"
   tags: [rust, matching, ergonomics]
+  tests: |
+    assert_eq!(max_pair(&(1, 2)), 2);
+    assert_eq!(max_pair(&(5, 3)), 5);
+    assert_eq!(max_pair(&(4, 4)), 4);
+    assert_eq!(max_pair(&(-1, -9)), -1);
 
 # --- concept cards ---
 - type: concept

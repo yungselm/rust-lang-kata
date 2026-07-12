@@ -23,6 +23,11 @@
     instead — clippy's `vec_init_then_push` will remind you.)
   source: "std Vec::push"
   tags: [rust, vec]
+  tests: |
+    assert_eq!(running_max(&[1, 3, 2]), vec![1, 3, 3]);
+    assert_eq!(running_max(&[-2, -5, -1]), vec![-2, -2, -1]);
+    assert_eq!(running_max(&[7]), vec![7]);
+    assert_eq!(running_max(&[]), Vec::<i32>::new());
 
 - instruction: |
     Write `three_ones() -> Vec<i32>` returning [1, 1, 1] using the `vec!` macro.
@@ -38,6 +43,9 @@
     `vec![value; count]` repeats a value; `vec![1, 2, 3]` lists elements.
   source: "std vec! macro"
   tags: [rust, vec]
+  tests: |
+    assert_eq!(three_ones(), vec![1, 1, 1]);
+    assert_eq!(three_ones().len(), 3);
 
 - instruction: |
     Write `squares(n: usize) -> Vec<usize>` of 0^2..(n-1)^2, pre-allocating with
@@ -58,6 +66,10 @@
     `with_capacity(n)` reserves space up front so the pushes don't reallocate.
   source: "std Vec::with_capacity"
   tags: [rust, vec]
+  tests: |
+    assert_eq!(squares(4), vec![0, 1, 4, 9]);
+    assert_eq!(squares(1), vec![0]);
+    assert_eq!(squares(0), Vec::<usize>::new());
 
 - instruction: |
     Write `get_or(v: &[i32], i: usize) -> i32` returning the element at `i`, or
@@ -75,6 +87,10 @@
     panics. `copied()` then `unwrap_or(-1)` gives a plain `i32`.
   source: "std slice::get"
   tags: [rust, vec, indexing]
+  tests: |
+    assert_eq!(get_or(&[10, 20, 30], 1), 20);
+    assert_eq!(get_or(&[10, 20, 30], 3), -1);
+    assert_eq!(get_or(&[], 0), -1);
 
 - instruction: |
     Write `increment_all(v: &mut [i32])` adding 1 to every element in place.
@@ -93,6 +109,13 @@
     (clippy::ptr_arg). `iter_mut()` yields `&mut T`; write through with `*x`.
   source: "std slice::iter_mut"
   tags: [rust, vec, mutation]
+  tests: |
+    let mut v = vec![1, 2, 3];
+    increment_all(&mut v);
+    assert_eq!(v, vec![2, 3, 4]);
+    let mut empty: Vec<i32> = Vec::new();
+    increment_all(&mut empty);
+    assert_eq!(empty, Vec::<i32>::new());
 
 - instruction: |
     Write `pop_last(v: &mut Vec<i32>) -> Option<i32>` removing and returning the
@@ -110,6 +133,12 @@
     parameter is `&mut Vec`, not `&mut [_]`.
   source: "std Vec::pop"
   tags: [rust, vec]
+  tests: |
+    let mut v = vec![1, 2, 3];
+    assert_eq!(pop_last(&mut v), Some(3));
+    assert_eq!(v, vec![1, 2]);
+    let mut empty: Vec<i32> = Vec::new();
+    assert_eq!(pop_last(&mut empty), None);
 
 - instruction: |
     Write `insert_front(v: &mut Vec<i32>, x: i32)` inserting `x` at the front.
@@ -126,6 +155,13 @@
     front-insertion use a `VecDeque`.
   source: "std Vec::insert"
   tags: [rust, vec]
+  tests: |
+    let mut v = vec![2, 3];
+    insert_front(&mut v, 1);
+    assert_eq!(v, vec![1, 2, 3]);
+    let mut empty = Vec::new();
+    insert_front(&mut empty, 7);
+    assert_eq!(empty, vec![7]);
 
 - instruction: |
     Write `remove_at(v: &mut Vec<i32>, i: usize) -> i32` removing and returning
@@ -142,6 +178,13 @@
     `remove(i)` shifts later elements left — O(n). Panics if `i` is out of bounds.
   source: "std Vec::remove"
   tags: [rust, vec]
+  tests: |
+    let mut v = vec![1, 2, 3, 4];
+    assert_eq!(remove_at(&mut v, 1), 2);
+    assert_eq!(v, vec![1, 3, 4]);
+    let mut single = vec![9];
+    assert_eq!(remove_at(&mut single, 0), 9);
+    assert_eq!(single, Vec::<i32>::new());
 
 - instruction: |
     Write `swap_remove_at(v: &mut Vec<i32>, i: usize) -> i32` removing element
@@ -159,6 +202,13 @@
     not preserve order.
   source: "std Vec::swap_remove"
   tags: [rust, vec]
+  tests: |
+    let mut v = vec![1, 2, 3, 4];
+    assert_eq!(swap_remove_at(&mut v, 0), 1);
+    assert_eq!(v, vec![4, 2, 3]);
+    let mut single = vec![9];
+    assert_eq!(swap_remove_at(&mut single, 0), 9);
+    assert!(single.is_empty());
 
 - instruction: |
     Write `has(v: &[i32], x: i32) -> bool` testing membership.
@@ -175,6 +225,10 @@
     prefer a `HashSet`.
   source: "std slice::contains"
   tags: [rust, vec]
+  tests: |
+    assert!(has(&[1, 2, 3], 2));
+    assert!(!has(&[1, 2, 3], 5));
+    assert!(!has(&[], 1));
 
 - instruction: |
     Write `sorted(mut v: Vec<i32>) -> Vec<i32>` sorting ascending and returning.
@@ -195,6 +249,10 @@
     lets us mutate it and hand it back.
   source: "std slice::sort"
   tags: [rust, vec, sorting]
+  tests: |
+    assert_eq!(sorted(vec![3, 1, 2]), vec![1, 2, 3]);
+    assert_eq!(sorted(vec![5]), vec![5]);
+    assert_eq!(sorted(Vec::new()), Vec::<i32>::new());
 
 - instruction: |
     Write `sort_by_abs(mut v: Vec<i32>) -> Vec<i32>` sorting by absolute value.
@@ -213,6 +271,10 @@
     sort then return `v` — not `return v.sort_by_key(...)`.
   source: "std slice::sort_by_key"
   tags: [rust, vec, sorting]
+  tests: |
+    assert_eq!(sort_by_abs(vec![-3, 1, 2]), vec![1, 2, -3]);
+    assert_eq!(sort_by_abs(vec![-5, 4]), vec![4, -5]);
+    assert_eq!(sort_by_abs(Vec::new()), Vec::<i32>::new());
 
 - instruction: |
     Write `unique_sorted(mut v: Vec<i32>) -> Vec<i32>`: sorted with duplicates
@@ -233,6 +295,10 @@
     apply them and then return `v`.
   source: "std Vec::dedup"
   tags: [rust, vec, sorting]
+  tests: |
+    assert_eq!(unique_sorted(vec![3, 1, 3, 2, 1]), vec![1, 2, 3]);
+    assert_eq!(unique_sorted(vec![7]), vec![7]);
+    assert_eq!(unique_sorted(Vec::new()), Vec::<i32>::new());
 
 - instruction: |
     Write `keep_positive(v: &mut Vec<i32>)` removing all non-positive elements
@@ -250,6 +316,13 @@
     It changes the length, so `&mut Vec` is correct.
   source: "std Vec::retain"
   tags: [rust, vec, mutation]
+  tests: |
+    let mut v = vec![1, -2, 0, 3];
+    keep_positive(&mut v);
+    assert_eq!(v, vec![1, 3]);
+    let mut all_neg = vec![-1, -2];
+    keep_positive(&mut all_neg);
+    assert_eq!(all_neg, Vec::<i32>::new());
 
 - instruction: |
     Write `append_all(v: &mut Vec<i32>, more: &[i32])` appending copies of
@@ -267,6 +340,12 @@
     `extend(iter)` for any iterator.
   source: "std Vec::extend_from_slice"
   tags: [rust, vec]
+  tests: |
+    let mut v = vec![1, 2];
+    append_all(&mut v, &[3, 4]);
+    assert_eq!(v, vec![1, 2, 3, 4]);
+    append_all(&mut v, &[]);
+    assert_eq!(v, vec![1, 2, 3, 4]);
 
 - instruction: |
     Write `ends(v: &[i32]) -> Option<(i32, i32)>` returning (first, last), or
@@ -284,6 +363,10 @@
     `*` copies the values out.
   source: "std slice::first / last"
   tags: [rust, vec, option]
+  tests: |
+    assert_eq!(ends(&[1, 2, 3]), Some((1, 3)));
+    assert_eq!(ends(&[7]), Some((7, 7)));
+    assert_eq!(ends(&[]), None);
 
 - instruction: |
     Write `middle(v: &[i32]) -> &[i32]` returning the slice without its first
@@ -301,6 +384,10 @@
     input. (Panics if `v.len() < 2` — guard in real code.)
   source: "std slice indexing"
   tags: [rust, vec, slices]
+  tests: |
+    assert_eq!(middle(&[1, 2, 3, 4]), [2, 3]);
+    assert_eq!(middle(&[5, 6, 7]), [6]);
+    assert!(middle(&[1, 2]).is_empty());
 
 - instruction: |
     Write `swap_ends(v: &mut [i32])` swapping the first and last elements
@@ -321,6 +408,16 @@
     `&mut [i32]` is the right parameter.
   source: "std slice::swap"
   tags: [rust, vec]
+  tests: |
+    let mut v = vec![1, 2, 3, 4];
+    swap_ends(&mut v);
+    assert_eq!(v, vec![4, 2, 3, 1]);
+    let mut single = vec![7];
+    swap_ends(&mut single);
+    assert_eq!(single, vec![7]);
+    let mut empty: Vec<i32> = Vec::new();
+    swap_ends(&mut empty);
+    assert_eq!(empty, Vec::<i32>::new());
 
 - instruction: |
     Write `reverse_in_place(v: &mut [i32])` reversing the slice in place.
@@ -337,6 +434,13 @@
     `v.iter().rev().copied().collect()`.
   source: "std slice::reverse"
   tags: [rust, vec]
+  tests: |
+    let mut v = vec![1, 2, 3];
+    reverse_in_place(&mut v);
+    assert_eq!(v, vec![3, 2, 1]);
+    let mut single = vec![7];
+    reverse_in_place(&mut single);
+    assert_eq!(single, vec![7]);
 
 - instruction: |
     Write `find_sorted(v: &[i32], x: i32) -> Option<usize>`: index of `x` in a
@@ -354,6 +458,10 @@
     `Result<usize, usize>`; `.ok()` keeps only the found index.
   source: "std slice::binary_search"
   tags: [rust, vec, search]
+  tests: |
+    assert_eq!(find_sorted(&[1, 3, 5, 7], 5), Some(2));
+    assert_eq!(find_sorted(&[1, 3, 5, 7], 4), None);
+    assert_eq!(find_sorted(&[], 1), None);
 
 - instruction: |
     Write `pairwise_sums(v: &[i32]) -> Vec<i32>`: sums of each adjacent pair
@@ -375,6 +483,10 @@
     and `Copy`; a whole slice is neither.)
   source: "std slice::windows"
   tags: [rust, vec, slices]
+  tests: |
+    assert_eq!(pairwise_sums(&[1, 2, 3, 4]), vec![3, 5, 7]);
+    assert_eq!(pairwise_sums(&[5]), Vec::<i32>::new());
+    assert_eq!(pairwise_sums(&[]), Vec::<i32>::new());
 
 - instruction: |
     Write `row_sums(v: &[i32], width: usize) -> Vec<i32>`: treat `v` as rows of
@@ -391,6 +503,10 @@
     `chunks(k)` yields non-overlapping groups (the last may be shorter).
   source: "std slice::chunks"
   tags: [rust, vec, slices]
+  tests: |
+    assert_eq!(row_sums(&[1, 2, 3, 4, 5, 6], 3), vec![6, 15]);
+    assert_eq!(row_sums(&[1, 2, 3], 2), vec![3, 3]);
+    assert_eq!(row_sums(&[], 2), Vec::<i32>::new());
 
 - instruction: |
     Write `take_first_two(v: &mut Vec<i32>) -> Vec<i32>`: remove the first two
@@ -408,6 +524,13 @@
     leaving the rest shifted down.
   source: "std Vec::drain"
   tags: [rust, vec]
+  tests: |
+    let mut v = vec![1, 2, 3, 4];
+    assert_eq!(take_first_two(&mut v), vec![1, 2]);
+    assert_eq!(v, vec![3, 4]);
+    let mut exact = vec![5, 6];
+    assert_eq!(take_first_two(&mut exact), vec![5, 6]);
+    assert_eq!(exact, Vec::<i32>::new());
 
 - instruction: |
     Write `cap_to(v: &mut Vec<i32>, n: usize)` shortening the Vec to at most `n`
@@ -425,6 +548,13 @@
     `clear()` empties it, `resize(n, val)` sets the length to exactly n.
   source: "std Vec::truncate"
   tags: [rust, vec]
+  tests: |
+    let mut v = vec![1, 2, 3, 4];
+    cap_to(&mut v, 2);
+    assert_eq!(v, vec![1, 2]);
+    let mut short = vec![1];
+    cap_to(&mut short, 5);
+    assert_eq!(short, vec![1]);
 
 # --- concept cards ---
 - type: concept
