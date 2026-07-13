@@ -6,14 +6,18 @@
     Which classic OOP hallmarks (encapsulation, polymorphism, inheritance)
     does Rust actually have, and which does it deliberately leave out?
   answer: |
+    **Rust has encapsulation (via private fields and module privacy) and
+    polymorphism (via generics and `dyn Trait`), but deliberately lacks
+    struct inheritance.**
+
     ENCAPSULATION — yes: structs/modules with private fields and a public
     method API give you this directly (book §18.1). POLYMORPHISM — yes: via
     generics (static, monomorphized dispatch) and `dyn Trait` (dynamic,
     vtable-based dispatch), without needing any class hierarchy at all
     (§18.2). INHERITANCE, specifically one concrete type automatically
-    inheriting another's fields and method implementations — no, and
-    deliberately so: Rust substitutes default trait methods plus composition
-    instead of struct inheritance.
+    inheriting another's fields and method implementations — no: Rust
+    substitutes default trait methods plus composition instead of struct
+    inheritance.
   source: "book §18.1-18.2 (characteristics of object-oriented languages)"
   tags: [rust, oop, concept]
 
@@ -22,13 +26,15 @@
     How does Rust achieve encapsulation without a `private`/`public` keyword
     pair on individual methods the way some OOP languages have?
   answer: |
-    Through the same module-privacy system covered in ch.7: a struct's
-    fields are private by default (visible only inside the defining module
-    and its descendants) unless marked `pub`, so a module can expose a small
-    set of `pub` methods as its API while keeping fields — and the invariants
-    those fields must satisfy — entirely hidden from callers. There's no
-    separate "encapsulation" mechanism; it falls directly out of the
-    ordinary privacy rules applied to structs and their `impl` blocks.
+    **Rust achieves encapsulation through the ordinary module-privacy
+    system: struct fields are private by default, so a module can expose
+    only a small set of `pub` methods while hiding the fields (and the
+    invariants they must satisfy) from callers.**
+
+    Fields are visible only inside the defining module and its descendants
+    unless marked `pub`. There's no separate "encapsulation" mechanism; it
+    falls directly out of the ordinary privacy rules applied to structs and
+    their `impl` blocks.
   source: "book §18.1 (encapsulation that hides implementation details)"
   tags: [rust, oop, concept]
 
@@ -173,16 +179,17 @@
     Rust has no struct inheritance — how do you share behavior across
     multiple types without it?
   answer: |
-    Mainly two tools. DEFAULT TRAIT METHODS share one implementation across
-    every type implementing the trait, while letting individual types
-    override it — covering the "reuse behavior" half of inheritance.
-    COMPOSITION — a struct holding another struct as a field and delegating
-    to it, rather than "is-a" subclassing — covers the "build bigger things
-    out of smaller things" half. Neither gives you the classic OOP mechanism
-    of one concrete struct automatically inheriting another concrete
-    struct's fields and overriding its methods; Rust's designers considered
-    that specific mechanism a common source of fragile coupling and left it
-    out on purpose.
+    **Mainly two tools: default trait methods (one implementation shared
+    across every implementor, overridable per type) and composition (a
+    struct holding another struct as a field and delegating to it, rather
+    than "is-a" subclassing).**
+
+    Default trait methods cover the "reuse behavior" half of inheritance;
+    composition covers the "build bigger things out of smaller things" half.
+    Neither gives you the classic OOP mechanism of one concrete struct
+    automatically inheriting another concrete struct's fields and overriding
+    its methods; Rust's designers considered that specific mechanism a
+    common source of fragile coupling and left it out on purpose.
   source: "book §18.1 (inheritance as a type system and as code sharing)"
   tags: [rust, oop, concept]
 
@@ -254,12 +261,14 @@
     What problem does the "state pattern" solve, and how is it usually
     implemented in Rust?
   answer: |
-    A type has several STATES, each allowing a different set of operations
-    or behaving differently for the same operation (a blog post is a Draft,
-    then Pending Review, then Published — only a Published post's content is
-    visible). The classic Rust implementation gives each state its own
-    struct implementing a shared `State` trait, and the main type holds a
-    `Box<dyn State>` it swaps out on each transition — so state-specific
+    **The state pattern lets a type behave differently across several
+    STATES by giving each state its own struct implementing a shared
+    `State` trait, with the main type holding a `Box<dyn State>` it swaps
+    out on each transition.**
+
+    Each state allows a different set of operations or behaves differently
+    for the same operation (a blog post is a Draft, then Pending Review, then
+    Published — only a Published post's content is visible). State-specific
     logic lives inside each state's own `impl` rather than being scattered
     across `if`/`match` arms checking "what state am I in?" throughout the
     rest of the code.
@@ -419,10 +428,12 @@
     What are the costs of the `Box<dyn State>`-based state pattern compared
     to a plain `enum` with a `match`?
   answer: |
-    Every transition heap-allocates a new `Box<dyn State>`, and adding a new
-    state means writing a whole new struct plus a full `impl State for
-    NewState` — more ceremony than adding one `enum` variant and one `match`
-    arm. The payoff is that each state's logic lives entirely inside its own
+    **The `Box<dyn State>` pattern costs a heap allocation per transition
+    and a whole new struct plus a full `impl State for NewState` per added
+    state — more ceremony than adding one `enum` variant and one `match`
+    arm.**
+
+    The payoff is that each state's logic lives entirely inside its own
     `impl` instead of being scattered across `match` arms wherever the type
     is used — though in Rust specifically, since `match` on an enum is
     already exhaustively checked by the compiler, this "don't forget a case"
@@ -498,16 +509,21 @@
     per state, consumed on transition) and the trait-object state pattern
     (one type, swapping an internal `Box<dyn State>`)?
   answer: |
-    Typestate turns invalid operations into COMPILE errors (a `LockedDoor`
-    simply has no `open` method — there's nothing to check at runtime), but
-    a collection like `Vec<Door>` can't hold "any door regardless of lock
-    state", since `LockedDoor` and `UnlockedDoor` are different types — that
-    needs an enum wrapping both, or trait objects, to store a heterogeneous
-    mix. The trait-object state pattern keeps ONE nameable type (`Post`)
-    whose behavior varies at runtime, so it fits naturally into collections
-    and function signatures that only mention `Post`, at the cost of
-    catching invalid-transition bugs only at runtime (or, as written above,
-    not catching them at all — an out-of-order call just silently no-ops).
+    **Typestate catches invalid operations at COMPILE time but can't put
+    different states in one collection since each state is a different
+    type; the trait-object state pattern keeps one nameable type that fits
+    naturally in collections, at the cost of only catching invalid
+    transitions at runtime (if at all).**
+
+    A `LockedDoor` simply has no `open` method — there's nothing to check at
+    runtime — but a collection like `Vec<Door>` can't hold "any door
+    regardless of lock state", since `LockedDoor` and `UnlockedDoor` are
+    different types; that needs an enum wrapping both, or trait objects, to
+    store a heterogeneous mix. The trait-object state pattern's `Post` fits
+    naturally into collections and function signatures that only mention
+    `Post`, at the cost of catching invalid-transition bugs only at runtime
+    (or, as written above, not catching them at all — an out-of-order call
+    just silently no-ops).
   source: "book §18.3 + typestate pattern comparison"
   tags: [rust, oop, concept]
 
@@ -516,18 +532,20 @@
     What makes a trait usable as a trait object (`dyn Trait`), and what
     commonly disqualifies one?
   answer: |
-    A trait is "object safe" (dyn-compatible) roughly when every method
-    could be called through an unsized, type-erased pointer: no method may
-    return `Self` by value (the concrete size is erased once you have a
-    `dyn Trait`), and no method may be GENERIC (a `dyn Trait`'s vtable has
-    one fixed slot per method, so it can't hold infinitely many
+    **A trait is object safe (dyn-compatible) when every method could be
+    called through an unsized, type-erased pointer — roughly: no method
+    returns `Self` by value, and no method is generic.**
+
+    No method may return `Self` by value (the concrete size is erased once
+    you have a `dyn Trait`), and no method may be GENERIC (a `dyn Trait`'s
+    vtable has one fixed slot per method, so it can't hold infinitely many
     monomorphized versions). Associated constants and associated functions
     with no `self` parameter (like a constructor) also aren't reachable
     through `dyn Trait`, since there's no instance to dispatch on. A method
     can opt out of the check entirely with a `where Self: Sized` bound,
     making it callable only when the concrete type is statically known —
-    never through `dyn Trait` — which restores object safety for the rest
-    of the trait.
+    never through `dyn Trait` — which restores object safety for the rest of
+    the trait.
   source: "Rust reference (object safety) + book §18.2"
   tags: [rust, oop, concept]
 
@@ -600,13 +618,13 @@
     What problem does the builder pattern solve, and when is it worth
     reaching for in Rust?
   answer: |
-    Constructing a struct with many fields — especially ones that are
-    optional or have sensible defaults — either forces one giant constructor
-    call with placeholder values for everything, or many overloaded
-    constructors, which Rust doesn't support (no function overloading). A
-    BUILDER separates "accumulate configuration, one step at a time" (each
-    `with_x(mut self, ...) -> Self` returns `self` for chaining) from
-    "produce the final value" (`build(self) -> Target`), letting callers set
+    **The builder pattern solves constructing a struct with many
+    optional/defaulted fields, without one giant constructor call or
+    overloaded constructors (which Rust doesn't support), by separating
+    "accumulate configuration" from "produce the final value".**
+
+    Each `with_x(mut self, ...) -> Self` returns `self` for chaining, then a
+    final `build(self) -> Target` produces the value — letting callers set
     only the fields they care about, in any order, with a clear call site
     (`Request::builder().timeout(...).retries(...).build()`).
   source: "builder pattern (common Rust API design idiom)"
@@ -713,17 +731,19 @@
     How do Rust traits compare to "interfaces" in classic OOP languages like
     Java or C#?
   answer: |
-    Both describe a set of methods a type must implement, but Rust traits
-    can additionally supply DEFAULT method bodies (closer to an abstract
-    base class than a pure interface), can be implemented for types you
-    don't own as long as either the trait or the type is local to your
-    crate (the orphan rule), and require no shared base "object" type — any
-    type, including primitives like `i32`, can implement any trait.
-    Dispatch is also opt-in: calling a trait method through a generic
-    parameter (`fn f<T: Trait>(x: T)`) is statically resolved at compile
-    time (monomorphized, like C++ templates), and only `dyn Trait`
-    explicitly opts into the vtable-based dynamic dispatch that's implicit
-    for every interface method call in languages like Java.
+    **Rust traits go beyond classic interfaces: they can supply default
+    method bodies, apply to types you don't own (subject to the orphan
+    rule), require no shared base type, and dispatch is opt-in — static by
+    default, dynamic only via `dyn Trait`.**
+
+    Both describe a set of methods a type must implement, but a default
+    method body makes a trait closer to an abstract base class than a pure
+    interface; any type, including primitives like `i32`, can implement any
+    trait. Calling a trait method through a generic parameter (`fn f<T:
+    Trait>(x: T)`) is statically resolved at compile time (monomorphized,
+    like C++ templates), and only `dyn Trait` explicitly opts into the
+    vtable-based dynamic dispatch that's implicit for every interface method
+    call in languages like Java.
   source: "book §10.2 + §18.2 (traits vs interfaces)"
   tags: [rust, oop, traits, concept]
 
@@ -733,16 +753,17 @@
     Trait>`-style polymorphism (as in the state-pattern `Post`) actually pay
     off over an enum with a `match`?
   answer: |
-    An enum + `match` is usually simpler and just as safe when the full set
-    of variants is known and closed (you own every case and won't add new
-    ones from outside this crate), and the per-variant logic is small enough
-    to stay readable scattered across `match` arms. Trait objects earn their
-    keep when the set of implementing types is OPEN — other crates, or
-    other parts of a large codebase, need to add a new state/shape/handler
-    without your code changing at all (a plugin system, or a library
-    exposing a trait for its users to implement) — something a fixed `enum`
-    can never support, since every variant must be known where the enum
-    itself is defined.
+    **`Box<dyn Trait>` pays off when the set of implementing types is OPEN
+    — other crates or codebase parts need to add new cases without your
+    code changing; an enum + `match` is usually simpler and just as safe
+    when the set of variants is known and closed.**
+
+    An enum + `match` fits when you own every case and won't add new ones
+    from outside this crate, and the per-variant logic is small enough to
+    stay readable scattered across `match` arms. Trait objects earn their
+    keep for a plugin system, or a library exposing a trait for its users to
+    implement — something a fixed `enum` can never support, since every
+    variant must be known where the enum itself is defined.
   source: "book §18.2-18.3 (choosing between enums and trait objects)"
   tags: [rust, oop, concept]
 
@@ -750,16 +771,20 @@
   question: |
     So — is Rust an "object-oriented" language?
   answer: |
-    It depends which hallmark you mean. ENCAPSULATION: yes, directly, via
-    module/field privacy. POLYMORPHISM: yes, via generics (static dispatch)
-    and `dyn Trait` (dynamic dispatch), without needing any class hierarchy.
-    INHERITANCE, specifically one concrete type automatically inheriting
-    another's fields and method bodies: no, deliberately — Rust substitutes
-    default trait methods and composition instead, judging classical
-    implementation inheritance a common source of fragile coupling. Whether
-    that adds up to "OOP" is mostly a semantic argument; more useful in
-    practice is knowing which of the three you actually need for a given
-    design, since Rust gives you two of them directly and asks you to reach
-    for different, often safer, tools for the third.
+    **Rust has two of the three classic OOP hallmarks directly —
+    encapsulation and polymorphism — but deliberately lacks classical
+    inheritance, so whether that counts as "OOP" is mostly a semantic
+    question.**
+
+    ENCAPSULATION: yes, directly, via module/field privacy. POLYMORPHISM:
+    yes, via generics (static dispatch) and `dyn Trait` (dynamic dispatch),
+    without needing any class hierarchy. INHERITANCE, specifically one
+    concrete type automatically inheriting another's fields and method
+    bodies: no, deliberately — Rust substitutes default trait methods and
+    composition instead, judging classical implementation inheritance a
+    common source of fragile coupling. More useful in practice is knowing
+    which of the three you actually need for a given design, since Rust
+    gives you two of them directly and asks you to reach for different,
+    often safer, tools for the third.
   source: "book §18.1-18.3 (is Rust object-oriented?)"
   tags: [rust, oop, concept]

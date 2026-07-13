@@ -5,12 +5,12 @@
     `String` vs `&str` — what is each, and which should a function PARAMETER
     usually be?
   answer: |
-    `String`: owned, growable, heap-allocated UTF-8 buffer.
-    `&str`: borrowed view into UTF-8 data (a String, a literal, a slice of
-    either).
-    Parameters should usually be `&str`: deref coercion lets callers pass
-    `&String` or a literal for free. Take `String` only when you need
-    ownership (e.g. storing it).
+    **`String` is an owned, growable, heap-allocated UTF-8 buffer; `&str` is
+    a borrowed view into UTF-8 data — and function parameters should usually
+    be `&str`.**
+
+    Deref coercion lets callers pass `&String` or a literal for free. Take
+    `String` only when you need ownership (e.g. storing it).
   source: "book §4.3 + §8.2 (String vs &str)"
   tags: [rust, strings, str, api-design, concept]
 
@@ -74,10 +74,14 @@
     After `let s3 = s1 + &s2;` — why can't you use `s1` anymore, and what's the
     usual alternative when combining several pieces?
   answer: |
-    `+` calls `fn add(self, s: &str) -> String`: it takes s1 BY VALUE (moves
-    it, reusing its buffer) and appends s2. s1 is gone; s2 (borrowed) is fine.
-    For multi-part combinations use `format!("{s1}-{s2}")` — it borrows
-    everything, at the cost of a fresh allocation.
+    **`s1` is moved because `+` calls `fn add(self, s: &str) -> String`,
+    taking `self` by value; the usual alternative for combining several
+    pieces is `format!`.**
+
+    `+` takes s1 BY VALUE (moves it, reusing its buffer) and appends s2. s1
+    is gone; s2 (borrowed) is fine. For multi-part combinations use
+    `format!("{s1}-{s2}")` — it borrows everything, at the cost of a fresh
+    allocation.
   source: "book §8.2 (concatenation)"
   tags: [rust, strings, ownership, format, concept]
 
@@ -85,10 +89,12 @@
   question: |
     Why does `&"héllo"[0..1]` risk a panic, and `"héllo".len() != 5`?
   answer: |
-    Strings are UTF-8 bytes: `len()` counts BYTES (é is 2 bytes → 6), and
-    slicing uses byte offsets — slicing must land on char boundaries or it
-    PANICS at runtime (`[0..2]` through é would). Indexing `s[0]` doesn't
-    compile at all.
+    **Because strings are UTF-8 bytes, `len()` counts bytes not characters,
+    and slicing must land on a char boundary or it panics at runtime.**
+
+    é is 2 bytes, so "héllo".len() == 6, not 5. Slicing uses byte offsets;
+    a slice that cuts through the middle of a multi-byte char panics.
+    Indexing `s[0]` doesn't compile at all.
     Iterate `chars()` for characters, or check `is_char_boundary` before
     slicing byte ranges.
   source: "book §8.2 (bytes, scalars, graphemes)"
@@ -428,10 +434,13 @@
     `bytes()` vs `chars()` vs `char_indices()` — what does each iterator yield
     and when do you use it?
   answer: |
-    `bytes()` → `u8`: raw UTF-8 bytes; fastest, correct for pure-ASCII work.
-    `chars()` → `char`: Unicode scalar values; the default for text logic.
-    `char_indices()` → `(usize, char)`: char plus its BYTE offset — use when
-    you need to slice the string at positions found while scanning.
+    **`bytes()` yields raw `u8` bytes, `chars()` yields Unicode scalar
+    `char`s, and `char_indices()` yields `(byte_offset, char)` pairs.**
+
+    `bytes()` — fastest, correct for pure-ASCII work.
+    `chars()` — the default for text logic.
+    `char_indices()` — use when you need to slice the string at positions
+    found while scanning.
   source: "book §8.2 + std str"
   tags: [rust, strings, utf8, iterators, concept]
 
@@ -489,6 +498,10 @@
     You have `bytes: Vec<u8>` from a file/socket. How do you get a `String`,
     and what are the failure-handling options?
   answer: |
+    **Use `String::from_utf8(bytes)` for a strict `Result` that fails on
+    invalid UTF-8, or `String::from_utf8_lossy(&bytes)` to always succeed by
+    replacing bad sequences with the replacement character.**
+
     `String::from_utf8(bytes)` → `Result<String, FromUtf8Error>` — strict,
     zero-copy on success; the error can give the bytes back.
     `String::from_utf8_lossy(&bytes)` → `Cow<str>` — replaces invalid

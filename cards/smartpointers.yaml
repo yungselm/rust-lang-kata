@@ -4,6 +4,9 @@
   question: |
     Name the three classic situations where you reach for `Box<T>`.
   answer: |
+    **Reach for `Box<T>` for recursive types, owned trait objects, and
+    moving large data without copying it.**
+
     1. Recursive types — the type's size would be infinite without a pointer
        (`enum List { Cons(i32, Box<List>), Nil }`).
     2. Trait objects — owning a value known only by trait: `Box<dyn Trait>`.
@@ -147,11 +150,14 @@
     What is deref coercion, and why does `hello(&boxed_string)` compile when
     `hello` takes `&str` but `boxed_string` is a `Box<String>`?
   answer: |
-    When argument types don't match, the compiler inserts `.deref()` calls as
-    long as the types implement `Deref`: `&Box<String>` → `&String` → `&str`.
-    It happens at compile time, only through `&` (no surprise moves), and also
-    applies when calling methods. It's why `&String` works anywhere `&str` is
-    expected.
+    **Deref coercion is the compiler automatically inserting `.deref()`
+    calls at compile time to turn `&Box<String>` into `&String` into
+    `&str`, whenever the types implement `Deref`, so argument types line
+    up.**
+
+    It happens at compile time, only through `&` (no surprise moves), and
+    also applies when calling methods. It's why `&String` works anywhere
+    `&str` is expected.
   source: "book §15.2 (deref coercion)"
   tags: [rust, smart-pointers, deref, concept]
 
@@ -198,9 +204,11 @@
     You want a value cleaned up BEFORE the end of its scope. Can you call
     `x.drop()`? What's the idiomatic way?
   answer: |
-    No — explicit destructor calls are forbidden (`E0040`), because the
-    compiler would still auto-drop at scope end → double free.
-    Use `std::mem::drop(x)` (in the prelude as `drop(x)`): it simply takes
+    **No — calling `x.drop()` is forbidden (`E0040`); instead call
+    `drop(x)` (`std::mem::drop`, in the prelude) to drop it early.**
+
+    Explicit destructor calls are disallowed because the compiler would
+    still auto-drop at scope end → double free. `drop(x)` simply takes
     ownership and lets `x` fall out of scope immediately.
   source: "book §15.3 (dropping early)"
   tags: [rust, smart-pointers, drop, concept]
@@ -240,9 +248,12 @@
     When do you need `Rc<T>` instead of plain ownership or references? What
     are its two big restrictions?
   answer: |
-    When MULTIPLE owners must keep the same value alive and no single owner's
-    scope dominates (graph nodes, shared config, caches) — lifetimes can't
-    express that.
+    **Use `Rc<T>` when multiple owners must keep the same value alive with
+    no single owner's scope dominating; its two restrictions are
+    single-threaded-only and shared-access-only.**
+
+    Typical cases: graph nodes, shared config, caches — plain lifetimes
+    can't express that kind of ownership.
     Restrictions: (1) single-threaded only — not `Send`; use `Arc` across
     threads. (2) Gives only SHARED access — combine with `RefCell` (or
     `Mutex` for `Arc`) to mutate.
@@ -286,11 +297,14 @@
     `RefCell<T>` enforces the borrow rules — how does that differ from normal
     references, and what happens on violation?
   answer: |
-    Same rules (many readers XOR one writer), but checked at RUNTIME instead of
-    compile time: `borrow()` and `borrow_mut()` count active borrows and PANIC
-    on conflict (e.g. `borrow_mut` while a `borrow` guard is alive).
-    Use it when you're sure the code is correct but the borrow checker can't
-    see it — typically mutation behind `&self` (interior mutability).
+    **`RefCell` enforces the same borrow rules as normal references (many
+    readers XOR one writer), but checks them at RUNTIME instead of compile
+    time, panicking on a violation instead of failing to compile.**
+
+    `borrow()` and `borrow_mut()` count active borrows and PANIC on
+    conflict (e.g. `borrow_mut` while a `borrow` guard is alive). Use it
+    when you're sure the code is correct but the borrow checker can't see
+    it — typically mutation behind `&self` (interior mutability).
   source: "book §15.5 (RefCell<T>)"
   tags: [rust, smart-pointers, refcell, interior-mutability, concept]
 
@@ -341,12 +355,15 @@
   question: |
     `Cell<T>` vs `RefCell<T>` — how do they differ and when do you pick each?
   answer: |
+    **`Cell<T>` copies the value in and out with zero runtime cost and
+    can't panic; `RefCell<T>` hands out real borrow guards with
+    runtime-checked counting that can panic.**
+
     `Cell<T>`: no references into the value at all — you `get()` a COPY and
-    `set()`/`replace()` the whole value. Zero runtime cost, can't panic. Ideal
-    for small `Copy` types (counters, flags).
-    `RefCell<T>`: hands out real `&`/`&mut` guards with runtime borrow
-    counting (can panic). Needed when the value isn't `Copy` or you must
-    mutate in place (e.g. a `Vec`).
+    `set()`/`replace()` the whole value. Ideal for small `Copy` types
+    (counters, flags).
+    `RefCell<T>`: needed when the value isn't `Copy` or you must mutate in
+    place (e.g. a `Vec`).
   source: "std cell (module docs); book §15.5"
   tags: [rust, smart-pointers, cell, refcell, concept]
 
@@ -436,6 +453,11 @@
   question: |
     How does an `Rc` reference cycle leak memory, and how does `Weak` fix it?
   answer: |
+    **An `Rc` cycle leaks memory because mutual strong references keep both
+    strong counts at 1 or more forever, so neither value ever drops;
+    `Weak` fixes it by pointing at the value without counting toward the
+    strong count.**
+
     If A holds `Rc<B>` and B holds `Rc<A>`, both strong counts stay ≥ 1 even
     after all outside handles are gone — neither ever drops (leak, no crash).
     `Weak` participates in the cycle WITHOUT counting toward strong count: the
@@ -484,11 +506,13 @@
   question: |
     Chooser: `Box<T>` vs `Rc<T>` vs `Arc<T>` — one line each.
   answer: |
-    `Box<T>` — single owner, heap allocation (recursive types, owned trait
-    objects).
-    `Rc<T>` — many owners, one thread (refcount not thread-safe, not `Send`).
-    `Arc<T>` — many owners across threads (atomic refcount; slightly slower —
-    don't default to it needlessly).
+    **`Box<T>` is a single-owner heap allocation, `Rc<T>` gives many owners
+    on one thread, and `Arc<T>` gives many owners across threads.**
+
+    `Box<T>` — recursive types, owned trait objects.
+    `Rc<T>` — refcount not thread-safe, not `Send`.
+    `Arc<T>` — atomic refcount; slightly slower — don't default to it
+    needlessly.
     All three give shared/immutable access; add `RefCell` (Rc) or
     `Mutex`/`RwLock` (Arc) for mutation.
   source: "book §15 + §16.3"
@@ -568,10 +592,13 @@
     Why does this panic at runtime?
     `let a = data.borrow_mut(); let b = data.borrow(); // data: RefCell<...>`
   answer: |
-    The first guard (`a`) is an active mutable borrow; taking any other borrow
-    while it's alive violates "many readers XOR one writer", which RefCell
-    checks at runtime → `BorrowError` panic ("already mutably borrowed").
-    Fix: end the first borrow before the second (`drop(a)` or a narrower
-    scope). Guards release their borrow when dropped.
+    **It panics because `a` is still holding an active mutable borrow when
+    `b` tries to borrow again, and `RefCell` enforces "many readers XOR one
+    writer" at runtime instead of at compile time.**
+
+    Taking any other borrow while the first guard is alive violates that
+    rule, which triggers a `BorrowError` panic ("already mutably
+    borrowed"). Fix: end the first borrow before the second (`drop(a)` or a
+    narrower scope) — guards release their borrow when dropped.
   source: "book §15.5 (RefCell panics)"
   tags: [rust, smart-pointers, refcell, panics, concept]

@@ -562,9 +562,11 @@
     Why take `&[T]` instead of `&Vec<T>` (and `&mut [T]` instead of `&mut Vec<T>`)
     as a function parameter?
   answer: |
-    `&[T]` is strictly more general: a `&Vec<T>`, an array, or any slice coerces
-    to it. Take `&[T]` to read and `&mut [T]` to edit existing elements. Only
-    take `&mut Vec<T>` when you must change the LENGTH (push, insert, remove,
+    **Take `&[T]`/`&mut [T]` because they're strictly more general — a
+    `&Vec<T>`, an array, or any slice all coerce to them.**
+
+    Take `&[T]` to read and `&mut [T]` to edit existing elements. Only take
+    `&mut Vec<T>` when you must change the LENGTH (push, insert, remove,
     truncate). clippy::ptr_arg nudges you here.
   source: "clippy::ptr_arg / book §4.3"
   tags: [rust, vec, concept]
@@ -573,9 +575,11 @@
   question: |
     What does a `Vec<T>` store, and where does the data live?
   answer: |
-    Three words: a pointer to a heap buffer, the length, and the capacity. That
-    header sits on the stack (or inline in its owner); the elements live on the
-    heap. Moving a Vec just copies the header.
+    **A `Vec<T>` is a three-word header — pointer, length, capacity — while
+    the elements themselves live on the heap.**
+
+    That header sits on the stack (or inline in its owner). Moving a Vec
+    just copies the header.
   source: "book §8.1 / std Vec"
   tags: [rust, vec, concept]
 
@@ -583,9 +587,11 @@
   question: |
     Difference between `v[i]` and `v.get(i)`?
   answer: |
-    `v[i]` yields the element directly but PANICS if out of bounds. `v.get(i)`
-    returns `Option<&T>` (None when out of bounds) — the safe choice when the
-    index might be invalid. (`get_mut` gives `Option<&mut T>`.)
+    **`v[i]` panics on an out-of-bounds index, while `v.get(i)` returns
+    `Option<&T>` (`None` instead of panicking).**
+
+    Use `get` as the safe choice when the index might be invalid. (`get_mut`
+    gives `Option<&mut T>`.)
   source: "std slice::get"
   tags: [rust, vec, concept]
 
@@ -593,9 +599,11 @@
   question: |
     Why must you usually `sort` before calling `dedup`?
   answer: |
-    `dedup` only collapses CONSECUTIVE equal elements. Sorting brings equal
-    values together, so dedup then yields fully unique elements. If you can't
-    sort, dedup via a `HashSet` instead.
+    **Because `dedup` only collapses consecutive equal elements, so sorting
+    first brings equal values together.**
+
+    Only then does dedup yield fully unique elements. If you can't sort,
+    dedup via a `HashSet` instead.
   source: "std Vec::dedup"
   tags: [rust, vec, concept]
 

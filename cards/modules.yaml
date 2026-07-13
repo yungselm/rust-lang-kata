@@ -7,14 +7,16 @@
     What do "package", "crate", and "module" each mean in Rust's project
     vocabulary?
   answer: |
-    A CRATE is the smallest unit the compiler compiles at once — either a
-    binary crate (has `fn main`) or a library crate. A PACKAGE is one or more
-    crates described by a single `Cargo.toml`: at most ONE library crate, but
-    any number of binary crates (each needs its own `src/bin/*.rs`, or the
-    single default `src/main.rs`). A MODULE (`mod`) is a unit of
-    organization and privacy WITHIN a single crate — it groups related items
-    and controls what's visible where, but doesn't produce a separate
-    compiled artifact the way a crate does.
+    **A crate is the smallest unit the compiler compiles at once; a package
+    is one or more crates sharing one `Cargo.toml`; a module organizes and
+    controls privacy within a single crate.**
+
+    A CRATE is either a binary crate (has `fn main`) or a library crate. A
+    PACKAGE's `Cargo.toml` allows at most ONE library crate, but any number
+    of binary crates (each needs its own `src/bin/*.rs`, or the single
+    default `src/main.rs`). A MODULE (`mod`) groups related items and
+    controls what's visible where, but doesn't produce a separate compiled
+    artifact the way a crate does.
   source: "book §7.1 (packages and crates)"
   tags: [rust, modules, concept]
 
@@ -55,14 +57,15 @@
     What is Rust's default visibility rule, and how does it interact with
     nested modules?
   answer: |
-    Every item (fn, struct, enum, module, ...) is PRIVATE by default —
-    visible only inside the module that defines it and that module's
-    DESCENDANTS. A child module can always see its ancestors' private items
-    (since it's nested inside their scope), but an ancestor can NOT see a
-    private item defined in a child module unless that item is explicitly
-    marked `pub` (or a narrower `pub(...)` that still reaches the ancestor).
-    This is the opposite of what people sometimes expect from other
-    languages' package-private defaults.
+    **Every item is private by default — visible only within the module
+    that defines it and that module's descendants.**
+
+    A child module can always see its ancestors' private items (since it's
+    nested inside their scope), but an ancestor can NOT see a private item
+    defined in a child module unless that item is explicitly marked `pub`
+    (or a narrower `pub(...)` that still reaches the ancestor). This is the
+    opposite of what people sometimes expect from other languages'
+    package-private defaults.
   source: "book §7.3 (paths for referring to an item in the module tree)"
   tags: [rust, modules, concept]
 
@@ -139,14 +142,17 @@
     What's the difference between an absolute path and a relative path when
     referring to an item in the module tree, and what does `super::` do?
   answer: |
-    An ABSOLUTE path starts from the crate root, spelled `crate::...` (or,
-    for a different crate, that crate's name). A RELATIVE path starts from
-    the CURRENT module and can begin with `self::` (the current module —
-    usually omitted, since a bare name already means that) or `super::` to
-    step up to the PARENT module, the same way `..` steps up a directory in
-    a filesystem path. Both forms are valid; a relative path is often
-    shorter when calling something nearby, while an absolute path is more
-    stable if you move the calling code to a different part of the tree.
+    **An absolute path starts from the crate root (`crate::...`); a
+    relative path starts from the current module and can use `super::` to
+    step up to the parent, the same way `..` steps up a directory.**
+
+    An ABSOLUTE path is spelled `crate::...` (or, for a different crate,
+    that crate's name). A RELATIVE path can begin with `self::` (the
+    current module — usually omitted, since a bare name already means that)
+    or `super::` for the parent module. Both forms are valid; a relative
+    path is often shorter when calling something nearby, while an absolute
+    path is more stable if you move the calling code to a different part of
+    the tree.
   source: "book §7.3 (paths for referring to an item in the module tree)"
   tags: [rust, modules, concept]
 
@@ -194,13 +200,18 @@
     usually imported by their FULL path (`use std::collections::HashMap;`,
     then just `HashMap::new()`)?
   answer: |
-    Importing a function's enclosing module and calling it as
-    `module::function()` keeps a visual reminder at the call site that it's
-    not a locally-defined function — reducing confusion about where it comes
-    from. Importing the full path for a type/struct/enum/trait is preferred
-    instead, since repeating the enclosing module name at every use
-    (`collections::HashMap`) adds noise without much extra clarity — this is
-    convention, not a compiler rule, and either form always compiles.
+    **Functions are conventionally imported by their enclosing module (so
+    calls read `module::function()`, flagging that it isn't local), while
+    types are imported by their full path since repeating the module name
+    at every use adds noise without benefit.**
+
+    Importing a function's enclosing module keeps a visual reminder at the
+    call site that it's not a locally-defined function — reducing confusion
+    about where it comes from. Importing the full path for a
+    type/struct/enum/trait is preferred instead, since repeating the
+    enclosing module name at every use (`collections::HashMap`) adds noise
+    without much extra clarity — this is convention, not a compiler rule,
+    and either form always compiles.
   source: "book §7.4 (idiomatic use paths)"
   tags: [rust, modules, concept]
 
@@ -314,14 +325,17 @@
     HashMap};`) and glob `use std::collections::*;` each do, and when is a
     glob import appropriate?
   answer: |
-    A nested-path `use` combines several `use` statements sharing a common
-    prefix into one line — purely a formatting convenience, no behavior
-    change. A GLOB import brings EVERY public item from a path into scope at
-    once; it's handy in a `#[cfg(test)] mod tests { use super::*; ... }`
-    block (grab everything from the parent module for testing, where it's
-    obvious what's in scope) but is generally discouraged in ordinary code,
-    since it makes it unclear which module a given name actually came from
-    and can silently introduce naming collisions as the target module grows.
+    **A nested-path `use` is purely a formatting shortcut combining several
+    imports that share a common prefix; a glob `use path::*` brings every
+    public item from that path into scope at once.**
+
+    The nested form causes no behavior change versus writing the `use`
+    statements separately. The GLOB import is handy in a `#[cfg(test)] mod
+    tests { use super::*; ... }` block (grab everything from the parent
+    module for testing, where it's obvious what's in scope) but is
+    generally discouraged in ordinary code, since it makes it unclear which
+    module a given name actually came from and can silently introduce
+    naming collisions as the target module grows.
   source: "book §7.4 (nested paths and the glob operator)"
   tags: [rust, modules, concept]
 
@@ -330,17 +344,19 @@
     How do you split a module's implementation into its OWN file, and what
     stays behind in the parent?
   answer: |
-    Write `mod front_of_house;` (a module declaration with NO body/braces) in
-    the parent file; the compiler then looks for the implementation in a
-    sibling file `front_of_house.rs` (or the older `front_of_house/mod.rs`
-    style), and the module tree — along with every visibility rule — behaves
-    identically to writing the body inline. Only the top-level declaration
-    (`mod front_of_house;`) lives in the parent; everything defined inside
-    that module lives in the separate file. This deck's harness compiles
-    every card as a single generated file, so this pattern is described here
-    rather than demonstrated literally — but the module-tree/visibility
-    rules covered by the other cards apply unchanged whether the code is in
-    one file or split across many.
+    **Write `mod front_of_house;` (no body/braces) in the parent file, and
+    the compiler loads the implementation from a sibling file
+    `front_of_house.rs` (or the older `front_of_house/mod.rs`) — the module
+    tree and every visibility rule behave identically to writing the body
+    inline.**
+
+    Only the top-level declaration (`mod front_of_house;`) lives in the
+    parent; everything defined inside that module lives in the separate
+    file. This deck's harness compiles every card as a single generated
+    file, so this pattern is described here rather than demonstrated
+    literally — but the module-tree/visibility rules covered by the other
+    cards apply unchanged whether the code is in one file or split across
+    many.
   source: "book §7.5 (separating modules into different files)"
   tags: [rust, modules, concept]
 
@@ -468,8 +484,10 @@
     Can a single package contain more than one crate? If so, what's the
     constraint?
   answer: |
-    Yes — a package's `Cargo.toml` can produce AT MOST one library crate
-    (`src/lib.rs`), but any number of binary crates: the default `src/
+    **Yes — a package's `Cargo.toml` can produce at most ONE library crate,
+    but any number of binary crates.**
+
+    The library crate is `src/lib.rs`; binary crates are the default `src/
     main.rs` plus additional ones under `src/bin/*.rs`, each compiled as its
     own separate binary crate. There is no limit on binary crates, only on
     library crates (zero or one). A package with neither `src/lib.rs` nor
@@ -525,8 +543,11 @@
     Why do many Rust projects keep `src/main.rs` nearly empty (just wiring or
     CLI parsing) and put the real logic in `src/lib.rs`?
   answer: |
-    A binary crate (`src/main.rs` only) has no public API for anything
-    outside it to link against, which rules out integration tests
+    **Because a binary crate has no public API for anything else to link
+    against, putting the real logic in `lib.rs` instead lets integration
+    tests and other binaries in the package reuse it.**
+
+    A binary crate (`src/main.rs` only) rules out integration tests
     (`tests/*.rs`, which link against the crate's PUBLIC API) and rules out
     reusing that logic from a second binary in the same package. Splitting
     into a thin `main.rs` that just calls into a full `lib.rs` gives you
@@ -585,15 +606,16 @@
     What's a good mental model for the "module tree", and how does it map
     onto a path like `crate::front_of_house::hosting::add_to_waitlist`?
   answer: |
-    Think of it like a filesystem: the CRATE ROOT is the root directory
-    (spelled `crate` in a path), each `mod` is a subdirectory, and each item
-    (fn/struct/enum/...) is a file inside its module — a path like `crate::
-    front_of_house::hosting::add_to_waitlist` reads exactly like a
-    filesystem path from the root down through nested directories to a
-    specific file. `super::` is the module-tree equivalent of `..`, stepping
-    up to the parent, and privacy propagates down the tree the same way a
-    private directory keeps its contents hidden from outside, but visible to
-    everything nested inside it.
+    **Think of the module tree like a filesystem: the crate root is the
+    root directory, each `mod` is a subdirectory, and each item
+    (fn/struct/enum/...) is a file inside its module.**
+
+    A path like `crate::front_of_house::hosting::add_to_waitlist` reads
+    exactly like a filesystem path from the root down through nested
+    directories to a specific file. `super::` is the module-tree equivalent
+    of `..`, stepping up to the parent, and privacy propagates down the
+    tree the same way a private directory keeps its contents hidden from
+    outside, but visible to everything nested inside it.
   source: "book §7.2 (defining modules to control scope and privacy)"
   tags: [rust, modules, concept]
 
@@ -602,13 +624,16 @@
     What's the full range of visibility levels available on an item, from
     most to least restrictive?
   answer: |
-    Private (default, no keyword) — visible only in the defining module and
-    its descendants. `pub(in some::path)` — visible only within the named
-    ancestor module (and ITS descendants). `pub(super)` — visible to the
-    direct parent module (and its descendants). `pub(crate)` — visible
-    anywhere in the current crate, never outside it. `pub` — visible to
+    **From most to least restrictive: private (default), `pub(in path)`,
+    `pub(super)`, `pub(crate)`, then `pub` — each a strict widening of the
+    one before it.**
+
+    Private (default, no keyword) is visible only in the defining module
+    and its descendants. `pub(in some::path)` is visible only within the
+    named ancestor module (and ITS descendants). `pub(super)` is visible to
+    the direct parent module (and its descendants). `pub(crate)` is visible
+    anywhere in the current crate, never outside it. `pub` is visible to
     anyone who can reach the item's path, including external crates that
-    depend on this one. Each level is a strict widening of the one before
-    it.
+    depend on this one.
   source: "book §7.3 (exposing paths with the pub keyword)"
   tags: [rust, modules, concept]

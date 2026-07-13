@@ -3,8 +3,10 @@
   question: |
     What does Big-O notation describe?
   answer: |
-    An asymptotic upper bound on how an algorithm's cost (time or space) grows
-    as the input size n grows — ignoring constant factors and lower-order terms.
+    **Big-O is an asymptotic upper bound on how an algorithm's cost (time or
+    space) grows as the input size n grows, ignoring constant factors and
+    lower-order terms.**
+
     It captures scaling/worst-case shape, not exact runtime in seconds.
   source: "CS fundamentals (asymptotic analysis)"
   tags: [bigo, concept]
@@ -14,7 +16,8 @@
     Order these from slowest-growing to fastest-growing:
     O(n), O(1), O(n^2), O(log n), O(n log n).
   answer: |
-    O(1) < O(log n) < O(n) < O(n log n) < O(n^2).
+    **O(1) < O(log n) < O(n) < O(n log n) < O(n^2).**
+
     (Constant, logarithmic, linear, linearithmic, quadratic.)
   source: "CS fundamentals (asymptotic analysis)"
   tags: [bigo, concept]
@@ -23,9 +26,10 @@
   question: |
     `Vec<T>`: complexity of indexing `v[i]`, `push`, and `pop` (from the end)?
   answer: |
-    `v[i]`: O(1) (contiguous memory).
-    `push`: amortized O(1).
-    `pop` (end): O(1).
+    **`v[i]` indexing is O(1), `push` is amortized O(1), and `pop` from the
+    end is O(1).**
+
+    Indexing is O(1) because Vec storage is contiguous in memory.
   source: "std Vec (complexity docs)"
   tags: [vec, bigo, concept]
 
@@ -33,7 +37,9 @@
   question: |
     `Vec<T>`: complexity of `insert(i, x)` or `remove(i)` at an arbitrary index?
   answer: |
-    O(n): every element after index i must shift over by one. Only inserting or
+    **`insert(i, x)`/`remove(i)` at an arbitrary index is O(n).**
+
+    Every element after index i must shift over by one. Only inserting or
     removing at the END is O(1) (amortized).
   source: "std Vec::insert / Vec::remove"
   tags: [vec, bigo, concept]
@@ -42,8 +48,11 @@
   question: |
     `Vec<T>`: complexity of checking whether it contains a value (unsorted)?
   answer: |
-    O(n) — a linear scan. If you need fast membership tests, use a `HashSet`
-    (O(1) avg) or sort and `binary_search` (O(log n)).
+    **Checking whether an unsorted `Vec` contains a value is O(n) — a linear
+    scan.**
+
+    If you need fast membership tests, use a `HashSet` (O(1) avg) or sort and
+    `binary_search` (O(log n)).
   source: "std slice::contains"
   tags: [vec, bigo, concept]
 
@@ -51,10 +60,13 @@
   question: |
     Why is `Vec::push` "amortized O(1)" rather than O(1)?
   answer: |
+    **Because a full Vec doubles its capacity and copies elements only rarely,
+    the cost of those expensive O(n) resizes averages out to a constant cost
+    per push over many pushes — that averaging is "amortized".**
+
     When capacity is full, the Vec allocates a larger buffer (typically 2x) and
     moves all elements — that single push is O(n). But because capacity doubles,
-    those expensive pushes are rare; averaged over many pushes the cost per push
-    is constant. That averaging is "amortized".
+    those expensive pushes are rare.
   source: "std Vec (growth strategy)"
   tags: [vec, bigo, concept]
 
@@ -63,8 +75,10 @@
     `HashMap<K, V>`: average and worst-case complexity of get / insert / remove,
     and what must `K` implement?
   answer: |
-    Average O(1); worst case O(n) (pathological hash collisions). Keys must
-    implement `Hash + Eq`.
+    **`HashMap` get/insert/remove average O(1), worst case O(n); keys must
+    implement `Hash + Eq`.**
+
+    The worst case comes from pathological hash collisions.
   source: "std HashMap (complexity docs)"
   tags: [hashmap, bigo, concept]
 
@@ -73,8 +87,10 @@
     `BTreeMap<K, V>`: complexity of get / insert / remove, and what does it give
     you that `HashMap` doesn't?
   answer: |
-    O(log n) for get / insert / remove. Keys are kept sorted, enabling ordered
-    iteration and range queries (`map.range(a..b)`). Keys must implement `Ord`.
+    **`BTreeMap` get/insert/remove are O(log n), and unlike `HashMap` it keeps
+    keys sorted, enabling ordered iteration and range queries.**
+
+    Range queries look like `map.range(a..b)`. Keys must implement `Ord`.
   source: "std BTreeMap (complexity docs)"
   tags: [btreemap, bigo, concept]
 
@@ -82,8 +98,10 @@
   question: |
     `HashSet` vs `BTreeSet`: membership-test complexity and ordering?
   answer: |
-    `HashSet`: O(1) average membership, no ordering.
-    `BTreeSet`: O(log n) membership, elements kept sorted (supports ranges).
+    **`HashSet` gives O(1) average membership with no ordering; `BTreeSet`
+    gives O(log n) membership but keeps elements sorted.**
+
+    `BTreeSet`'s sorted order also supports range queries.
   source: "std HashSet / BTreeSet"
   tags: [set, bigo, concept]
 
@@ -92,9 +110,10 @@
     What is `VecDeque`, and which operations does it make O(1) that `Vec` does
     not?
   answer: |
-    A double-ended queue backed by a ring buffer. `push_front`/`pop_front` AND
-    `push_back`/`pop_back` are all O(1). On a `Vec`, front operations are O(n).
-    Indexing is still O(1).
+    **`VecDeque` is a double-ended queue backed by a ring buffer, making
+    `push_front`/`pop_front` AND `push_back`/`pop_back` all O(1).**
+
+    On a `Vec`, front operations are O(n) instead. Indexing is still O(1).
   source: "std VecDeque"
   tags: [vecdeque, bigo, concept]
 
@@ -103,8 +122,10 @@
     What is the default growable sequence in Rust, and when would you prefer
     `VecDeque` or `LinkedList`?
   answer: |
-    Default to `Vec` — contiguous, cache-friendly, O(1) index and back-ops.
-    Prefer `VecDeque` when you need fast insertion/removal at BOTH ends (queues).
+    **`Vec` is the default growable sequence; reach for `VecDeque` when you
+    need fast insertion/removal at BOTH ends, and avoid `LinkedList`.**
+
+    `Vec` is contiguous, cache-friendly, with O(1) index and back-ops.
     `LinkedList` is almost never worth it in practice (poor cache locality).
   source: "std collections (choosing a collection)"
   tags: [vec, vecdeque, concept]
@@ -113,8 +134,10 @@
   question: |
     Difference between `[T; N]` (array) and `Vec<T>`?
   answer: |
-    `[T; N]`: fixed length known at compile time, stored inline (often on the
-    stack), no allocation. `Vec<T>`: growable, heap-allocated, stores a pointer,
+    **`[T; N]` has a fixed length known at compile time and no allocation,
+    while `Vec<T>` is growable and heap-allocated.**
+
+    `[T; N]` is stored inline (often on the stack). `Vec<T>` stores a pointer,
     length, and capacity. Use an array when the size is fixed and known.
   source: "Rust Book §3.2 (arrays) / std Vec"
   tags: [array, vec, concept]
@@ -123,9 +146,11 @@
   question: |
     `slice::binary_search`: complexity, precondition, and return value?
   answer: |
-    O(log n). The slice MUST be sorted. Returns `Result<usize, usize>`:
-    `Ok(index)` if found, or `Err(insertion_index)` where the value would be
-    inserted to keep order.
+    **`slice::binary_search` is O(log n) but requires the slice to already be
+    sorted.**
+
+    It returns `Result<usize, usize>`: `Ok(index)` if found, or
+    `Err(insertion_index)` where the value would be inserted to keep order.
   code: |
     let v = [1, 3, 5, 7];
     assert_eq!(v.binary_search(&5), Ok(2));
@@ -137,9 +162,11 @@
   question: |
     Linear search vs binary search — complexity and the tradeoff?
   answer: |
-    Linear: O(n), works on ANY (unsorted) data. Binary: O(log n) but requires
-    SORTED data. Sorting first costs O(n log n), so binary search pays off when
-    you search the same data many times.
+    **Linear search is O(n) and works on any unsorted data; binary search is
+    O(log n) but requires sorted data.**
+
+    Sorting first costs O(n log n), so binary search pays off when you search
+    the same data many times.
   source: "CS fundamentals (search algorithms)"
   tags: [search, bigo, concept]
 
@@ -147,10 +174,12 @@
   question: |
     Complexity of `slice::sort` vs `slice::sort_unstable`, and when to use each?
   answer: |
-    Both O(n log n). `sort` is stable (preserves the relative order of equal
-    elements) and allocates scratch space. `sort_unstable` is usually faster and
-    in-place but may reorder equal elements. Prefer `sort_unstable` unless you
-    need stability.
+    **`sort` and `sort_unstable` are both O(n log n); `sort` is stable and
+    allocates scratch space, while `sort_unstable` is usually faster and
+    in-place but may reorder equal elements.**
+
+    "Stable" means it preserves the relative order of equal elements. Prefer
+    `sort_unstable` unless you need stability.
   source: "std slice::sort / sort_unstable"
   tags: [sort, bigo, concept]
 
@@ -159,9 +188,11 @@
     `Vec`: difference between `len()` and `capacity()`, and why use
     `Vec::with_capacity(n)`?
   answer: |
-    `len()` = number of elements currently stored; `capacity()` = slots
-    allocated (>= len). `with_capacity(n)` pre-allocates so a known number of
-    pushes won't trigger repeated O(n) reallocations.
+    **`len()` is the number of elements currently stored, while `capacity()`
+    is the number of slots allocated (always >= len).**
+
+    `with_capacity(n)` pre-allocates so a known number of pushes won't trigger
+    repeated O(n) reallocations.
   source: "std Vec::with_capacity"
   tags: [vec, concept]
 
@@ -169,9 +200,11 @@
   question: |
     Difference between time complexity and space complexity?
   answer: |
-    Time: how runtime scales with input size n. Space: how much EXTRA memory
-    (beyond the input) scales with n. Example: deduping with a `HashSet` is O(n)
-    time but also O(n) extra space.
+    **Time complexity measures how runtime scales with input size n; space
+    complexity measures how much EXTRA memory (beyond the input) scales with
+    n.**
+
+    Example: deduping with a `HashSet` is O(n) time but also O(n) extra space.
   source: "CS fundamentals (complexity analysis)"
   tags: [bigo, concept]
 
@@ -179,8 +212,11 @@
   question: |
     How do you use a `Vec` as a stack (LIFO), and what are the operations' costs?
   answer: |
-    `push(x)` to add and `pop()` to remove — both operate on the END, which is
-    the "top". `push` is amortized O(1), `pop` is O(1).
+    **Use `push(x)` to add and `pop()` to remove, both operating on the END
+    of the `Vec` as the stack's "top" — push is amortized O(1), pop is O(1).**
+
+    Both operations working on the end is what makes a `Vec` an efficient
+    stack.
   source: "std Vec (as a stack)"
   tags: [stack, vec, concept]
 
@@ -188,7 +224,9 @@
   question: |
     How do you implement an efficient FIFO queue in Rust?
   answer: |
-    Use `VecDeque`: `push_back` to enqueue, `pop_front` to dequeue — both O(1).
+    **Use `VecDeque`: `push_back` to enqueue and `pop_front` to dequeue, both
+    O(1).**
+
     Using a `Vec` with `remove(0)` to dequeue would be O(n) each time.
   source: "std VecDeque (as a queue)"
   tags: [queue, vecdeque, concept]
@@ -198,9 +236,12 @@
     Both array traversal and linked-list traversal are "O(n)". Why is a `Vec`
     usually much faster in practice?
   answer: |
-    Constant factors and memory layout, which Big-O hides. A `Vec` is contiguous,
-    so the CPU cache prefetches the next elements (few cache misses). A linked
-    list scatters nodes across the heap, causing a cache miss per hop.
+    **A `Vec`'s contiguous memory gives it far better CPU cache locality than
+    a linked list, even though both traversals are O(n) — constant factors and
+    memory layout are what Big-O hides.**
+
+    The CPU cache prefetches a `Vec`'s next elements (few cache misses), while
+    a linked list scatters nodes across the heap, causing a cache miss per hop.
   source: "CS fundamentals (cache locality)"
   tags: [bigo, vec, concept]
 
@@ -209,9 +250,11 @@
     What must a type implement to be used as a `HashMap`/`HashSet` key, versus a
     `BTreeMap`/`BTreeSet` key?
   answer: |
-    Hash-based (`HashMap`/`HashSet`): `Hash + Eq`. Tree-based
-    (`BTreeMap`/`BTreeSet`): `Ord`. Keys that are "equal" must hash equally
-    (hash) or compare consistently (Ord).
+    **Hash-based collections (`HashMap`/`HashSet`) require `Hash + Eq`;
+    tree-based collections (`BTreeMap`/`BTreeSet`) require `Ord`.**
+
+    Keys that are "equal" must hash equally (Hash) or compare consistently
+    (Ord).
   source: "std collections (key bounds)"
   tags: [hashmap, btreemap, concept]
 
@@ -221,6 +264,11 @@
     windows(2) is O(n log n). Why does the "worse" sorting version often run
     FASTER on LeetCode/NeetCode inputs?
   answer: |
+    **On the small inputs typical of these platforms, sort_unstable's
+    cache-friendly sequential access often beats HashSet's per-element hashing
+    overhead, even though HashSet's O(n) is asymptotically better than
+    sorting's O(n log n).**
+
     Big-O ignores constants, but CPUs don't. On the small inputs these platforms
     use, the constant factors dominate:
     - Sorting i32s with sort_unstable is sequential memory access, no allocation,
@@ -239,6 +287,11 @@
     If sorting often wins on small inputs, when should you still reach for the
     hashing solution (and what would an interviewer expect)?
   answer: |
+    **Reach for hashing when n can grow large, when you can early-exit, when
+    you must not mutate/reorder the input, or when a fast hasher is available
+    — but state the HashSet O(n) answer first as the expected interview
+    optimum.**
+
     Reach for hashing when:
     - n can grow large — O(n) eventually beats O(n log n) no matter the constants.
     - You can early-exit (e.g. Contains Duplicate returns the instant a repeat is
@@ -258,6 +311,10 @@
     For "count the characters" problems (anagram, frequency), how do you choose
     the counting structure in Rust, fastest first?
   answer: |
+    **For a small, known alphabet use a fixed array indexed by byte offset
+    (fastest, O(1), no hashing); for arbitrary or unknown key spaces use a
+    `HashMap<char, i32>`.**
+
     - Small, KNOWN alphabet (e.g. lowercase a-z): a fixed array `[i32; 26]` indexed
       by `(b - b'a') as usize`. O(1) lookups, no hashing, no allocation -- usually
       the optimal answer.
@@ -275,10 +332,12 @@
     `BinaryHeap<T>`: complexity of `push`, `pop` (removing the max), and `peek`?
     Is it a min-heap or a max-heap by default?
   answer: |
-    `push`: O(log n). `pop`: O(log n) (removes and returns the GREATEST element).
-    `peek`: O(1) (looks at the greatest element without removing it).
-    Rust's `BinaryHeap` is a MAX-heap by default; for a min-heap, wrap elements in
-    `std::cmp::Reverse`, or implement `Ord` inverted.
+    **`BinaryHeap` push and pop are both O(log n) while peek is O(1); it's a
+    MAX-heap by default.**
+
+    `pop` removes and returns the GREATEST element; `peek` looks at it without
+    removing it. For a min-heap, wrap elements in `std::cmp::Reverse`, or
+    implement `Ord` inverted.
   code: |
     use std::collections::BinaryHeap;
     use std::cmp::Reverse;
@@ -294,9 +353,12 @@
     A recursive function calls itself to depth n. What is its SPACE complexity,
     and why — even if it does O(1) work per call?
   answer: |
-    O(n): each pending call keeps its own STACK FRAME alive (locals, return
-    address) until it returns, so n nested calls hold n frames simultaneously.
-    This is why deep unbounded recursion (e.g. over a large unsorted list) can
+    **A recursive function calling itself to depth n uses O(n) space, because
+    each pending call keeps its own stack frame alive until it returns.**
+
+    Each pending call's STACK FRAME (locals, return address) stays alive until
+    it returns, so n nested calls hold n frames simultaneously. This is why
+    deep unbounded recursion (e.g. over a large unsorted list) can
     overflow the stack even when the per-call work is trivial — an iterative
     loop with an explicit accumulator would do the same job in O(1) space.
     Tail-call optimization would eliminate this in some languages, but Rust does
@@ -310,6 +372,10 @@
     Cheat sheet: average-case complexity of get/insert/remove (or push/pop) for
     Vec, VecDeque, HashMap, BTreeMap, and BinaryHeap, side by side.
   answer: |
+    **`Vec`/`VecDeque` are O(1) at their fast ends (O(n) in the middle),
+    `HashMap` averages O(1), `BTreeMap` is O(log n) but sorted, and
+    `BinaryHeap` push/pop is O(log n) with O(1) peek.**
+
     `Vec`: index O(1), push/pop-back O(1) amortized, insert/remove-middle O(n).
     `VecDeque`: index O(1), push/pop at EITHER end O(1), insert/remove-middle O(n).
     `HashMap`: get/insert/remove O(1) average (O(n) worst case).

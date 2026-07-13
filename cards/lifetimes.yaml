@@ -4,10 +4,13 @@
   question: |
     What problem do lifetimes solve? What do the annotations actually do?
   answer: |
-    They prevent dangling references — using a reference after the data it
-    points to is gone. Annotations DESCRIBE relationships between the lifetimes
-    of parameters and return values so the borrow checker can verify them; they
-    never extend or change how long anything actually lives.
+    **Lifetimes prevent dangling references; annotations describe (not
+    change) how long the borrow checker can assume a reference is valid.**
+
+    They prevent using a reference after the data it points to is gone.
+    Annotations DESCRIBE relationships between the lifetimes of parameters
+    and return values so the borrow checker can verify them; they never
+    extend or change how long anything actually lives.
   source: "book §10.3 (validating references with lifetimes)"
   tags: [rust, lifetimes, concept]
 
@@ -41,6 +44,10 @@
     State the three lifetime elision rules the compiler applies before
     requiring explicit annotations.
   answer: |
+    **The three elision rules: (1) each reference parameter gets its own
+    lifetime, (2) a single input lifetime is assigned to all outputs, (3)
+    `&self`/`&mut self`'s lifetime is assigned to all outputs.**
+
     1. Each reference parameter gets its own lifetime.
     2. If there is exactly ONE input lifetime, it is assigned to all outputs.
     3. If one parameter is `&self`/`&mut self`, self's lifetime is assigned to
@@ -168,10 +175,12 @@
     Why does `fn make_greeting() -> &String { let s = String::from("hello"); &s }`
     fail to compile, and what are the two idiomatic fixes?
   answer: |
-    It returns a reference to `s`, a local String dropped at the end of the
-    function — a dangling reference ("cannot return reference to local
-    variable"). No lifetime annotation can fix this: there's nothing valid to
-    borrow from.
+    **It fails because it returns a reference to `s`, a local `String`
+    dropped at the end of the function — a dangling reference; no lifetime
+    annotation can fix that.**
+
+    The error is "cannot return reference to local variable" — there's
+    nothing valid left to borrow from once the function returns.
     Fixes: return the owned `String` itself (usual), or — when the result is
     genuinely a view into an INPUT — return a slice of that input parameter.
   source: "book §10.3 (dangling references)"
@@ -270,12 +279,14 @@
   question: |
     `&'static str` vs a generic bound `T: 'static` — what does each mean?
   answer: |
-    `&'static str`: a reference valid for the whole program (string literals,
-    leaked memory).
-    `T: 'static`: T contains NO non-'static references — owned types like
-    `String` or `Vec<i32>` satisfy it. It does not mean "lives forever"; it
-    means "not borrowing anything short-lived" (required by `thread::spawn`,
-    `Box<dyn Error>`, etc.).
+    **`&'static str` is a reference valid for the whole program; `T:
+    'static` means T contains no non-`'static` references, not that it
+    "lives forever."**
+
+    `&'static str`: string literals, leaked memory. `T: 'static`: owned
+    types like `String` or `Vec<i32>` satisfy it — it means "not borrowing
+    anything short-lived" (required by `thread::spawn`, `Box<dyn Error>`,
+    etc.).
   source: "book §10.3 + common misconception"
   tags: [rust, lifetimes, static, concept]
 
@@ -375,10 +386,13 @@
   question: |
     Since Rust 2018 (non-lexical lifetimes), when exactly does a borrow end?
   answer: |
-    At the borrow's LAST USE, not at the end of its lexical scope. That's why
-    you can take `let first = &v[0];`, print it, and then mutate `v` in the same
-    block — the shared borrow is already over. Borrow-checker errors therefore
-    point at overlapping USES, not just overlapping scopes.
+    **A borrow ends at its LAST USE, not at the end of its lexical scope
+    (non-lexical lifetimes).**
+
+    That's why you can take `let first = &v[0];`, print it, and then mutate
+    `v` in the same block — the shared borrow is already over.
+    Borrow-checker errors therefore point at overlapping USES, not just
+    overlapping scopes.
   code: |
     let mut v = vec![1, 2, 3];
     let first = &v[0];
@@ -413,11 +427,14 @@
     Why does a struct that stores a reference need a lifetime parameter, while
     a struct that stores a `String` doesn't?
   answer: |
-    `String` is owned — the struct controls when it dies. A `&str` field points
-    at data OWNED ELSEWHERE, so the compiler must be able to prove the struct
-    instance never outlives that data. The lifetime parameter
-    (`struct S<'a> { r: &'a str }`) records that obligation in the type; owning
-    fields carry no such obligation.
+    **A struct needs a lifetime parameter only when it stores a reference,
+    because the compiler must be able to prove the struct instance never
+    outlives the data that reference points at.**
+
+    `String` is owned — the struct controls when it dies, so no such proof
+    is needed. A `&str` field points at data OWNED ELSEWHERE; the lifetime
+    parameter (`struct S<'a> { r: &'a str }`) records that obligation in the
+    type, while owning fields carry no such obligation.
   source: "book §10.3 (structs holding references)"
   tags: [rust, lifetimes, structs, ownership, concept]
 
@@ -454,11 +471,13 @@
   question: |
     What does the anonymous lifetime `'_` mean, and where is it typically used?
   answer: |
-    A placeholder telling the compiler "elide/infer this lifetime" while still
-    signaling that a lifetime EXISTS. Typical spots: return types holding
-    borrows (`Excerpt<'_>`, `impl Iterator<Item = &str> + '_`) and impl blocks
-    (`impl Foo<'_>`) when the body never names the lifetime. It makes borrowing
-    visible without the `<'a>` ceremony.
+    **`'_` is a placeholder telling the compiler "elide/infer this
+    lifetime" while still signaling that a lifetime exists.**
+
+    Typical spots: return types holding borrows (`Excerpt<'_>`, `impl
+    Iterator<Item = &str> + '_`) and impl blocks (`impl Foo<'_>`) when the
+    body never names the lifetime. It makes borrowing visible without the
+    `<'a>` ceremony.
   source: "Rust 2018 idioms ('_)"
   tags: [rust, lifetimes, elision, concept]
 
@@ -493,11 +512,14 @@
     `thread::spawn` requires its closure to be `'static`. Why, and what are the
     two standard ways to satisfy it?
   answer: |
-    The new thread may outlive the function that spawned it, so the closure
-    must not borrow anything from that stack frame.
-    Satisfy it by: (1) `move` the data into the closure (transfer ownership),
-    or (2) share ownership via `Arc`. (Alternative: `std::thread::scope`, whose
-    scoped threads are guaranteed to finish, CAN borrow locals.)
+    **`thread::spawn` requires `'static` because the new thread may outlive
+    the function that spawned it, so its closure must not borrow anything
+    from that stack frame.**
+
+    Satisfy it by: (1) `move` the data into the closure (transfer
+    ownership), or (2) share ownership via `Arc`. (Alternative:
+    `std::thread::scope`, whose scoped threads are guaranteed to finish, CAN
+    borrow locals.)
   source: "book §16.1 + std thread::scope"
   tags: [rust, lifetimes, static, threads, concept]
 

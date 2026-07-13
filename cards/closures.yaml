@@ -5,11 +5,12 @@
     Name the three closure traits and what each is allowed to do with its
     captured environment.
   answer: |
-    `FnOnce` — consumes captures; callable at most once. Every closure implements it.
-    `FnMut` — mutates captures; callable repeatedly.
-    `Fn` — only reads captures (or captures nothing); callable repeatedly, even through `&`.
-    Subtrait chain: `Fn: FnMut: FnOnce` — a `Fn` closure can be used wherever
-    `FnMut` or `FnOnce` is expected.
+    **`FnOnce` consumes its captures (callable once), `FnMut` mutates them
+    (callable repeatedly), and `Fn` only reads them (callable repeatedly,
+    even through `&`).**
+
+    Every closure implements `FnOnce`. Subtrait chain: `Fn: FnMut: FnOnce` —
+    a `Fn` closure can be used wherever `FnMut` or `FnOnce` is expected.
   source: "book §13.1 (Fn traits)"
   tags: [rust, closures, fn-traits, concept]
 
@@ -18,8 +19,10 @@
     How does a closure decide whether it captures a variable by `&`, `&mut`,
     or by value? What does the `move` keyword change?
   answer: |
-    The compiler infers the weakest capture the body needs: read-only use → `&`,
-    mutation → `&mut`, consuming (drop/move out) → by value.
+    **The compiler infers the weakest capture mode the closure body needs —
+    `&` for read-only use, `&mut` for mutation, by value for consuming — and
+    `move` overrides this to force every capture to be by value.**
+
     `move` forces EVERY capture to be by value (ownership) regardless of use —
     it changes how the closure captures, not which `Fn` trait it implements.
   source: "book §13.1 (capturing the environment)"
@@ -166,10 +169,12 @@
     Why does returning two different closures from the same function require
     `Box<dyn Fn(..)>` instead of `impl Fn(..)`?
   answer: |
-    Every closure expression has its own unique, unnameable type. `impl Fn`
-    means ONE concrete (hidden) type, so both `return` branches would have to be
-    the same closure. `Box<dyn Fn>` erases the concrete type behind a trait
-    object, letting different branches return different closures.
+    **`Box<dyn Fn>` is required because every closure expression has its own
+    unique, unnameable type, so `impl Fn` (one hidden concrete type) can't
+    represent two different closures from two branches.**
+
+    `Box<dyn Fn>` erases the concrete type behind a trait object, letting
+    different branches return different closures.
   source: "book §20.4 (returning closures)"
   tags: [rust, closures, dyn, concept]
 
@@ -316,12 +321,13 @@
     What's the difference between `fn(i32) -> i32` and `impl Fn(i32) -> i32`
     as a parameter type?
   answer: |
-    `fn(..)` is a function pointer — a concrete type. Only named functions and
-    NON-capturing closures coerce to it.
-    `impl Fn(..)` is a generic with a trait bound — accepts capturing closures
-    too, and is monomorphized (zero-cost).
-    Rule of thumb: take `impl Fn`/`FnMut`/`FnOnce` unless you specifically need
-    a concrete type (FFI, storing many in a Vec without boxes).
+    **`fn(i32) -> i32` is a concrete function-pointer type that only accepts
+    named functions and non-capturing closures, while `impl Fn(i32) -> i32`
+    is a generic trait bound that also accepts capturing closures.**
+
+    `impl Fn(..)` is monomorphized (zero-cost). Rule of thumb: take
+    `impl Fn`/`FnMut`/`FnOnce` unless you specifically need a concrete type
+    (FFI, storing many in a Vec without boxes).
   source: "book §20.3 (function pointers vs closures)"
   tags: [rust, closures, fn-pointers, concept]
 
@@ -383,11 +389,14 @@
     A closure only READS a captured `String`. Does adding `move` change which
     Fn trait it implements? What does change?
   answer: |
-    No — trait inference depends on what the BODY does with captures, not how
-    they got captured. A read-only body is `Fn` either way.
-    What changes: with `move` the closure OWNS the String (so it can outlive the
-    original scope — required for threads and returned closures); without it,
-    the closure borrows, tying its lifetime to the variable.
+    **No — `move` does not change which `Fn` trait a closure implements,
+    since a read-only body is `Fn` either way.**
+
+    Trait inference depends on what the BODY does with captures, not how they
+    got captured. What changes: with `move` the closure OWNS the String (so
+    it can outlive the original scope — required for threads and returned
+    closures); without it, the closure borrows, tying its lifetime to the
+    variable.
   source: "book §13.1 (move closures)"
   tags: [rust, closures, move, concept]
 
@@ -461,6 +470,9 @@
     (b) a callback called repeatedly that may update state, (c) a callback
     called repeatedly, possibly in parallel / through `&`?
   answer: |
+    **Take `FnOnce` for a one-shot callback, `FnMut` when it mutates state
+    across repeated calls, and `Fn` when it's read-only and safe to share.**
+
     (a) `FnOnce` — most permissive for the caller.
     (b) `FnMut` — repeat calls, mutation allowed.
     (c) `Fn` — read-only, safe to share.

@@ -7,14 +7,16 @@
     What five things does an `unsafe` block let you do that safe Rust
     otherwise forbids?
   answer: |
-    Dereference a raw pointer (`*const T`/`*mut T`). Call an `unsafe fn`
-    (including calling a function across an FFI boundary). Read or write a
-    mutable `static` variable. Implement an `unsafe trait`. Access a field of
-    a `union`. None of these make the CODE INSIDE the block magically safe
-    from bugs — `unsafe` just tells the compiler "trust me, I've manually
-    verified the invariant the borrow checker would otherwise check for you"
-    for these five specific operations; everything else (borrowing rules,
-    move semantics, etc.) is still enforced exactly as in safe code.
+    **An `unsafe` block lets you dereference a raw pointer, call an `unsafe
+    fn` (including across an FFI boundary), read or write a mutable
+    `static`, implement an `unsafe trait`, or access a `union` field.**
+
+    These five operations are the entire list — nothing else changes. None
+    of them make the CODE INSIDE the block magically safe from bugs —
+    `unsafe` just tells the compiler "trust me, I've manually verified the
+    invariant the borrow checker would otherwise check for you" for these
+    five specific operations; everything else (borrowing rules, move
+    semantics, etc.) is still enforced exactly as in safe code.
   source: "book §20.1 (unsafe superpowers)"
   tags: [rust, unsafe, concept]
 
@@ -65,15 +67,17 @@
     Why can you create a raw pointer (`&x as *const i32`) in completely safe
     code, but dereferencing it (`*ptr`) requires `unsafe`?
   answer: |
-    Creating a raw pointer just copies an address into a value — it can't
-    violate memory safety by itself, so the compiler allows it anywhere,
-    even letting you create a `*const T` and a `*mut T` to the SAME location
-    simultaneously (something two live references could never do).
-    DEREFERENCING is where an actual memory access happens, and raw pointers
-    carry none of the guarantees the borrow checker normally verifies for
-    references — no guarantee the pointer is non-null, aligned, pointing at
-    valid initialized memory of the right type, or that no other code is
-    mutating that memory concurrently — so reading through one requires the
+    **Creating a raw pointer is safe because it's just copying an address
+    and can't by itself violate memory safety; dereferencing is unsafe
+    because that's where an actual, unchecked memory access happens.**
+
+    The compiler allows creation anywhere, even letting you make a `*const
+    T` and a `*mut T` to the SAME location simultaneously (something two
+    live references could never do). Raw pointers carry none of the
+    guarantees the borrow checker normally verifies for references — no
+    guarantee the pointer is non-null, aligned, pointing at valid
+    initialized memory of the right type, or that no other code is mutating
+    that memory concurrently — so reading through one requires the
     programmer to manually vouch for all of that via `unsafe`.
   source: "book §20.1 (dereferencing a raw pointer)"
   tags: [rust, unsafe, concept]
@@ -134,17 +138,19 @@
     In the slice-splitting example above, why is it okay for a SAFE
     function's implementation to use `unsafe` internally?
   answer: |
-    Rust's safety guarantees are about the language's public API surface,
-    not "no unsafe code ever": the caller of `split_at_mut_i32` only sees an
-    ordinary, safe function signature and can't observe (or need to know)
-    that raw pointers were used internally. The `unsafe` block is a promise
-    from the FUNCTION'S AUTHOR — verified by them, not the compiler — that
-    the specific operation performed (here, that the two halves genuinely
-    don't overlap, since `mid <= len` was checked first) upholds the
-    invariants the borrow checker would otherwise enforce automatically.
-    This "safe abstraction over an unsafe implementation" pattern is exactly
-    how much of `std` itself (`Vec`, `String`, the real `split_at_mut`) is
-    actually built.
+    **A safe function can use `unsafe` internally because Rust's safety
+    guarantee covers the function's public API surface, not whether unsafe
+    code appears anywhere inside its implementation.**
+
+    The caller of `split_at_mut_i32` only sees an ordinary, safe function
+    signature and can't observe (or need to know) that raw pointers were
+    used internally. The `unsafe` block is a promise from the FUNCTION'S
+    AUTHOR — verified by them, not the compiler — that the specific
+    operation performed (here, that the two halves genuinely don't overlap,
+    since `mid <= len` was checked first) upholds the invariants the borrow
+    checker would otherwise enforce automatically. This "safe abstraction
+    over an unsafe implementation" pattern is exactly how much of `std`
+    itself (`Vec`, `String`, the real `split_at_mut`) is actually built.
   source: "book §20.1 (creating a safe abstraction over unsafe code)"
   tags: [rust, unsafe, concept]
 
@@ -183,17 +189,19 @@
     write, and what's the modern safe alternative for shared mutable global
     state?
   answer: |
+    **`static mut` is unsafe because reading or writing it has no
+    synchronization at all, so concurrent access from multiple threads is a
+    data race (undefined behavior); the modern safe alternative is an
+    atomic type (`AtomicU32`, etc.) or a `Mutex`/`RwLock` behind a
+    `std::sync::OnceLock`.**
+
     A `static` lives for the entire program and can be reached from
-    multiple threads simultaneously; reading or writing a `static mut`
-    directly has NO synchronization at all, so concurrent access is a data
-    race — undefined behavior — which is why every access requires
+    multiple threads simultaneously, which is why every access requires
     `unsafe` (recent Rust editions go further, making implicit `static mut`
     references a hard error outside `unsafe`, nudging the pattern toward
-    extinction). The safe replacement is an atomic type from `std::sync::
-    atomic` (`AtomicU32`, etc., for simple counters/flags) or a `Mutex`/
-    `RwLock`-wrapped value behind a `std::sync::OnceLock` for more complex
-    shared global state — both give the same "one shared global" shape with
-    actual synchronization instead of a bare, unchecked memory location.
+    extinction). The atomic/`Mutex`+`OnceLock` alternatives give the same
+    "one shared global" shape but with actual synchronization instead of a
+    bare, unchecked memory location.
   source: "book §20.1 (accessing or modifying a mutable static variable)"
   tags: [rust, unsafe, concurrency, concept]
 
@@ -236,16 +244,18 @@
     What does marking a trait `unsafe trait` (and its impls `unsafe impl`)
     signal, using `Send`/`Sync` as the classic example?
   answer: |
-    `Send`/`Sync` are `unsafe trait`s because the compiler can't verify
-    their contract by construction the way it verifies ordinary trait
-    bounds — implementing one is a promise, checked by the AUTHOR, that a
-    type really is safe to send across threads (`Send`) or share by
-    reference across threads (`Sync`). Both are normally auto-derived for
-    types built entirely out of `Send`/`Sync` pieces; you only write
-    `unsafe impl Send for MyType {}` yourself when a type contains something
-    the compiler conservatively assumes ISN'T thread-safe (like a raw
-    pointer) but you've manually verified your actual usage is — at which
-    point you, not the compiler, are vouching for the invariant.
+    **`unsafe trait` means the compiler can't verify the trait's contract by
+    construction; implementing it via `unsafe impl` is a promise, checked by
+    the AUTHOR, that the type truly upholds it — for `Send`/`Sync` that
+    means genuinely being safe to send across threads or share by reference
+    across threads.**
+
+    Both are normally auto-derived for types built entirely out of
+    `Send`/`Sync` pieces; you only write `unsafe impl Send for MyType {}`
+    yourself when a type contains something the compiler conservatively
+    assumes ISN'T thread-safe (like a raw pointer) but you've manually
+    verified your actual usage is — at which point you, not the compiler,
+    are vouching for the invariant.
   source: "book §20.1 (implementing an unsafe trait) + std::marker::Send/Sync"
   tags: [rust, unsafe, concurrency, concept]
 
@@ -254,17 +264,19 @@
     Why does Rust have declarative macros (`macro_rules!`) at all, given it
     already has functions and generics?
   answer: |
-    A macro operates on SYNTAX (a token stream) before types are resolved,
-    which lets it do things a function fundamentally can't: accept a
-    VARIABLE number of arguments (`vec![1, 2, 3]` vs `vec![1, 2, 3, 4, 5]` —
-    no function overload set could do this in a language without
-    overloading), and generate different CODE STRUCTURES — not just
-    different values — depending on its arguments, such as defining several
-    functions or trait impls from one invocation. The cost is that macro
-    definitions are harder to read and debug than functions, and errors
-    surface in terms of EXPANDED code rather than the macro's own source —
-    so macros are reached for only when a function or generic genuinely
-    can't express what's needed.
+    **Declarative macros exist because they operate on syntax (a token
+    stream) before types are resolved, letting them accept a variable
+    number of arguments and generate different code structures — things a
+    function or generic fundamentally can't do.**
+
+    For example: `vec![1, 2, 3]` vs `vec![1, 2, 3, 4, 5]` — no function
+    overload set could do this in a language without overloading — and a
+    macro can generate different CODE STRUCTURES, not just different
+    values, such as defining several functions or trait impls from one
+    invocation. The cost is that macro definitions are harder to read and
+    debug than functions, and errors surface in terms of EXPANDED code
+    rather than the macro's own source — so macros are reached for only
+    when a function or generic genuinely can't express what's needed.
   source: "book §20.4 (macros vs functions)"
   tags: [rust, macros, concept]
 
@@ -319,17 +331,18 @@
     What does "macro hygiene" mean for `macro_rules!`, and what problem does
     it prevent?
   answer: |
-    Hygiene means identifiers introduced INSIDE a macro's expansion (a
-    temporary `let` binding the macro creates internally, for instance)
-    don't accidentally collide with or capture identifiers from the
-    CALLER's surrounding code, and vice versa — each macro expansion gets
-    its own effectively-invisible naming context. Without hygiene, a macro
-    that internally does `let x = ...;` could silently shadow a variable
-    named `x` at the call site, or a variable the macro's own pattern
-    expects to reference (like `$a` in `max_of!` above) could accidentally
-    resolve to something unrelated the macro's author never intended —
-    hygiene is what makes macros usable without meticulously renaming every
-    internal temporary to dodge clashes.
+    **Macro hygiene means identifiers introduced INSIDE a macro's expansion
+    can't accidentally collide with or capture identifiers from the
+    CALLER's surrounding code, and vice versa — each expansion gets its own
+    effectively-invisible naming context.**
+
+    A temporary `let` binding the macro creates internally is an example.
+    Without hygiene, a macro that internally does `let x = ...;` could
+    silently shadow a variable named `x` at the call site, or a variable the
+    macro's own pattern expects to reference (like `$a` in `max_of!` above)
+    could accidentally resolve to something unrelated the macro's author
+    never intended — hygiene is what makes macros usable without
+    meticulously renaming every internal temporary to dodge clashes.
   source: "book §20.4 (macro hygiene)"
   tags: [rust, macros, concept]
 
@@ -338,18 +351,21 @@
     What does `type Kilometers = i32;` actually do, and how is a type ALIAS
     different from the newtype pattern (`struct Kilometers(i32);`)?
   answer: |
-    A type alias is just another NAME for an existing type — `Kilometers`
-    and `i32` are completely interchangeable everywhere, with no new
-    type-checking distinction (you can pass a `Kilometers` anywhere an
-    `i32` is expected and vice versa, add them together, and so on). Its
-    main purpose is READABILITY: giving a long or repetitive type
-    (`Box<dyn Fn(i32) -> i32>`, `Result<T, std::io::Error>`) a short,
-    meaningful name used consistently across a codebase. The newtype
-    pattern (`struct Kilometers(i32)`) instead creates a genuinely
-    DIFFERENT type that happens to wrap an `i32` — the compiler rejects
-    mixing a `Kilometers` and a plain `i32` (or a `Meters`) without an
-    explicit conversion, which is the whole point when you want the type
-    system to catch unit-confusion bugs.
+    **A type alias is just another NAME for an existing type with no new
+    type-checking distinction, purely for readability; the newtype pattern
+    creates a genuinely DIFFERENT type that the compiler won't let you mix
+    with the wrapped type without an explicit conversion.**
+
+    `Kilometers` (as an alias for `i32`) and `i32` are completely
+    interchangeable everywhere — you can pass one anywhere the other is
+    expected, add them together, and so on. Its main purpose is giving a
+    long or repetitive type (`Box<dyn Fn(i32) -> i32>`, `Result<T,
+    std::io::Error>`) a short, meaningful name used consistently across a
+    codebase. The newtype pattern (`struct Kilometers(i32)`) instead wraps
+    an `i32` in a genuinely distinct type — mixing a `Kilometers` and a
+    plain `i32` (or a `Meters`) is rejected without an explicit conversion,
+    which is the whole point when you want the type system to catch
+    unit-confusion bugs.
   source: "book §20.3 (type aliases vs the newtype pattern)"
   tags: [rust, types, concept]
 
@@ -394,14 +410,18 @@
   question: |
     What is the never type `!`, and where does it typically show up?
   answer: |
-    `!` is the type of an expression that NEVER produces a value because
-    control flow diverges before it would — `panic!()`, a bare `continue`
-    or `break`, an infinite `loop {}` with no `break`, and `std::process::
-    exit(1)` all have type `!`. Because `!` can coerce into ANY other type
-    (there's no value of type `!` to be wrong about), an arm of a `match`
-    that panics or `continue`s can sit alongside arms that produce, say, an
-    `i32`, and the whole `match` still type-checks as `i32` — the diverging
-    arm simply never contributes a value to unify with the rest.
+    **The never type `!` is the type of an expression that never produces a
+    value because control flow diverges before it would, and it typically
+    shows up in diverging `match` arms alongside arms that do produce a
+    value.**
+
+    `panic!()`, a bare `continue` or `break`, an infinite `loop {}` with no
+    `break`, and `std::process::exit(1)` all have type `!`. Because `!` can
+    coerce into ANY other type (there's no value of type `!` to be wrong
+    about), an arm of a `match` that panics or `continue`s can sit alongside
+    arms that produce, say, an `i32`, and the whole `match` still
+    type-checks as `i32` — the diverging arm simply never contributes a
+    value to unify with the rest.
   source: "book §20.3 (the never type that never returns)"
   tags: [rust, types, concept]
 
@@ -464,14 +484,17 @@
     a type implements both PLUS has its own inherent `fly` method — how do
     you call each one specifically?
   answer: |
-    Rust resolves an ambiguous method name with FULLY QUALIFIED SYNTAX:
-    `<Type as Trait>::method(&value)` (or `Type::method(&value)` for the
-    inherent method; plain `Trait::method(&value)` also works when only one
-    trait providing that method is in scope). Plain `value.fly()` prefers
-    the INHERENT method if one exists, and is a compile error ("multiple
-    applicable items in scope") if two TRAITS both apply with no inherent
-    method to prefer — fully qualified syntax is the one unambiguous way to
-    pick exactly which one you mean.
+    **An ambiguous method name (two traits, or a trait and an inherent
+    method, all named `fly`) is resolved with FULLY QUALIFIED SYNTAX,
+    `<Type as Trait>::method(&value)`, the one form that's always
+    unambiguous.**
+
+    `Type::method(&value)` works for the inherent method, and plain
+    `Trait::method(&value)` also works when only one trait providing that
+    method is in scope. Plain `value.fly()` prefers the INHERENT method if
+    one exists, and is a compile error ("multiple applicable items in
+    scope") if two TRAITS both apply with no inherent method to prefer —
+    which is exactly when the fully qualified form becomes necessary.
   source: "book §20.2 (fully qualified syntax for disambiguation)"
   tags: [rust, traits, concept]
 
@@ -573,17 +596,20 @@
     qualified syntax) all live in the same "advanced features" chapter —
     what's the common thread for when to reach for each?
   answer: |
-    Each is an escape hatch from the ordinary tools, used deliberately
-    rather than by default. Macros: reach for them only when a function or
-    generic genuinely can't express what's needed (variable argument
-    counts, generating code structure itself) — prefer a plain function
-    whenever one will do. `unsafe`: reach for it only for the small, fixed
-    set of operations the borrow checker can't verify by construction (raw
-    pointer deref, FFI calls, mutable statics, unsafe traits) — and wrap it
-    in the smallest possible SAFE api so callers never need to think about
-    it, the way `split_at_mut_i32` above does. Type aliases, `!`, and fully
-    qualified syntax are lower-stakes readability and disambiguation tools
-    with no special caution required — reach for them anytime they make an
+    **The common thread is that macros, `unsafe`, and the advanced-types
+    tools are all escape hatches from the ordinary tools, meant to be
+    reached for deliberately rather than by default.**
+
+    Macros: reach for them only when a function or generic genuinely can't
+    express what's needed (variable argument counts, generating code
+    structure itself) — prefer a plain function whenever one will do.
+    `unsafe`: reach for it only for the small, fixed set of operations the
+    borrow checker can't verify by construction (raw pointer deref, FFI
+    calls, mutable statics, unsafe traits) — and wrap it in the smallest
+    possible SAFE api so callers never need to think about it, the way
+    `split_at_mut_i32` above does. Type aliases, `!`, and fully qualified
+    syntax are lower-stakes readability and disambiguation tools with no
+    special caution required — reach for them anytime they make an
     already-safe program clearer.
   source: "book ch.20 (advanced features, in summary)"
   tags: [rust, unsafe, macros, concept]

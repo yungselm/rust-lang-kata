@@ -593,6 +593,9 @@
     What do `iter()`, `iter_mut()`, and `into_iter()` each yield, and how do
     they treat the underlying collection?
   answer: |
+    **`iter()` yields `&T` (borrows), `iter_mut()` yields `&mut T` (mutably
+    borrows), and `into_iter()` yields `T` (consumes the collection).**
+
     `iter()` -> `&T`: borrows; the collection stays usable.
     `iter_mut()` -> `&mut T`: mutably borrows; edit elements in place.
     `into_iter()` -> `T`: consumes, moving elements out (a `Vec` is gone after).
@@ -610,7 +613,10 @@
   question: |
     Are iterator adaptors like `map` and `filter` evaluated immediately?
   answer: |
-    No — they are lazy. Adaptors build a description and do no work until a
+    **No — iterator adaptors are lazy; they do no work until a consumer
+    drives them.**
+
+    Adaptors like `map`/`filter` build a description and run nothing until a
     CONSUMER drives them: `collect`, `sum`, `count`, `for`, `fold`, `find`, etc.
     A chain with no consumer does nothing (the compiler warns "unused iterator").
   source: "book §13.2"
@@ -620,9 +626,11 @@
   question: |
     Why does `collect()` often need a type annotation or turbofish?
   answer: |
-    `collect` is generic over its output via `FromIterator`, so the compiler
-    can't always tell what you want. Specify it via the binding type
-    (`let v: Vec<_> = ...`) or turbofish (`.collect::<Vec<_>>()`).
+    **Because `collect` is generic over its output type via `FromIterator`,
+    so the compiler can't always infer what you want without help.**
+
+    Specify it via the binding type (`let v: Vec<_> = ...`) or turbofish
+    (`.collect::<Vec<_>>()`).
   source: "std Iterator::collect"
   tags: [rust, iterators, concept]
 
@@ -631,9 +639,11 @@
     What happens when you `collect` an iterator of `Result<T, E>` into
     `Result<Vec<T>, E>` (or `Option`)?
   answer: |
-    It short-circuits: stops at the first `Err` and returns it; otherwise yields
-    `Ok(all_values)`. The same works for `Option<Vec<T>>` (first `None` wins).
-    Ideal for "parse/validate all or fail".
+    **It short-circuits: collecting stops at the first `Err` and returns it;
+    otherwise it yields `Ok(all_values)`.**
+
+    The same works for `Option<Vec<T>>` (first `None` wins). Ideal for
+    "parse/validate all or fail".
   source: "std FromIterator for Result"
   tags: [rust, iterators, concept, results]
 
@@ -859,12 +869,15 @@
     Why does `v.windows(2).map(|&w| w[0] + w[1])` fail with "the size for values
     of type `[i32]` cannot be known at compile time"?
   answer: |
-    `windows(2)` yields `&[i32]` — a reference to a slice. The pattern `|&w|` says
-    "peel the reference and bind the pointee by value", which would make `w` a bare
-    `[i32]`. But `[i32]` is unsized (`!Sized`): its length isn't part of the type,
-    so the compiler can't store one in a local or move it. Keep the reference:
-    write `|w|` (so `w: &[i32]`) and index through it — `w[0]` auto-derefs to a
-    sized `i32` and the arithmetic is fine.
+    **Because `|&w|` tries to bind the pointee of `&[i32]` by value, making
+    `w` a bare `[i32]`, which is unsized and can't be stored in a local.**
+
+    `windows(2)` yields `&[i32]` — a reference to a slice. The pattern `|&w|`
+    says "peel the reference and bind the pointee by value", which would make
+    `w` a bare `[i32]`. But `[i32]` is unsized (`!Sized`): its length isn't
+    part of the type, so the compiler can't store one in a local or move it.
+    Keep the reference: write `|w|` (so `w: &[i32]`) and index through it —
+    `w[0]` auto-derefs to a sized `i32` and the arithmetic is fine.
   source: "std slice::windows; std::marker::Sized"
   tags: [rust, iterators, sized, concept]
 
@@ -873,7 +886,9 @@
     When can you use the reference-peeling closure pattern `|&x|` (binding the
     value behind the reference), and when does it fail?
   answer: |
-    Only when what's behind the reference is `Sized`.
+    **You can only use `|&x|` to peel the reference when the pointee is
+    `Sized`; over an unsized pointee like `[i32]` it fails to compile.**
+
     - `v.iter().map(|&x| ...)` over `&i32`: peeling binds `x: i32`. `i32` is sized,
       so this is fine (and idiomatic).
     - `v.windows(2).map(|&w| ...)` over `&[i32]`: peeling would bind `w: [i32]`, a
@@ -889,10 +904,12 @@
     Safe default when you're unsure whether to peel the reference in a closure
     pattern (`|&x|` vs `|x|`)?
   answer: |
-    Don't destructure — write `|w|` (or `|x|`) and reach inside: `w[0]`, `w.0`,
-    `*x`, a method call, etc. Indexing, field access, and method calls auto-deref,
-    so this works whether the item is a slice or a sized value, and it always
-    compiles. Reach for `|&x|` deliberately only when the item is an obvious `&i32`
+    **Don't destructure — write `|w|` (or `|x|`) and reach inside the
+    reference (`w[0]`, `w.0`, `*x`, a method call) instead of peeling it.**
+
+    Indexing, field access, and method calls auto-deref, so this works
+    whether the item is a slice or a sized value, and it always compiles.
+    Reach for `|&x|` deliberately only when the item is an obvious `&i32`
     / `&T: Copy` and you want the value directly. This single habit makes
     `windows`, `chunks`, and `iter` all correct.
   tags: [rust, iterators, concept]
@@ -902,10 +919,11 @@
     Does the "you can only peel `&` in a pattern if the pointee is `Sized`" rule
     apply only to `.map()` closures, or more broadly?
   answer: |
-    It applies EVERYWHERE a pattern binds a value: `for` loops, `let`, `match`
-    arms, function parameters, and closure arguments. A leading `&` in a pattern
-    always means "match a reference and move the pointee out by value", which only
-    works if that pointee is `Sized`.
+    **It applies everywhere a pattern binds a value — `for` loops, `let`,
+    `match` arms, function parameters, and closures — not just `.map()`.**
+
+    A leading `&` in a pattern always means "match a reference and move the
+    pointee out by value", which only works if that pointee is `Sized`.
     - `for &x in &nums {}` — pointee `i32`, sized -> OK.
     - `for &w in nums.windows(2) {}` — pointee `[i32]`, unsized -> ERROR (use
       `for w in ...` and index).

@@ -501,9 +501,12 @@
   question: |
     When should you reach for `Option<T>` versus `Result<T, E>`?
   answer: |
-    `Option<T>`: a value may simply be absent, no explanation needed
-    (`Some`/`None`). `Result<T, E>`: an operation may FAIL and you want to carry
-    why (`Ok`/`Err` with an error). Use Result for fallible work.
+    **Use `Option<T>` when a value may simply be absent with no explanation
+    needed, and `Result<T, E>` when an operation may fail and you want to
+    carry why.**
+
+    `Option<T>`: `Some`/`None`, no error info. `Result<T, E>`: `Ok`/`Err`
+    with an error. Use Result for fallible work.
   source: "book §9"
   tags: [rust, results, concept]
 
@@ -511,9 +514,13 @@
   question: |
     What does `?` do, and what does it require of the enclosing function?
   answer: |
-    On `Ok(v)`/`Some(v)` it evaluates to `v`; on `Err(e)`/`None` it returns early
-    with that `Err`/`None`. The function's return type must be a compatible
-    `Result`/`Option`; for `Result`, the error converts via `From`.
+    **`?` evaluates to the inner value on `Ok`/`Some`, or returns early with
+    the `Err`/`None` on failure — requiring the enclosing function to return
+    a compatible `Result`/`Option`.**
+
+    On `Ok(v)`/`Some(v)` it evaluates to `v`; on `Err(e)`/`None` it returns
+    early with that `Err`/`None`. For `Result`, the error converts via
+    `From`.
   source: "book §9.2"
   tags: [rust, results, concept]
 
@@ -522,10 +529,12 @@
     When is it acceptable to use `unwrap` / `expect`, and what do they do on
     failure?
   answer: |
-    They return the inner value or PANIC on `None`/`Err`. Acceptable when failure
-    is genuinely impossible or a bug (tests, prototypes, checked invariants). In
-    real code prefer `?`, the `unwrap_or*` family, or matching. `expect("why")`
-    documents the assumption in the panic message.
+    **`unwrap`/`expect` return the inner value or panic on `None`/`Err`; use
+    them only when failure is genuinely impossible or a bug.**
+
+    Acceptable for tests, prototypes, checked invariants. In real code prefer
+    `?`, the `unwrap_or*` family, or matching. `expect("why")` documents the
+    assumption in the panic message.
   source: "book §9.3"
   tags: [rust, results, concept]
 
@@ -534,10 +543,12 @@
     Difference between `unwrap_or(x)` and `unwrap_or_else(|| x)` — and why does
     clippy care?
   answer: |
-    `unwrap_or(x)` takes an already-evaluated value (eager). `unwrap_or_else(f)`
-    calls the closure only on `None`/`Err` (lazy). Use `_else` when the fallback is
-    expensive, allocates, or needs the error. clippy flags an eager call with an
-    expensive argument (`or_fun_call`) and a lazy call with a trivial one
+    **`unwrap_or(x)` is eager (x is always evaluated), while
+    `unwrap_or_else(f)` is lazy (f runs only on `None`/`Err`).**
+
+    Use `_else` when the fallback is expensive, allocates, or needs the
+    error. clippy flags an eager call with an expensive argument
+    (`or_fun_call`) and a lazy call with a trivial one
     (`unnecessary_lazy_evaluations`).
   source: "std Option/Result; clippy"
   tags: [rust, results, concept]

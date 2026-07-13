@@ -662,7 +662,9 @@
   question: |
     What problem does the `entry` API solve, and what are its main methods?
   answer: |
-    It avoids looking a key up twice for "insert if missing / update if present".
+    **The `entry` API avoids looking a key up twice for "insert if missing /
+    update if present" — one lookup instead of two.**
+
     `map.entry(k)` returns a handle; then `.or_insert(d)`, `.or_insert_with(f)`,
     `.or_default()`, or `.and_modify(f)` operate with a single lookup. Idiomatic
     for counters and grouping.
@@ -673,9 +675,11 @@
   question: |
     Why can you call `map.get("x")` when the keys are `String`?
   answer: |
-    `get` is generic over a borrowed key form: `get<Q>(&self, k: &Q) where
-    K: Borrow<Q>, Q: Hash + Eq`. Since `String: Borrow<str>`, a `&str` works — no
-    allocating a `String` just to look something up.
+    **Because `get` is generic over a borrowed key form via `Borrow`, and
+    `String: Borrow<str>`, so a `&str` works directly.**
+
+    `get<Q>(&self, k: &Q) where K: Borrow<Q>, Q: Hash + Eq` — no allocating a
+    `String` just to look something up.
   source: "std HashMap::get"
   tags: [rust, hashmap, concept]
 
@@ -683,8 +687,10 @@
   question: |
     Is HashMap (and HashSet) iteration order stable or predictable?
   answer: |
-    No — unspecified and randomized per run (HashDoS resistance), so never rely
-    on it. For ordered output, collect into a Vec and sort, or use a
+    **No — HashMap/HashSet iteration order is unspecified and randomized per
+    run (HashDoS resistance), so never rely on it.**
+
+    For ordered output, collect into a Vec and sort, or use a
     `BTreeMap`/`BTreeSet` (sorted, O(log n)).
   source: "std HashMap"
   tags: [rust, hashmap, concept]
@@ -694,11 +700,12 @@
     Difference between `entry(k).or_insert(v)` and `or_insert_with(f)` /
     `or_default()`?
   answer: |
-    `or_insert(v)` takes an already-built value, evaluated even if unused (eager).
-    `or_insert_with(f)` calls `f` only when the key is absent (lazy) — use it when
-    the default allocates or is costly. `or_default()` is shorthand for
-    `or_insert_with(Default::default)`, which clippy prefers for an empty `Vec`,
-    `0`, and similar defaults.
+    **`or_insert(v)` is eager (the value is always built), while
+    `or_insert_with(f)` is lazy (`f` runs only when the key is absent).**
+
+    Use `or_insert_with` when the default allocates or is costly.
+    `or_default()` is shorthand for `or_insert_with(Default::default)`, which
+    clippy prefers for an empty `Vec`, `0`, and similar defaults.
   source: "std Entry (or_insert / or_insert_with / or_default)"
   tags: [rust, hashmap, concept]
 
@@ -778,6 +785,10 @@
     On a `HashMap<String, V>`, when can you pass a `&str` directly and when do you
     still need `.to_string()`?
   answer: |
+    **Reads (`get`, `contains_key`, `remove`) accept a borrowed `&str`
+    directly; writes that store a new key (`insert`, `entry`) need an owned
+    `String`.**
+
     READS take a BORROWED key, so pass `&str` with no allocation: `get`, `get_mut`,
     `contains_key`, and `remove` are generic over `&Q where String: Borrow<Q>`, and
     `String: Borrow<str>` — so `map.get("foo")` or `map.contains_key(name)` just

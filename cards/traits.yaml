@@ -537,11 +537,13 @@
     Difference between `impl Trait` (e.g. `fn f(x: &impl T)`) and `dyn Trait` (e.g.
     `Box<dyn T>`) — static vs dynamic dispatch?
   answer: |
-    `impl Trait` is STATIC dispatch: the compiler monomorphizes a copy per concrete
-    type, resolved at compile time (zero overhead, but one type per call site).
-    `dyn Trait` is DYNAMIC dispatch: one copy of the code, the method looked up at
-    runtime through a vtable — slightly slower, but lets a single collection hold
-    different concrete types (`Vec<Box<dyn T>>`).
+    **`impl Trait` is static dispatch, monomorphized per concrete type at
+    compile time; `dyn Trait` is dynamic dispatch, resolved at runtime
+    through a vtable.**
+
+    Static dispatch means zero overhead but one type per call site. Dynamic
+    dispatch is slightly slower but lets a single collection hold different
+    concrete types (`Vec<Box<dyn T>>`).
   source: "Rust Book §18.2"
   tags: [rust, traits, concept]
 
@@ -549,10 +551,13 @@
   question: |
     The orphan rule: when are you allowed to implement a trait for a type?
   answer: |
-    Only if the trait OR the type is local to your crate (at least one is yours).
+    **You may implement a trait for a type only if the trait or the type is
+    local to your crate — at least one of the two must be yours.**
+
     You can't `impl ExternalTrait for ExternalType` — that "orphan" impl is
-    forbidden so two crates can't write conflicting impls (coherence). Work around
-    it with the newtype pattern (wrap the foreign type in your own struct).
+    forbidden so two crates can't write conflicting impls (coherence). Work
+    around it with the newtype pattern (wrap the foreign type in your own
+    struct).
   source: "Rust Book §10.2 (coherence / orphan rule)"
   tags: [rust, traits, concept]
 
@@ -560,10 +565,12 @@
   question: |
     What is a default method, and what can it do?
   answer: |
-    A trait method with a body. Implementors can use it as-is (empty `impl` block)
-    or override it. A default method may call the trait's other methods — including
-    required ones the implementor must provide — letting a trait build rich
-    behaviour on a small required surface.
+    **A default method is a trait method with a body, which implementors may
+    use as-is (empty `impl` block) or override.**
+
+    A default method may call the trait's other methods — including required
+    ones the implementor must provide — letting a trait build rich behaviour
+    on a small required surface.
   source: "Rust Book §10.2 (Default Implementations)"
   tags: [rust, traits, concept]
 
@@ -572,10 +579,14 @@
     Associated type (like `Iterator::Item`) vs a generic trait parameter (like
     `Trait<T>`) — when do you use each?
   answer: |
-    An associated type fixes ONE output type per impl: a type implements `Iterator`
-    once, with one `Item`. A generic trait parameter lets a type implement the
-    trait MANY times with different parameters (e.g. `From<i32>` and `From<&str>`
-    on the same type). Use an associated type when there's a single natural choice.
+    **Use an associated type when a type should implement the trait exactly
+    once with one fixed output type; use a generic trait parameter when it
+    may implement the trait many times with different parameters.**
+
+    An associated type fixes ONE output type per impl: a type implements
+    `Iterator` once, with one `Item`. A generic trait parameter lets a type
+    implement the trait MANY times with different parameters (e.g.
+    `From<i32>` and `From<&str>` on the same type).
   source: "Rust Book §20.x (Associated Types)"
   tags: [rust, traits, concept]
 
@@ -583,10 +594,12 @@
   question: |
     What does `#[derive(...)]` do, and which common std traits are derivable?
   answer: |
-    It auto-generates the obvious field-by-field implementation of a trait.
-    Derivable std traits include `Debug`, `Clone`, `Copy`, `PartialEq`, `Eq`,
-    `Hash`, `PartialOrd`, `Ord`, and `Default`. For custom logic (e.g. case-
-    insensitive equality) you write the `impl` by hand instead.
+    **`#[derive(...)]` auto-generates the obvious field-by-field
+    implementation of a trait; derivable std traits include `Debug`, `Clone`,
+    `Copy`, `PartialEq`, `Eq`, `Hash`, `PartialOrd`, `Ord`, and `Default`.**
+
+    For custom logic (e.g. case-insensitive equality) you write the `impl` by
+    hand instead.
   source: "Rust Book Appendix C (Derivable Traits)"
   tags: [rust, traits, derive, concept]
 
@@ -649,11 +662,12 @@
   question: |
     What is the difference between the `Copy` and `Clone` traits?
   answer: |
-    `Copy` is implicit and always a cheap bitwise copy: a `Copy` value is
-    duplicated automatically on move/assignment and you never call `.copy()`.
-    `Clone` is explicit (you call `.clone()`) and may be expensive (allocate /
-    deep-copy). Every `Copy` type is also `Clone` (Copy requires Clone), but not
-    the other way around.
+    **`Copy` is an implicit, always-cheap bitwise duplicate made automatically
+    on move/assignment (you never call `.copy()`); `Clone` is an explicit,
+    possibly expensive duplicate made by calling `.clone()`.**
+
+    Every `Copy` type is also `Clone` (Copy requires Clone), but not the other
+    way around.
   source: "Rust Book §4.1 / §10.2 (Copy & Clone)"
   tags: [rust, traits, concept]
 
@@ -661,9 +675,11 @@
   question: |
     Which kinds of types implement `Copy`?
   answer: |
-    Cheap, stack-only types: integers, floats, `bool`, `char`, shared references
-    `&T`, raw pointers, and fixed-size arrays `[T; N]` / tuples whose elements are
-    all `Copy`. Anything that owns a heap allocation is NOT `Copy`.
+    **Cheap, stack-only types implement `Copy`: integers, floats, `bool`,
+    `char`, shared references `&T`, raw pointers, and fixed-size arrays
+    `[T; N]` / tuples whose elements are all `Copy`.**
+
+    Anything that owns a heap allocation is NOT `Copy`.
   source: "Rust Book §4.1 (Stack-Only Data: Copy)"
   tags: [rust, traits, concept]
 
@@ -671,10 +687,13 @@
   question: |
     Which common types own heap data, making them `Clone` but not `Copy`?
   answer: |
-    `String`, `Vec<T>`, `Box<T>`, the collections (`HashMap`, `HashSet`,
-    `BTreeMap`, `VecDeque`, `BinaryHeap`, ...), and `Rc<T>`/`Arc<T>`. Duplicating
-    them must allocate (or, for Rc/Arc, bump a reference count), so it's explicit
-    via `.clone()` rather than an automatic copy.
+    **`String`, `Vec<T>`, `Box<T>`, the standard collections, and `Rc<T>`/
+    `Arc<T>` all own heap data, so they're `Clone` but not `Copy`.**
+
+    This also includes `HashMap`, `HashSet`, `BTreeMap`, `VecDeque`,
+    `BinaryHeap`, and similar. Duplicating them must allocate (or, for
+    Rc/Arc, bump a reference count), so it's explicit via `.clone()` rather
+    than an automatic copy.
   source: "Rust Book §8 / §15 (owned heap types)"
   tags: [rust, traits, concept]
 
@@ -683,10 +702,11 @@
     Why can't a type be both `Copy` and have a `Drop` impl (why does owning heap
     data rule out `Copy`)?
   answer: |
-    A `Copy` is a bitwise duplicate, which would create two owners of the same
-    allocation — and both would try to free it when dropped (a double-free). So
-    Rust makes `Copy` and `Drop` mutually exclusive: if dropping a value must free
-    something, the type cannot be `Copy`.
+    **A bitwise `Copy` duplicate would create two owners of the same
+    allocation that both try to free it on drop (a double-free), so Rust
+    makes `Copy` and `Drop` mutually exclusive.**
+
+    If dropping a value must free something, the type cannot be `Copy`.
   source: "Rust Book §4.1 / std::marker::Copy"
   tags: [rust, traits, concept]
 
@@ -695,10 +715,13 @@
     On an `Option<&T>` (or an iterator of `&T`), what do `.copied()` and
     `.cloned()` do, and when do you use each?
   answer: |
-    Both reach THROUGH the reference to produce owned values: `Option<&T>` ->
-    `Option<T>` (and `Iterator<Item = &T>` -> `Item = T`). `.copied()` requires
-    `T: Copy` (e.g. `&i32` -> `i32`); `.cloned()` requires `T: Clone` (e.g.
-    `&String` -> `String`). Prefer `.copied()` for cheap Copy types, `.cloned()`
+    **Both `.copied()` and `.cloned()` reach THROUGH the reference to produce
+    an owned value (`Option<&T>` -> `Option<T>`); `.copied()` requires `T:
+    Copy`, `.cloned()` requires `T: Clone`.**
+
+    This also applies to `Iterator<Item = &T>` -> `Item = T`. For example
+    `.copied()` turns `&i32` into `i32`, while `.cloned()` turns `&String`
+    into `String`. Prefer `.copied()` for cheap Copy types, `.cloned()`
     otherwise.
   code: |
     use std::collections::HashMap;
@@ -713,9 +736,11 @@
     Why does `m.get(key).clone()` (where `m: HashMap<String, i32>`) give
     `Option<&i32>` instead of the `Option<i32>` you wanted?
   answer: |
-    `get` returns `Option<&i32>`, and `.clone()` clones its RECEIVER — the whole
-    `Option<&i32>` — giving another `Option<&i32>` (it just copies the inner `&i32`,
-    since `&T` is `Copy`). It never dereferences to the `i32`. Use `.copied()` (or
+    **Because `.clone()` clones its receiver — the whole `Option<&i32>` — you
+    get back another `Option<&i32>`, not the `Option<i32>` you wanted.**
+
+    `get` returns `Option<&i32>`, and it just copies the inner `&i32` (since
+    `&T` is `Copy`); it never dereferences to the `i32`. Use `.copied()` (or
     `.cloned()`), which reach through the reference to return an owned value.
   source: "std Option::clone vs copied"
   tags: [rust, traits, concept]

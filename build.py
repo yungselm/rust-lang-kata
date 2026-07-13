@@ -10,7 +10,8 @@ Each card is a YAML list item:
   - type: concept
     question / answer / code / source / tags
 
-Text fields are HTML-escaped (so Vec<T> renders) and `backticks` -> <code>.
+Text fields are HTML-escaped (so Vec<T> renders), `backticks` -> <code>, and
+**double-asterisks** -> <strong> (bold, for a concept card's lead sentence).
 After genanki writes the package, `postprocess()` injects two deck-options
 presets and stamps the NeetCode new-card order (see SETTINGS below).
 
@@ -132,9 +133,12 @@ def b64(s):
 
 
 def text(s):
-    """HTML-escape, then turn `code` into <code>code</code>."""
+    """HTML-escape, then turn `code` into <code>code</code> and **bold** into
+    <strong>bold</strong> (used for a concept card's one-sentence lead answer,
+    so it's easy to self-check before reading the rest of the explanation)."""
     s = html.escape(s or "", quote=False)
-    return re.sub(r"`([^`]+)`", r"<code>\1</code>", s)
+    s = re.sub(r"`([^`]+)`", r"<code>\1</code>", s)
+    return re.sub(r"\*\*([^*]+)\*\*", r"<strong>\1</strong>", s)
 
 
 def stage_assets():

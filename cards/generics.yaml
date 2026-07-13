@@ -449,10 +449,11 @@
   question: |
     Do generics cost anything at runtime in Rust?
   answer: |
-    No — generics are zero-cost. The compiler MONOMORPHIZES them: it generates a
-    separate concrete copy of the code for each type actually used, so a generic
-    function runs exactly as fast as a hand-written concrete one. The trade-off is
-    compile time and binary size, not speed.
+    **No — generics are zero-cost at runtime because the compiler
+    monomorphizes them into a separate concrete copy per type used.**
+
+    A generic function runs exactly as fast as a hand-written concrete one.
+    The trade-off is compile time and binary size, not speed.
   source: "Rust Book §10.1 (Performance of Code Using Generics)"
   tags: [rust, generics, concept]
 
@@ -461,10 +462,12 @@
     In `fn largest<T>(list: &[T]) -> T`, why won't `if item > max` compile until you
     add a bound, and which bounds does it need?
   answer: |
-    A bare `T` has no capabilities, so `>` isn't available. You must require
-    `T: PartialOrd` to compare, and `T: Copy` (or `Clone`) to move elements out of
-    the borrowed slice. Bounds tell the compiler — and the reader — exactly what
-    operations `T` must support.
+    **It needs `T: PartialOrd` to compare with `>`, and `T: Copy` (or `Clone`)
+    to move elements out of the borrowed slice.**
+
+    A bare `T` has no capabilities, so `>` isn't available without the bound.
+    Bounds tell the compiler — and the reader — exactly what operations `T`
+    must support.
   source: "Rust Book §10.1 · Rustlings generics"
   tags: [rust, generics, concept]
 
@@ -472,10 +475,13 @@
   question: |
     What does a `where` clause do, and when is it preferable to inline bounds?
   answer: |
-    It lists the trait bounds after the signature: `fn f<T>(x: T) -> R where T:
-    Clone + Debug { ... }`. It means the same as `fn f<T: Clone + Debug>(...)` but
-    reads better when there are many or long bounds (especially multiple type
-    parameters).
+    **A `where` clause lists trait bounds after the signature instead of
+    inline, meaning exactly the same thing but reading better when bounds
+    are numerous or long.**
+
+    E.g. `fn f<T>(x: T) -> R where T: Clone + Debug { ... }` means the same
+    as `fn f<T: Clone + Debug>(...)`, which matters especially with multiple
+    type parameters.
   source: "Rust Book §10.2 (where clauses)"
   tags: [rust, generics, concept]
 
@@ -483,9 +489,12 @@
   question: |
     Given `fn f<T>(x: T)` with no trait bounds, what can you actually do with `x`?
   answer: |
-    Only move it, store it, return it, or drop it. You cannot compare, print,
-    clone, or do arithmetic on it — each of those needs a bound (`PartialOrd`,
-    `Display`, `Clone`, `Add`, ...). An unbounded generic is completely opaque.
+    **With no bounds, you can only move, store, return, or drop `x` —
+    nothing else.**
+
+    You cannot compare, print, clone, or do arithmetic on it — each of those
+    needs a bound (`PartialOrd`, `Display`, `Clone`, `Add`, ...). An unbounded
+    generic is completely opaque.
   source: "Rust Book §10.1"
   tags: [rust, generics, concept]
 
@@ -494,9 +503,11 @@
     How do you specify a generic type parameter when the compiler can't infer it
     (e.g. collecting, or calling a generic fn on an empty slice)?
   answer: |
-    Use the turbofish `::<T>`: e.g. `first::<i32>(&[])`, `"5".parse::<i32>()`, or
-    `it.collect::<Vec<_>>()`. Usually inference handles it; the turbofish is for
-    when there's no value to infer from or several types would fit.
+    **Use the turbofish syntax `::<T>`, e.g. `first::<i32>(&[])`,
+    `"5".parse::<i32>()`, or `it.collect::<Vec<_>>()`.**
+
+    Usually inference handles it; the turbofish is for when there's no value
+    to infer from or several types would fit.
   source: "Rust Book §10.1 / §13.2 (collect)"
   tags: [rust, generics, concept]
 
@@ -505,9 +516,11 @@
     Which common Rust types are unsized (`!Sized`), and how do you always handle
     them?
   answer: |
-    The everyday unsized types are slices `[T]`, the string slice `str`, and trait
-    objects `dyn Trait`. Their size isn't known at compile time, so you never hold
-    one by value — you handle them behind a pointer: `&[T]` / `&mut [T]`, `&str`,
+    **The everyday unsized types are slices `[T]`, the string slice `str`,
+    and trait objects `dyn Trait`, and you always handle them behind a
+    pointer since their size isn't known at compile time.**
+
+    You never hold one by value — only behind `&[T]` / `&mut [T]`, `&str`,
     `Box<dyn Trait>` / `&dyn Trait`.
     This is also why a generic parameter has an implicit `T: Sized` bound; write
     `T: ?Sized` to opt out and accept unsized types (then you must take them by

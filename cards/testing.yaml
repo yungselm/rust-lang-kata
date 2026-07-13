@@ -4,9 +4,11 @@
   question: |
     What does the `#[test]` attribute do, and what makes a test pass or fail?
   answer: |
-    It marks a function as a test that `cargo test` discovers and runs, each in
-    its own thread. A test PASSES if the function returns normally and FAILS if
-    it panics — from a failed `assert!`/`assert_eq!`/`assert_ne!`, an
+    **`#[test]` marks a function as a test that `cargo test` discovers and
+    runs, each in its own thread; the test passes if the function returns
+    normally and fails if it panics.**
+
+    Panics can come from a failed `assert!`/`assert_eq!`/`assert_ne!`, an
     `unwrap()` on `None`/`Err`, or an explicit `panic!`. `cargo test` compiles a
     special test binary that includes every `#[cfg(test)]` item and every
     `#[test]` function.
@@ -75,9 +77,11 @@
     What do `assert!`, `assert_eq!`, and `assert_ne!` each require of their
     arguments, and what do the latter two print on failure?
   answer: |
-    `assert!(cond)` needs only a `bool`. `assert_eq!(a, b)`/`assert_ne!(a, b)`
-    need `a`/`b` to implement `PartialEq` (to compare) AND `Debug` (to print);
-    on failure they show both values via `{:?}` — much more informative than
+    **`assert!` only needs a `bool`; `assert_eq!`/`assert_ne!` additionally
+    need `PartialEq` (to compare) and `Debug` (to print both values on
+    failure).**
+
+    On failure they show both values via `{:?}` — much more informative than
     `assert!(a == b)`, which only reports that the condition was false.
   source: "book §11.1 (assert_eq!/assert_ne!)"
   tags: [rust, testing, concept]
@@ -178,11 +182,12 @@
     `#[should_panic]` vs `#[should_panic(expected = "substring")]` — why add
     the `expected` string?
   answer: |
+    **The `expected` string makes the test also check that the panic message
+    contains that text, so it only passes if the code failed for the reason
+    you intended — bare `#[should_panic]` accepts any panic at all.**
+
     Bare `#[should_panic]` passes on ANY panic, even one from a totally
     unrelated bug that happens to also panic — a false sense of security.
-    `expected = "substring"` additionally checks that the panic MESSAGE
-    contains that text, so the test only passes if the code failed for the
-    reason you intended.
   source: "book §11.1 (expected panic messages)"
   tags: [rust, testing, should_panic, concept]
 
@@ -228,12 +233,13 @@
   question: |
     Why can't a test that returns `Result<(), E>` also use `#[should_panic]`?
   answer: |
-    `#[should_panic]` inspects whether the function PANICKED; a
-    `Result`-returning test signals failure by returning `Err(e)`, not by
-    panicking — there's nothing for `#[should_panic]` to catch. To assert an
-    expected failure with this style, return early with `Err(...)` (or just
-    assert the operation produces the expected `Err` value directly) instead
-    of combining the two.
+    **`#[should_panic]` checks whether the function panicked, but a
+    `Result`-returning test signals failure by returning `Err(e)` instead —
+    there's nothing for `#[should_panic]` to catch.**
+
+    To assert an expected failure with this style, return early with
+    `Err(...)` (or just assert the operation produces the expected `Err`
+    value directly) instead of combining the two.
   source: "book §11.1"
   tags: [rust, testing, concept]
 
@@ -277,6 +283,10 @@
   question: |
     Name three `cargo test` command-line options and what each controls.
   answer: |
+    **`cargo test <substring>` filters by test name, `--test-threads=1`
+    forces sequential execution, and `--nocapture` shows stdout even for
+    passing tests.**
+
     `cargo test <substring>` runs only tests whose (module-qualified) name
     contains `<substring>`.
     `cargo test -- --test-threads=1` forces tests to run sequentially instead
@@ -291,11 +301,12 @@
     Why does `cargo test` run tests in parallel by default, and what's the
     classic footgun that causes?
   answer: |
-    Parallel by default is FASTER — tests run concurrently across threads
-    with no coordination needed as long as they're independent. The footgun:
-    tests that share mutable external state (the same file, a shared global,
-    the same env var, the same DB row) can interfere with each other
-    nondeterministically. Fix by making tests independent (unique temp
+    **Parallel execution is faster, but the footgun is that tests sharing
+    mutable external state (the same file, a shared global, the same env
+    var, the same DB row) can interfere with each other nondeterministically.**
+
+    Tests run concurrently across threads with no coordination needed as long
+    as they're independent. Fix by making tests independent (unique temp
     files/ports per test) or, if that's not possible, forcing single-threaded
     execution with `--test-threads=1`.
   source: "book §11.2 (tests and parallel execution)"
@@ -343,13 +354,14 @@
     in `tests/`) — what can each see, and which crate kinds support
     integration tests?
   answer: |
-    Unit tests live alongside the code they test and can reach PRIVATE items
-    (same-crate visibility). Integration tests are separate files under
-    `tests/`, each compiled as its OWN crate that depends on yours through its
-    PUBLIC API only — so they test the crate the way an external user would.
-    Integration tests require a library target (`src/lib.rs`); a pure binary
-    crate (`src/main.rs` only) has no public API for them to link against,
-    unless it's split into a thin `main.rs` plus a real `lib.rs`.
+    **Unit tests live alongside the code and can reach PRIVATE items
+    (same-crate visibility); integration tests are separate files under
+    `tests/`, each its own crate that sees only your PUBLIC API.**
+
+    Integration tests test the crate the way an external user would. They
+    require a library target (`src/lib.rs`); a pure binary crate
+    (`src/main.rs` only) has no public API for them to link against, unless
+    it's split into a thin `main.rs` plus a real `lib.rs`.
   source: "book §11.3 (test organization)"
   tags: [rust, testing, concept]
 
@@ -358,13 +370,16 @@
     What is `tests/common/mod.rs` for, and why is it named that way instead of
     `tests/common.rs`?
   answer: |
-    It holds setup/helper code SHARED by multiple integration test files (e.g.
-    a `setup()` fixture). Cargo treats every direct `.rs` file under `tests/`
-    as its own independent test crate with its own test-runner output section
-    — a plain `tests/common.rs` would show up as an (empty) test suite of its
-    own. The old `mod.rs` naming (a submodule, not a test-crate root) opts it
-    out of that treatment, so `common` is just a shared helper module other
-    test files can `mod common;` and reuse.
+    **It holds setup/helper code SHARED by multiple integration test files
+    (e.g. a `setup()` fixture), and the `mod.rs` naming stops Cargo from
+    treating it as its own independent test crate.**
+
+    Cargo treats every direct `.rs` file under `tests/` as its own
+    independent test crate with its own test-runner output section — a plain
+    `tests/common.rs` would show up as an (empty) test suite of its own. The
+    old `mod.rs` naming (a submodule, not a test-crate root) opts it out of
+    that treatment, so `common` is just a shared helper module other test
+    files can `mod common;` and reuse.
   source: "book §11.3 (submodules in integration tests)"
   tags: [rust, testing, concept]
 
@@ -417,11 +432,13 @@
   question: |
     What is a "doc test", and why does it help keep documentation honest?
   answer: |
-    A code block inside a `///` doc comment (fenced with triple backticks) on
-    a public item. `cargo test` compiles and RUNS every doc example as its own
-    tiny test — so if an API changes and an example stops compiling or
-    returning what it claims, `cargo test` fails immediately, catching stale
-    documentation the same way it catches broken code.
+    **A doc test is a code block inside a `///` doc comment (fenced with
+    triple backticks) on a public item, which `cargo test` compiles and RUNS
+    as its own tiny test.**
+
+    So if an API changes and an example stops compiling or returning what it
+    claims, `cargo test` fails immediately, catching stale documentation the
+    same way it catches broken code.
   code: |
     /// Adds one to the given number.
     ///
@@ -442,10 +459,11 @@
   question: |
     By default, does `cargo test` show a passing test's `println!` output?
   answer: |
-    No — stdout from every test is captured and DISCARDED for tests that
-    PASS, and shown only for tests that FAIL (so failure output isn't
-    buried). Pass `--nocapture` (`cargo test -- --nocapture`) to see it for
-    every test, passing or not — handy while debugging, noisy to leave on
+    **No — stdout is captured and discarded for tests that PASS, and shown
+    only for tests that FAIL, so failure output isn't buried.**
+
+    Pass `--nocapture` (`cargo test -- --nocapture`) to see it for every
+    test, passing or not — handy while debugging, noisy to leave on
     permanently.
   source: "book §11.2 (showing function output)"
   tags: [rust, testing, concept]
@@ -494,11 +512,12 @@
   question: |
     Why should tests be independent of each other and of execution order?
   answer: |
-    `cargo test` runs tests in parallel, in no guaranteed order, by default. A
-    test that depends on another test having already run (or not run yet) —
-    via shared global state, a shared file, or a fixed ordering assumption —
-    becomes FLAKY: it passes or fails depending on scheduling, not on whether
-    the code is actually correct. Each test should set up everything it needs
+    **Because `cargo test` runs tests in parallel with no guaranteed order, a
+    test that depends on another test having (or not having) already run
+    becomes FLAKY — passing or failing based on scheduling, not correctness.**
+
+    This dependency can come via shared global state, a shared file, or a
+    fixed ordering assumption. Each test should set up everything it needs
     and clean up after itself.
   source: "book §11.2 (running tests in parallel)"
   tags: [rust, testing, concept]
@@ -546,13 +565,16 @@
     `Result<(), E>`, or a plain `assert!`/`assert_eq!` to verify an expected
     FAILURE?
   answer: |
-    `#[should_panic]` — the code under test signals failure by PANICKING (an
-    invariant violation, an `unwrap()` you expect to blow up).
-    A `Result`-returning test — the code under test signals failure by
-    returning `Err(...)`; assert the `Err` value directly (or use `?` for the
-    success path) rather than panicking to fail the test.
-    Plain `assert!`/`assert_eq!` — you already have a concrete value (an
-    `Option`/`Result`/bool) and just need to compare it; no special attribute
-    needed.
+    **Use `#[should_panic]` when the code under test signals failure by
+    panicking, a `Result`-returning test when it signals failure by
+    returning `Err`, and plain `assert!`/`assert_eq!` when you already have a
+    concrete value to compare.**
+
+    `#[should_panic]` fits an invariant violation or an `unwrap()` you expect
+    to blow up. For a `Result`-returning test, assert the `Err` value
+    directly (or use `?` for the success path) rather than panicking to fail
+    the test. Plain `assert!`/`assert_eq!` applies when you already have a
+    concrete value (an `Option`/`Result`/bool) and just need to compare it —
+    no special attribute needed.
   source: "book §11.1 (choosing a failure-testing style)"
   tags: [rust, testing, concept]

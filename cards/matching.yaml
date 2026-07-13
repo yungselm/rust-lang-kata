@@ -533,12 +533,14 @@
     In a pattern, what's the difference between `_` and `..`, and can a pattern
     use both?
   answer: |
-    `_` ignores exactly ONE field or element — you need one per skipped
-    position. `..` ignores ANY NUMBER of remaining fields/elements in a single
-    marker, and may appear at most once per pattern. Yes, they combine freely:
-    `(a, _, c)` skips exactly the 3-tuple's middle; `[first, ..]` skips
-    everything after `first` regardless of length; `Point { x, .. }` skips
-    every other field no matter how many exist.
+    **`_` ignores exactly one field or element, while `..` ignores any
+    number of remaining fields/elements in a single marker — and yes, a
+    pattern can use both.**
+
+    `_` needs one per skipped position. `..` may appear at most once per
+    pattern. `(a, _, c)` skips exactly the 3-tuple's middle; `[first, ..]`
+    skips everything after `first` regardless of length; `Point { x, .. }`
+    skips every other field no matter how many exist.
   code: |
     let t = (1, 2, 3);
     let (a, _, c) = t; // `_` skips exactly one element
@@ -637,7 +639,9 @@
   question: |
     When should you prefer `if let` over a full `match`?
   answer: |
-    When you only care about ONE pattern and want to ignore the rest.
+    **Prefer `if let` when you only care about one pattern and want to
+    ignore the rest.**
+
     `if let Some(x) = opt { ... } else { ... }` is shorthand for a `match` with
     one real arm plus `_`. For two-plus meaningful cases, use `match`.
   source: "book §6.3"
@@ -647,9 +651,11 @@
   question: |
     Why does Rust force `match` to be exhaustive?
   answer: |
-    So every possible value is handled. Add an enum variant and every
-    non-exhaustive match fails to compile, pointing you at code to update. Use
-    `_` (or a catch-all binding like `other`) for an intentional fallback.
+    **So every possible value is guaranteed to be handled.**
+
+    Add an enum variant and every non-exhaustive match fails to compile,
+    pointing you at code to update. Use `_` (or a catch-all binding like
+    `other`) for an intentional fallback.
   source: "book §6.2"
   tags: [rust, matching, concept]
 
@@ -658,10 +664,12 @@
     Difference between a refutable and an irrefutable pattern, and where is each
     allowed?
   answer: |
-    Irrefutable patterns always match (e.g. `let (a, b) = pair;`) and are
-    required by `let` and function params. Refutable patterns can fail (e.g.
-    `Some(x)`) and are used in `match`, `if let`, `while let`. A refutable
-    pattern in a plain `let` is an error — use `let else`.
+    **Irrefutable patterns always match and are required by `let`/function
+    params; refutable patterns can fail and are used in `match`/`if let`/
+    `while let`.**
+
+    E.g. `let (a, b) = pair;` is irrefutable, `Some(x)` is refutable. A
+    refutable pattern in a plain `let` is an error — use `let else`.
   source: "book §19.2 (refutability)"
   tags: [rust, matching, concept]
 
@@ -669,10 +677,12 @@
   question: |
     What are "default binding modes" (match ergonomics)?
   answer: |
-    When you match a reference against a non-reference pattern, the bindings
-    automatically become references — so `match &opt { Some(x) => ... }` gives
-    `x: &T` without writing `ref`. It removes manual `ref`/`&` noise when matching
-    through borrows.
+    **Default binding modes automatically turn bindings into references when
+    you match a reference against a non-reference pattern, so you never
+    write `ref` manually.**
+
+    E.g. `match &opt { Some(x) => ... }` gives `x: &T`. It removes manual
+    `ref`/`&` noise when matching through borrows.
   source: "book §19.3 (default binding modes)"
   tags: [rust, matching, concept]
 

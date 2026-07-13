@@ -170,12 +170,24 @@ presets to others.)
   question: |
     What is X?
   answer: |
-    The answer.
+    **X is, in one direct sentence, the actual answer.** Then the supporting
+    detail, caveats, and "why" go here, in as many sentences as needed.
   code: |             # optional snippet shown highlighted on the back
     let x = 1;
   source: "book §8.3"  # optional
   tags: [rust, concept]
 ```
+
+**Concept card answers should lead with one bolded (`**...**`) sentence that
+directly answers the question**, then elaborate below. Anki is self-graded —
+you decide "correct" or "wrong" yourself — and a long undifferentiated
+paragraph makes that easy to fudge: you skim it, spot a half-matching phrase,
+and let yourself off the hook instead of honestly checking what you actually
+recalled. A short bolded lead sentence gives you one crisp claim to check
+your recall against before you read the reasoning behind it. `**bold**` in
+any text field (`question`/`answer`/`notes`/`instruction`/`source`) renders as
+`<strong>` via `build.py`'s `text()` helper, the same way `` `backticks` ``
+become `<code>`.
 
 Rebuild with `python build.py` (or `python build.py cards/match.yaml` for one
 file). Re-importing **updates** existing cards (guids are stable per instruction /
