@@ -539,8 +539,10 @@
 - instruction: |
     Restrict a function's visibility to a SPECIFIC ancestor module (not just
     the immediate parent) with `pub(in path)`: three levels deep
-    (`outer::middle::inner`), give `inner` a fn visible only within `outer`
-    (using a path relative to `inner`), and have `middle` call it.
+    (`outer::middle::inner`), give `inner` a `pub(in path)` fn named
+    `restricted() -> i32` that returns `9` and is visible only within `outer`
+    (using a path relative to `inner`), and have `middle`'s `call_restricted`
+    call it.
   starter: |
     mod outer {
         pub mod middle {

@@ -119,8 +119,8 @@
 
 - instruction: |
     Write `async fn double(n: i32) -> i32` that returns `n * 2`, then run it
-    to completion with a hand-rolled `block_on` (std-only, no external
-    crate — spin-poll with a no-op `Waker`, same pattern as before).
+    to completion with the `block_on` executor from before (provided below
+    unchanged — std-only, spin-polls with a no-op `Waker`).
   starter: |
     use std::future::Future;
     use std::pin::Pin;
@@ -130,7 +130,25 @@
 
     }
 
-    // add noop_raw_waker and block_on here
+    fn noop_raw_waker() -> RawWaker {
+        fn no_op(_: *const ()) {}
+        fn clone(_: *const ()) -> RawWaker {
+            noop_raw_waker()
+        }
+        const VTABLE: RawWakerVTable = RawWakerVTable::new(clone, no_op, no_op, no_op);
+        RawWaker::new(std::ptr::null(), &VTABLE)
+    }
+
+    fn block_on<F: Future>(mut fut: F) -> F::Output {
+        let waker = unsafe { Waker::from_raw(noop_raw_waker()) };
+        let mut cx = Context::from_waker(&waker);
+        let mut fut = unsafe { Pin::new_unchecked(&mut fut) };
+        loop {
+            if let Poll::Ready(val) = fut.as_mut().poll(&mut cx) {
+                return val;
+            }
+        }
+    }
   solution: |
     use std::future::Future;
     use std::pin::Pin;
@@ -186,9 +204,10 @@
   tags: [rust, async, concept]
 
 - instruction: |
-    Write `async fn double(n: i32) -> i32` and `async fn quadruple(n: i32) ->
-    i32` where `quadruple` calls `double` TWICE, `.await`ing each call (so it
-    chains through two suspend points), then drive it with `block_on`.
+    Write `async fn quadruple(n: i32) -> i32` where it calls the given
+    `double` TWICE, `.await`ing each call (so it chains through two suspend
+    points), then drive it with the `block_on` executor from before
+    (provided below unchanged).
   starter: |
     use std::future::Future;
     use std::pin::Pin;
@@ -202,7 +221,25 @@
 
     }
 
-    // add noop_raw_waker and block_on here
+    fn noop_raw_waker() -> RawWaker {
+        fn no_op(_: *const ()) {}
+        fn clone(_: *const ()) -> RawWaker {
+            noop_raw_waker()
+        }
+        const VTABLE: RawWakerVTable = RawWakerVTable::new(clone, no_op, no_op, no_op);
+        RawWaker::new(std::ptr::null(), &VTABLE)
+    }
+
+    fn block_on<F: Future>(mut fut: F) -> F::Output {
+        let waker = unsafe { Waker::from_raw(noop_raw_waker()) };
+        let mut cx = Context::from_waker(&waker);
+        let mut fut = unsafe { Pin::new_unchecked(&mut fut) };
+        loop {
+            if let Poll::Ready(val) = fut.as_mut().poll(&mut cx) {
+                return val;
+            }
+        }
+    }
   solution: |
     use std::future::Future;
     use std::pin::Pin;
@@ -266,7 +303,8 @@
     Implement `PollNTimes { remaining: u32 }` as a `Future<Output =
     &'static str>` that returns `Poll::Pending` (decrementing `remaining` and
     calling `cx.waker().wake_by_ref()`) until `remaining` hits 0, then
-    `Poll::Ready("done")`. Drive it with `block_on`.
+    `Poll::Ready("done")`. Drive it with the `block_on` executor from before
+    (provided below unchanged).
   starter: |
     use std::future::Future;
     use std::pin::Pin;
@@ -284,7 +322,25 @@
         }
     }
 
-    // add noop_raw_waker and block_on here
+    fn noop_raw_waker() -> RawWaker {
+        fn no_op(_: *const ()) {}
+        fn clone(_: *const ()) -> RawWaker {
+            noop_raw_waker()
+        }
+        const VTABLE: RawWakerVTable = RawWakerVTable::new(clone, no_op, no_op, no_op);
+        RawWaker::new(std::ptr::null(), &VTABLE)
+    }
+
+    fn block_on<F: Future>(mut fut: F) -> F::Output {
+        let waker = unsafe { Waker::from_raw(noop_raw_waker()) };
+        let mut cx = Context::from_waker(&waker);
+        let mut fut = unsafe { Pin::new_unchecked(&mut fut) };
+        loop {
+            if let Poll::Ready(val) = fut.as_mut().poll(&mut cx) {
+                return val;
+            }
+        }
+    }
   solution: |
     use std::future::Future;
     use std::pin::Pin;
@@ -363,7 +419,8 @@
     target`, then a `JoinTwo { a: CountUp, b: CountUp, a_done: Option<u32>,
     b_done: Option<u32> }` future that polls BOTH inner futures independently
     every poll and completes with `(a, b)` once each has finished (even if
-    one finishes before the other). Drive it with `block_on`.
+    one finishes before the other). Drive it with the `block_on` executor
+    from before (provided below unchanged).
   starter: |
     use std::future::Future;
     use std::pin::Pin;
@@ -397,7 +454,25 @@
         }
     }
 
-    // add noop_raw_waker and block_on here
+    fn noop_raw_waker() -> RawWaker {
+        fn no_op(_: *const ()) {}
+        fn clone(_: *const ()) -> RawWaker {
+            noop_raw_waker()
+        }
+        const VTABLE: RawWakerVTable = RawWakerVTable::new(clone, no_op, no_op, no_op);
+        RawWaker::new(std::ptr::null(), &VTABLE)
+    }
+
+    fn block_on<F: Future>(mut fut: F) -> F::Output {
+        let waker = unsafe { Waker::from_raw(noop_raw_waker()) };
+        let mut cx = Context::from_waker(&waker);
+        let mut fut = unsafe { Pin::new_unchecked(&mut fut) };
+        loop {
+            if let Poll::Ready(val) = fut.as_mut().poll(&mut cx) {
+                return val;
+            }
+        }
+    }
   solution: |
     use std::future::Future;
     use std::pin::Pin;
