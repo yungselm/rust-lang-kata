@@ -1,0 +1,163 @@
+# Edge-case hunting — given a function, name the input that breaks it (panic or
+# wrong answer) and why, then how to guard. Trains reading code for the corner it
+# forgot, not writing it.
+- type: concept
+  question: |
+    What input breaks this, and why?
+
+        fn sum(v: &[i32]) -> i32 { v.iter().sum() }
+  answer: |
+    A slice whose total exceeds `i32::MAX` (many large values). `sum()` overflows —
+    a panic in debug builds, a silent wrap in release.
+    Guard: accumulate into `i64`, or use `checked`/`saturating` addition.
+  source: "Edge cases · integer overflow"
+  tags: [rust, edge-cases, overflow, concept]
+- type: concept
+  question: |
+    Which input breaks this, and why?
+
+        fn average(v: &[i32]) -> i32 { v.iter().sum::<i32>() / v.len() as i32 }
+  answer: |
+    An empty slice: `v.len()` is 0, so it's a division by zero -> panic.
+    Guard: check `v.is_empty()` first and return `Option<i32>` (or a sentinel).
+  source: "Edge cases · empty input"
+  tags: [rust, edge-cases, panic, concept]
+- type: concept
+  question: |
+    What input panics, and why?
+
+        fn first_two(s: &str) -> &str { &s[0..2] }
+  answer: |
+    A string whose bytes 0..2 don't land on a char boundary — e.g. "€1" (`€` is 3
+    bytes): `[0..2]` cuts through the middle of `€` -> panic. `&str` slicing uses
+    BYTE offsets.
+    Guard: iterate `chars()` (e.g. `s.chars().take(2).collect::<String>()`) or check
+    `is_char_boundary`.
+  source: "Edge cases · UTF-8 boundaries"
+  tags: [rust, edge-cases, utf8, concept]
+- type: concept
+  question: |
+    What input breaks this, and why?
+
+        fn factorial(n: u64) -> u64 { (1..=n).product() }
+  answer: |
+    `n >= 21`: 21! exceeds `u64::MAX`, so `product()` overflows (panic in debug,
+    wrap in release).
+    Guard: fold with `checked_mul` returning `Option`, or use a big-integer type.
+  source: "Edge cases · integer overflow"
+  tags: [rust, edge-cases, overflow, concept]
+- type: concept
+  question: |
+    Which input breaks this, and why?
+
+        fn last_index(v: &[i32]) -> usize { v.len() - 1 }
+  answer: |
+    An empty slice: `0usize - 1` underflows (unsigned) -> panic in debug, a huge
+    number in release.
+    Guard: `v.len().checked_sub(1)` returning `Option`, or an `is_empty()` check.
+  source: "Edge cases · usize underflow"
+  tags: [rust, edge-cases, panic, concept]
+- type: concept
+  question: |
+    What inputs break this, and why?
+
+        fn to_int(s: &str) -> i32 { s.trim().parse().unwrap() }
+  answer: |
+    Anything non-numeric, empty, or out of range ("", "abc", "9999999999"): `parse`
+    returns `Err`, and `unwrap` panics.
+    Guard: return `Result<i32, _>`/`Option<i32>` and propagate with `?` or `.ok()`.
+  source: "Edge cases · parse + unwrap"
+  tags: [rust, edge-cases, panic, error-handling, concept]
+- type: concept
+  question: |
+    What's the hidden bug (two of them)?
+
+        use std::collections::HashMap;
+        fn first_key(m: &HashMap<i32, i32>) -> i32 { *m.keys().next().unwrap() }
+  answer: |
+    (1) An empty map -> `unwrap` panics. (2) `HashMap` iteration order is
+    UNSPECIFIED, so "first" is arbitrary and can change between runs — relying on it
+    is a logic bug.
+    Guard: handle empty (return `Option`), and if you need order use a `BTreeMap` or
+    `keys().min()`.
+  source: "Edge cases · HashMap ordering"
+  tags: [rust, edge-cases, hashmap, concept]
+- type: concept
+  question: |
+    Which input breaks this, and why?
+
+        fn diff(a: usize, b: usize) -> usize { a - b }
+  answer: |
+    Any call with `b > a`: unsigned subtraction underflows -> panic (debug) / wrap
+    (release).
+    Guard: `a.abs_diff(b)` (order-independent), or `a.checked_sub(b)`.
+  source: "Edge cases · usize underflow"
+  tags: [rust, edge-cases, overflow, concept]
+- type: concept
+  question: |
+    Why can this return a surprising answer?
+
+        fn is_half(x: f64) -> bool { x == 0.5 }
+  answer: |
+    Floating-point results carry rounding error, so a computed value meant to be 0.5
+    may be 0.4999999999999 — exact `==` then fails. Comparing computed floats with
+    `==` is fragile.
+    Guard: compare within a tolerance — `(x - 0.5).abs() < 1e-9`.
+  source: "Edge cases · float equality"
+  tags: [rust, edge-cases, floats, concept]
+- type: concept
+  question: |
+    Why is this count wrong, and for which inputs?
+
+        fn distinct_count(v: &[i32]) -> usize { v.len() }
+  answer: |
+    Any slice with duplicates: `[1, 1, 2]` reports 3, but there are only 2 DISTINCT
+    values. `len()` counts elements, not unique ones.
+    Guard: `v.iter().collect::<std::collections::HashSet<_>>().len()`.
+  source: "Edge cases · duplicates"
+  tags: [rust, edge-cases, correctness, concept]
+- type: concept
+  question: |
+    Which inputs break this, and why?
+
+        fn nth_char(s: &str, n: usize) -> char { s.chars().nth(n).unwrap() }
+  answer: |
+    `n` >= the character count (including any `n` on an empty string): `nth` returns
+    `None` -> `unwrap` panics. (Also note `nth` is O(n) — chars aren't index-able.)
+    Guard: return `Option<char>` (just `s.chars().nth(n)`).
+  source: "Edge cases · out-of-range index"
+  tags: [rust, edge-cases, panic, utf8, concept]
+- type: concept
+  question: |
+    Which input gives the wrong answer, and why?
+
+        fn is_odd(n: i32) -> bool { n % 2 == 1 }
+  answer: |
+    Negative odd numbers: in Rust `%` truncates toward zero, so `-3 % 2 == -1`, not
+    `1` — `is_odd(-3)` wrongly returns false.
+    Guard: test against zero instead — `n % 2 != 0`.
+  source: "Edge cases · negative modulo"
+  tags: [rust, edge-cases, correctness, concept]
+- type: concept
+  question: |
+    Which inputs break this, and why?
+
+        fn domain(email: &str) -> &str { email.split('@').nth(1).unwrap() }
+  answer: |
+    No `@` -> `nth(1)` is `None` -> panic. And more than one `@` -> you silently get
+    only the middle segment, dropping the rest.
+    Guard: `email.split_once('@')` (returns `Option<(&str, &str)>`), returning
+    `Option`.
+  source: "Edge cases · split + unwrap"
+  tags: [rust, edge-cases, strings, panic, concept]
+- type: concept
+  question: |
+    Which input panics, and why?
+
+        fn initial(name: &str) -> char { name.chars().next().unwrap() }
+  answer: |
+    An empty string: `next()` is `None` -> `unwrap` panics.
+    Guard: return `Option<char>` (`name.chars().next()`) and let the caller handle a
+    nameless input.
+  source: "Edge cases · empty string"
+  tags: [rust, edge-cases, panic, concept]

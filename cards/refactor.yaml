@@ -1,0 +1,281 @@
+# Refactor to idiomatic — the starter WORKS and is correct, just verbose/imperative.
+# Rewrite it in idiomatic Rust (loops -> iterators, match -> combinators, etc.);
+# the editor diff checks against the idiomatic version.
+- instruction: |
+    Refactor to idiomatic Rust — rewrite `sum_squares` as an iterator chain (no
+    manual loop or accumulator).
+  starter: |
+    fn sum_squares(v: &[i32]) -> i32 {
+        let mut total = 0;
+        for &x in v {
+            total += x * x;
+        }
+        total
+    }
+  solution: |
+    fn sum_squares(v: &[i32]) -> i32 {
+        v.iter().map(|&x| x * x).sum()
+    }
+  notes: |
+    `map` transforms each element and `sum` folds them — the accumulator and loop
+    are implicit. Reads as "square each, then add them up".
+  source: "Refactor · loop -> map/sum"
+  tags: [rust, refactor, iterators]
+  tests: |
+    assert_eq!(sum_squares(&[1, 2, 3]), 14);
+    assert_eq!(sum_squares(&[]), 0);
+- instruction: |
+    Refactor to idiomatic Rust — rewrite `evens` with `filter`/`collect`.
+  starter: |
+    fn evens(v: &[i32]) -> Vec<i32> {
+        let mut out = Vec::new();
+        for &x in v {
+            if x % 2 == 0 {
+                out.push(x);
+            }
+        }
+        out
+    }
+  solution: |
+    fn evens(v: &[i32]) -> Vec<i32> {
+        v.iter().copied().filter(|&x| x % 2 == 0).collect()
+    }
+  notes: |
+    "empty Vec, loop, conditionally push" is exactly `filter` + `collect`.
+    `.copied()` turns the `&i32` items into `i32` so the output is `Vec<i32>`.
+  source: "Refactor · loop -> filter/collect"
+  tags: [rust, refactor, iterators]
+  tests: |
+    assert_eq!(evens(&[1, 2, 3, 4]), vec![2, 4]);
+    assert_eq!(evens(&[1, 3]), Vec::<i32>::new());
+- instruction: |
+    Refactor to idiomatic Rust — rewrite `count_negatives` with `filter().count()`.
+  starter: |
+    fn count_negatives(v: &[i32]) -> usize {
+        let mut n = 0;
+        for &x in v {
+            if x < 0 {
+                n += 1;
+            }
+        }
+        n
+    }
+  solution: |
+    fn count_negatives(v: &[i32]) -> usize {
+        v.iter().filter(|&&x| x < 0).count()
+    }
+  notes: |
+    Counting matches is `filter(...).count()` — no manual counter. `count` consumes
+    the filtered iterator.
+  source: "Refactor · loop -> filter/count"
+  tags: [rust, refactor, iterators]
+  tests: |
+    assert_eq!(count_negatives(&[-1, 2, -3]), 2);
+    assert_eq!(count_negatives(&[1, 2]), 0);
+- instruction: |
+    Refactor to idiomatic Rust — replace the manual max search with a single
+    iterator call (return `Option<i32>`).
+  starter: |
+    fn largest(v: &[i32]) -> Option<i32> {
+        let mut best: Option<i32> = None;
+        for &x in v {
+            match best {
+                Some(b) if b >= x => {}
+                _ => best = Some(x),
+            }
+        }
+        best
+    }
+  solution: |
+    fn largest(v: &[i32]) -> Option<i32> {
+        v.iter().max().copied()
+    }
+  notes: |
+    `Iterator::max` already returns `Option` (`None` for empty), in one O(n) pass.
+    `.copied()` turns `Option<&i32>` into `Option<i32>`.
+  source: "Refactor · loop -> Iterator::max"
+  tags: [rust, refactor, iterators]
+  tests: |
+    assert_eq!(largest(&[3, 1, 4]), Some(4));
+    assert_eq!(largest(&[]), None);
+- instruction: |
+    Refactor to idiomatic Rust — build the comma-joined string without the manual
+    index-and-push loop.
+  starter: |
+    fn csv(v: &[i32]) -> String {
+        let mut s = String::new();
+        for (i, x) in v.iter().enumerate() {
+            if i > 0 {
+                s.push(',');
+            }
+            s.push_str(&x.to_string());
+        }
+        s
+    }
+  solution: |
+    fn csv(v: &[i32]) -> String {
+        v.iter().map(|x| x.to_string()).collect::<Vec<_>>().join(",")
+    }
+  notes: |
+    Map each number to its text, then `join(",")` handles the separators (no
+    "first element" special case). `join` only puts commas BETWEEN items.
+  source: "Refactor · manual join -> join()"
+  tags: [rust, refactor, iterators, strings]
+  tests: |
+    assert_eq!(csv(&[1, 2, 3]), "1,2,3");
+    assert_eq!(csv(&[]), "");
+- instruction: |
+    Refactor to idiomatic Rust — replace the match on `Option` with a combinator.
+  starter: |
+    fn double_first(v: &[i32]) -> Option<i32> {
+        match v.first() {
+            Some(x) => Some(x * 2),
+            None => None,
+        }
+    }
+  solution: |
+    fn double_first(v: &[i32]) -> Option<i32> {
+        v.first().map(|x| x * 2)
+    }
+  notes: |
+    "`Some(f(x))` on `Some`, `None` on `None`" is exactly `Option::map` (clippy's
+    `manual_map`). It applies the function only when there's a value.
+  source: "Refactor · match -> Option::map"
+  tags: [rust, refactor, options]
+  tests: |
+    assert_eq!(double_first(&[3, 4]), Some(6));
+    assert_eq!(double_first(&[]), None);
+- instruction: |
+    Refactor to idiomatic Rust — replace the index loop with an iterator search.
+  starter: |
+    fn index_of(v: &[i32], target: i32) -> Option<usize> {
+        for i in 0..v.len() {
+            if v[i] == target {
+                return Some(i);
+            }
+        }
+        None
+    }
+  solution: |
+    fn index_of(v: &[i32], target: i32) -> Option<usize> {
+        v.iter().position(|&x| x == target)
+    }
+  notes: |
+    `Iterator::position` returns the index of the first match as `Option<usize>` and
+    short-circuits — no index loop, no manual `return`.
+  source: "Refactor · loop -> Iterator::position"
+  tags: [rust, refactor, iterators]
+  tests: |
+    assert_eq!(index_of(&[5, 6, 7], 6), Some(1));
+    assert_eq!(index_of(&[1], 9), None);
+- instruction: |
+    Refactor to idiomatic Rust — rewrite `to_upper` with `map`/`collect`.
+  starter: |
+    fn to_upper(words: &[&str]) -> Vec<String> {
+        let mut out = Vec::new();
+        for w in words {
+            out.push(w.to_uppercase());
+        }
+        out
+    }
+  solution: |
+    fn to_upper(words: &[&str]) -> Vec<String> {
+        words.iter().map(|w| w.to_uppercase()).collect()
+    }
+  notes: |
+    Transform-and-collect is the canonical `map().collect()`; `collect` can pre-size
+    the output `Vec` from the iterator.
+  source: "Refactor · loop -> map/collect"
+  tags: [rust, refactor, iterators]
+  tests: |
+    assert_eq!(to_upper(&["a", "bc"]), vec!["A".to_string(), "BC".to_string()]);
+- instruction: |
+    Refactor to idiomatic Rust — sum the stack without the `while let` pop loop.
+  starter: |
+    fn sum_stack(mut stack: Vec<i32>) -> i32 {
+        let mut total = 0;
+        while let Some(x) = stack.pop() {
+            total += x;
+        }
+        total
+    }
+  solution: |
+    fn sum_stack(stack: Vec<i32>) -> i32 {
+        stack.into_iter().sum()
+    }
+  notes: |
+    Draining a `Vec` by value is just `into_iter()`; `sum` folds it. (Order doesn't
+    matter for a sum, so we don't need the pop order.)
+  source: "Refactor · while-let -> into_iter/sum"
+  tags: [rust, refactor, iterators]
+  tests: |
+    assert_eq!(sum_stack(vec![1, 2, 3]), 6);
+    assert_eq!(sum_stack(vec![]), 0);
+- instruction: |
+    Refactor to idiomatic Rust — produce the squares from a range without a manual
+    push loop.
+  starter: |
+    fn squares(n: usize) -> Vec<usize> {
+        let mut out = Vec::new();
+        for i in 0..n {
+            out.push(i * i);
+        }
+        out
+    }
+  solution: |
+    fn squares(n: usize) -> Vec<usize> {
+        (0..n).map(|i| i * i).collect()
+    }
+  notes: |
+    A range IS an iterator, so `(0..n).map(..).collect()` replaces the loop directly.
+  source: "Refactor · range -> map/collect"
+  tags: [rust, refactor, iterators]
+  tests: |
+    assert_eq!(squares(4), vec![0, 1, 4, 9]);
+    assert_eq!(squares(0), Vec::<usize>::new());
+- instruction: |
+    Refactor to idiomatic Rust — replace the bool-flag loop with `any`.
+  starter: |
+    fn has_negative(v: &[i32]) -> bool {
+        let mut found = false;
+        for &x in v {
+            if x < 0 {
+                found = true;
+            }
+        }
+        found
+    }
+  solution: |
+    fn has_negative(v: &[i32]) -> bool {
+        v.iter().any(|&x| x < 0)
+    }
+  notes: |
+    "set a flag if any element matches" is `Iterator::any`, which also
+    SHORT-CIRCUITS on the first match instead of scanning the whole slice.
+  source: "Refactor · flag loop -> any"
+  tags: [rust, refactor, iterators]
+  tests: |
+    assert!(has_negative(&[1, -2, 3]));
+    assert!(!has_negative(&[1, 2]));
+- instruction: |
+    Refactor to idiomatic Rust — total the word lengths with `map`/`sum`.
+  starter: |
+    fn total_len(words: &[&str]) -> usize {
+        let mut total = 0;
+        for w in words {
+            total += w.len();
+        }
+        total
+    }
+  solution: |
+    fn total_len(words: &[&str]) -> usize {
+        words.iter().map(|w| w.len()).sum()
+    }
+  notes: |
+    Map each item to a number, then `sum` — the same shape as any "accumulate over
+    a collection" loop.
+  source: "Refactor · loop -> map/sum"
+  tags: [rust, refactor, iterators]
+  tests: |
+    assert_eq!(total_len(&["ab", "cde"]), 5);
+    assert_eq!(total_len(&[]), 0);

@@ -1,0 +1,156 @@
+# Predict the behaviour — read a snippet and say what it prints / whether it
+# compiles / what the value is, and why. Trains the mental model.
+- type: concept
+  question: |
+    What does this print?
+
+        let v = vec![1, 2, 3];
+        v.iter().map(|x| println!("{x}"));
+        println!("done");
+  answer: |
+    Just `done`. Iterator adaptors like `map` are LAZY — with no consumer (`for`,
+    `collect`, `sum`, ...) the closure never runs. The compiler also warns that the
+    `Map` is unused / must be used.
+  source: "Predict · iterator laziness"
+  tags: [rust, predict, iterators, concept]
+- type: concept
+  question: |
+    In a RELEASE build, what is `250u8 + 10`? In a DEBUG build?
+  answer: |
+    Debug: panics ("attempt to add with overflow"). Release: wraps around to `4`
+    (260 mod 256). Be explicit with `wrapping_add` / `checked_add` / `saturating_add`.
+  source: "Predict · integer overflow"
+  tags: [rust, predict, overflow, concept]
+- type: concept
+  question: |
+    What does this print, and why?
+
+        let x = 5;
+        let x = x + 1;
+        let x = x * 2;
+        println!("{x}");
+  answer: |
+    `12`. Each `let x` SHADOWS the previous binding with a brand-new variable (not
+    mutation): 5 -> 6 -> 12. Shadowing can even change the type.
+  source: "Predict · shadowing"
+  tags: [rust, predict, bindings, concept]
+- type: concept
+  question: |
+    What type is `n`, and what does this print?
+
+        let n = 10;
+        println!("{}", n / 3);
+  answer: |
+    `n` defaults to `i32`, so this is INTEGER division: `3` (the remainder is
+    discarded). You'd need floats (`10.0 / 3.0`) for `3.333...`.
+  source: "Predict · integer division"
+  tags: [rust, predict, types, concept]
+- type: concept
+  question: |
+    Does this compile?
+
+        let s = String::from("hi");
+        takes(s);            // fn takes(s: String)
+        println!("{s}");
+  answer: |
+    No — `s` was MOVED into `takes` (String isn't `Copy`), so the later use is
+    E0382 use-after-move. It would compile if `takes` took `&s`, or if `s` were a
+    `Copy` type like `i32`.
+  source: "Predict · move semantics"
+  tags: [rust, predict, ownership, concept]
+- type: concept
+  question: |
+    What does this print?
+
+        let mut count = 0;
+        let mut inc = || { count += 1; count };
+        println!("{} {}", inc(), inc());
+  answer: |
+    `1 2`. `inc` is an `FnMut` closure capturing `count` by mutable reference; each
+    call increments it. Macro arguments evaluate left-to-right.
+  source: "Predict · closure capture (FnMut)"
+  tags: [rust, predict, closures, concept]
+- type: concept
+  question: |
+    What does `"café".len()` return, and what about `"café".chars().count()`?
+  answer: |
+    `len()` is 5 (BYTES: c, a, f are 1 each, `é` is 2 in UTF-8). `chars().count()`
+    is 4 (characters). `str::len` is never the character count for non-ASCII text.
+  source: "Predict · bytes vs chars"
+  tags: [rust, predict, strings, utf8, concept]
+- type: concept
+  question: |
+    How many iterations, and what is the last value of `i`?
+
+        for i in 0..5 { /* ... */ }
+  answer: |
+    5 iterations with `i` = 0,1,2,3,4. `0..5` is EXCLUSIVE of the upper bound. Use
+    `0..=5` for an inclusive range (6 iterations, last `i` = 5).
+  source: "Predict · ranges"
+  tags: [rust, predict, ranges, concept]
+- type: concept
+  question: |
+    What happens at runtime?
+
+        let v = vec![1, 2, 3];
+        println!("{}", v[5]);
+  answer: |
+    Panics: "index out of bounds: the len is 3 but the index is 5". `v.get(5)` would
+    return `None` instead of panicking.
+  source: "Predict · index panic"
+  tags: [rust, predict, panic, concept]
+- type: concept
+  question: |
+    What is `y`, and why is this legal?
+
+        let y = if true { 1 } else { 2 };
+  answer: |
+    `y` is `1`. `if` is an EXPRESSION in Rust: it evaluates to the taken branch's
+    value, so you can bind it. Both arms must have the same type.
+  source: "Predict · if-as-expression"
+  tags: [rust, predict, expressions, concept]
+- type: concept
+  question: |
+    What does this print?
+
+        let v = vec![1, 2, 3, 4];
+        let s: i32 = v.iter().filter(|&&x| x % 2 == 0).sum();
+        println!("{s}");
+  answer: |
+    `6`. `filter` keeps the even values (2 and 4); `sum` adds them. The
+    double-`&` in `|&&x|` peels the `&&i32` the borrowed filter gives.
+  source: "Predict · filter + sum"
+  tags: [rust, predict, iterators, concept]
+- type: concept
+  question: |
+    Does `1 < 2 < 3` compile?
+  answer: |
+    No. Rust has no chained comparison: `1 < 2` is a `bool`, then `bool < 3` is a
+    type error. Write `1 < 2 && 2 < 3`.
+  source: "Predict · no chained comparison"
+  tags: [rust, predict, operators, concept]
+- type: concept
+  question: |
+    What does `v` become?
+
+        let mut v = vec![1, 2, 3];
+        for x in v.iter_mut() { *x *= 10; }
+  answer: |
+    `[10, 20, 30]`. `iter_mut` yields `&mut i32`; dereferencing with `*x` lets you
+    assign through it, editing the elements in place.
+  source: "Predict · iter_mut"
+  tags: [rust, predict, iterators, concept]
+- type: concept
+  question: |
+    Does this compile, and what does it print?
+
+        let v = vec![1, 2, 3];
+        let sum: i32 = v.iter().sum();
+        let doubled: Vec<i32> = v.iter().map(|x| x * 2).collect();
+        println!("{} {:?}", sum, doubled);
+  answer: |
+    Compiles; prints `6 [2, 4, 6]`. `iter()` BORROWS the Vec (it doesn't consume
+    it), so you can iterate `v` as many times as you like. `into_iter()` would move
+    it and forbid the second use.
+  source: "Predict · iter borrows"
+  tags: [rust, predict, iterators, ownership, concept]

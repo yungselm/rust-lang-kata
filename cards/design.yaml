@@ -1,0 +1,154 @@
+# Design decisions — "you need X; which type / collection / pattern, and why?"
+# Trains judgment about choosing, not recalling syntax.
+- type: concept
+  question: |
+    You need a queue: push to the back and pop from the FRONT, repeatedly. `Vec`
+    or `VecDeque`?
+  answer: |
+    `VecDeque`. It's a ring buffer with O(1) `push_back` and `pop_front`. `Vec`'s
+    front removal (`remove(0)`) is O(n) — it shifts every element. Use `Vec` when
+    you only ever push/pop the back (a stack).
+  source: "Design · Vec vs VecDeque"
+  tags: [rust, design, collections, concept]
+- type: concept
+  question: |
+    You need key -> value lookups AND to iterate the keys in sorted order. `HashMap`
+    or `BTreeMap`?
+  answer: |
+    `BTreeMap`: keys stay sorted, iteration is ordered, lookups are O(log n), and it
+    supports range queries. `HashMap` is faster (O(1) average) but its iteration
+    order is arbitrary. Pick `HashMap` when you don't need order.
+  source: "Design · HashMap vs BTreeMap"
+  tags: [rust, design, collections, concept]
+- type: concept
+  question: |
+    A function only READS a string argument. Take `&str` or `String`?
+  answer: |
+    `&str`. It accepts string literals, `&String`, and sub-slices, without the
+    caller giving up ownership or cloning. Take `String` by value only when the
+    function needs to OWN or store it.
+  source: "Design · &str vs String parameter"
+  tags: [rust, design, api, concept]
+- type: concept
+  question: |
+    A function reads a sequence of ints. `&[i32]`, `&Vec<i32>`, or `Vec<i32>`?
+  answer: |
+    `&[i32]`. A slice reference accepts arrays, `Vec`s, and sub-slices. `&Vec<i32>`
+    needlessly demands a `Vec` (clippy's `ptr_arg`); `Vec<i32>` by value takes
+    ownership you don't need.
+  source: "Design · &[T] vs Vec<T> parameter"
+  tags: [rust, design, api, concept]
+- type: concept
+  question: |
+    A function can fail. When do you return `Option`, when `Result`, and when just
+    `panic!`/`unwrap`?
+  answer: |
+    `Option` when "absent" is a normal, self-explanatory outcome (a lookup miss).
+    `Result<T, E>` when the caller needs to know WHY it failed (I/O, parsing).
+    `panic!`/`unwrap` only for bugs or invariants that should be impossible (or
+    throwaway code) — never for expected failures.
+  source: "Design · Option vs Result vs panic"
+  tags: [rust, design, error-handling, concept]
+- type: concept
+  question: |
+    A closed, known set of shapes vs an open set callers can extend. `enum` or
+    `Box<dyn Trait>`?
+  answer: |
+    `enum` for a CLOSED set you control: exhaustive `match`, no allocation, no
+    dynamic dispatch. `Box<dyn Trait>` for an OPEN/extensible set (callers add their
+    own types), at the cost of a heap allocation and vtable dispatch.
+  source: "Design · enum vs trait object"
+  tags: [rust, design, traits, concept]
+- type: concept
+  question: |
+    Single owner, vs shared ownership on one thread, vs shared across threads.
+    `Box`, `Rc`, or `Arc`?
+  answer: |
+    `Box<T>`: one owner, heap-allocated. `Rc<T>`: many owners, single-threaded
+    (non-atomic refcount — fast). `Arc<T>`: many owners across threads (atomic
+    refcount — slightly slower, and needs `T: Send + Sync` to share). Use the
+    cheapest that fits.
+  source: "Design · Box vs Rc vs Arc"
+  tags: [rust, design, smart-pointers, concept]
+- type: concept
+  question: |
+    Return "some iterator" from a function. `-> impl Iterator`, a generic param, or
+    `Box<dyn Iterator>`?
+  answer: |
+    `-> impl Iterator<Item = ..>` for a single concrete (monomorphized) return type
+    — zero-cost, but every call site gets that same type. `Box<dyn Iterator>` when
+    different branches return DIFFERENT concrete iterator types (dynamic dispatch).
+    Generic parameters are for INPUTS, not for choosing a return type.
+  source: "Design · impl Trait vs dyn"
+  tags: [rust, design, traits, concept]
+- type: concept
+  question: |
+    A helper produces a sequence the caller will loop over once. Return `Vec<T>` or
+    an iterator?
+  answer: |
+    Prefer an iterator (`impl Iterator`): no allocation, lazy, and composable with
+    more adaptors. Return `Vec<T>` when the caller needs to index it, keep it, or
+    iterate it multiple times — or when lifetimes make returning an iterator awkward.
+  source: "Design · iterator vs Vec return"
+  tags: [rust, design, iterators, concept]
+- type: concept
+  question: |
+    You return part of an input string. `&str` or `String`?
+  answer: |
+    `&str` (borrowing the input) when you return a SLICE of data that already exists
+    — no allocation. `String` when you build NEW content (concatenation,
+    transformation) that isn't already sitting in memory to borrow.
+  source: "Design · &str vs String return"
+  tags: [rust, design, api, strings, concept]
+- type: concept
+  question: |
+    You want a `UserId` that can't be mixed up with a raw `u64` or an `OrderId`.
+    `type UserId = u64;` or `struct UserId(u64);`?
+  answer: |
+    `struct UserId(u64)` — a NEWTYPE the compiler treats as a distinct type, so you
+    can't accidentally pass a raw `u64` or an `OrderId` where a `UserId` is expected.
+    A `type` alias is just a rename: fully interchangeable with `u64`, purely for
+    readability.
+  source: "Design · newtype vs type alias"
+  tags: [rust, design, types, concept]
+- type: concept
+  question: |
+    A fixed 3-byte RGB colour vs a list that grows at runtime. `[u8; 3]` or
+    `Vec<u8>`?
+  answer: |
+    `[u8; 3]`: length known at compile time, lives on the stack, no allocation, and
+    the compiler enforces the count. `Vec<u8>` when the length is dynamic or unknown
+    up front.
+  source: "Design · array vs Vec"
+  tags: [rust, design, collections, concept]
+- type: concept
+  question: |
+    A value used to index/size a collection vs a general number that can be
+    negative. `usize` or `i32`?
+  answer: |
+    `usize` for lengths and indices — that's what `len()` and indexing use, so you
+    avoid casts. `i32`/`i64` for general arithmetic that can go negative. Mixing them
+    forces `as` casts and invites overflow bugs.
+  source: "Design · usize vs i32"
+  tags: [rust, design, types, concept]
+- type: concept
+  question: |
+    A function returns its input unchanged MOST of the time, but occasionally a
+    modified copy. What return type avoids always allocating?
+  answer: |
+    `Cow<str>` (clone-on-write): return `Cow::Borrowed` for the unchanged case (no
+    allocation) and `Cow::Owned` only when you actually modify. Callers use the
+    result uniformly and only pay for a `String` when a change happened.
+  source: "Design · Cow<str>"
+  tags: [rust, design, strings, concept]
+- type: concept
+  question: |
+    You build a set once, then do many membership checks. `HashSet` or a sorted
+    `Vec` + `binary_search`?
+  answer: |
+    `HashSet` for simple O(1)-average lookups. A sorted `Vec` + `binary_search`
+    (O(log n)) wins when you ALSO need ordering/range queries, cache-friendly
+    scans, or minimal memory — the same "an array can beat a hash for small n"
+    trade-off as sorting-vs-hashing.
+  source: "Design · HashSet vs sorted Vec"
+  tags: [rust, design, collections, concept]

@@ -50,7 +50,7 @@ python build.py                 # writes output/CodeCards.apkg
 Import `output/CodeCards.apkg` into Anki (keep "Update notetypes" checked).
 Preview the look without Anki by opening `preview.html` in a browser.
 
-## Current decks (602 cards)
+## Current decks (696 cards)
 
 **Core Rust (452)** — idiomatic patterns to drill to fluency (decks under `Rust::Core::…`), covering the full book front-to-back:
 
@@ -74,6 +74,17 @@ Preview the look without Anki by opening `preview.html` in a browser.
 | `modules.yaml` | 20 | packages/crates, module tree, `mod`, `pub`/`pub(crate)`/`pub(in path)`, `use`, re-exports, paths (`self`/`super`/`crate`), splitting modules across files |
 | `oop.yaml` | 18 | encapsulation, trait objects (`dyn`), default methods, the state pattern (`Post`/`Draft`/`Published`), typestate pattern, object safety (`where Self: Sized`), builder pattern, trait objects vs enum match |
 | `advanced.yaml` | 19 | unsafe superpowers (raw pointers, unsafe fn, FFI/`extern "C"`, statics, unsafe traits), `macro_rules!`, macro hygiene, newtype vs type alias, the never type `!`, fully-qualified syntax for disambiguation |
+
+**Reading & judgment (94)** — reading and improving code, not just recalling syntax; also under `Rust::Core::…`:
+
+| File | Cards | Focus |
+|------|-------|-------|
+| `review.yaml` | 25 | code review — spot & fix a bug / perf / idiom / safety / allocation smell (rewrite it) |
+| `refactor.yaml` | 12 | rewrite working-but-verbose code idiomatically (loops → iterators, `match` → combinators) |
+| `predict.yaml` | 14 | predict the behaviour — what prints, does it compile, what's the value, and why |
+| `design.yaml` | 15 | design decisions — pick the right type / collection / pattern and know when the alternative wins |
+| `debugging.yaml` | 14 | diagnose real `rustc` / borrow-checker errors (E0382/E0499/E0502/E0106/…) → cause + fix |
+| `edgecases.yaml` | 14 | find the input that breaks a function (overflow, empty, UTF-8 boundary, `unwrap`, negative `%`, …) |
 
 **NeetCode 150 (150)** — interview problems grouped by pattern, nested under `Rust::Neetcode::…`:
 
@@ -132,7 +143,7 @@ authored easy→hard order.
 
 To apply: open Deck Options on **`Rust::Core`**, create a preset `Rust Core` with the
 values above, then the preset menu → **Save to all subdecks** (the parent's 14/day cap
-then bounds the daily total across the eighteen core subdecks). Repeat from **`Rust::Neetcode`**
+then bounds the daily total across the twenty-four core subdecks). Repeat from **`Rust::Neetcode`**
 with `Rust NeetCode` (1/day). Study the two groups as two separate daily sessions →
 14 random core cards + 1 NeetCode card in topic order. Change any number anytime.
 

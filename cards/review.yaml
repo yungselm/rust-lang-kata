@@ -1,0 +1,525 @@
+# Code Review — read a snippet that COMPILES AND RUNS but has a flaw, then rewrite
+# it into the fixed version. The prompt names the specific defect so the fix is
+# deterministic; the notes say why it was wrong. Trains reading & improving code.
+- instruction: |
+    Review & fix. This works but is O(n^2): `Vec::contains` rescans the whole Vec
+    each iteration. Rewrite `has_duplicate` to run in O(n) with a HashSet (same
+    signature and behaviour).
+  starter: |
+    fn has_duplicate(nums: &[i32]) -> bool {
+        let mut seen = Vec::new();
+        for &n in nums {
+            if seen.contains(&n) {
+                return true;
+            }
+            seen.push(n);
+        }
+        false
+    }
+  solution: |
+    use std::collections::HashSet;
+
+    fn has_duplicate(nums: &[i32]) -> bool {
+        let mut seen = HashSet::new();
+        for &n in nums {
+            if !seen.insert(n) {
+                return true;
+            }
+        }
+        false
+    }
+  notes: |
+    `Vec::contains` is a linear scan, so doing it inside the loop is O(n^2). A
+    `HashSet` gives O(1) membership; `insert` returns false when the value was
+    already present, so you don't even need a separate `contains` check.
+    O(n^2) -> O(n).
+  source: "Code review · O(n^2) membership"
+  tags: [rust, review, perf]
+- instruction: |
+    Review & fix. `sum_positive` allocates a whole `Vec` just to add it up.
+    Rewrite it without the intermediate collection.
+  starter: |
+    fn sum_positive(nums: &[i32]) -> i32 {
+        let positives: Vec<i32> = nums.iter().filter(|&&n| n > 0).copied().collect();
+        positives.iter().sum()
+    }
+  solution: |
+    fn sum_positive(nums: &[i32]) -> i32 {
+        nums.iter().filter(|&&n| n > 0).sum()
+    }
+  notes: |
+    Iterator adaptors are lazy, so the `collect()` into a temporary `Vec` is wasted
+    work and a wasted allocation — you can `sum()` the filtered iterator directly.
+    clippy flags this as `needless_collect`.
+  source: "clippy::needless_collect"
+  tags: [rust, review, alloc]
+- instruction: |
+    Review & fix. Rewrite `total` idiomatically — no index loop.
+  starter: |
+    fn total(v: &[i32]) -> i32 {
+        let mut sum = 0;
+        for i in 0..v.len() {
+            sum += v[i];
+        }
+        sum
+    }
+  solution: |
+    fn total(v: &[i32]) -> i32 {
+        v.iter().sum()
+    }
+  notes: |
+    Indexing over `0..v.len()` re-checks bounds on every access and is exactly what
+    clippy's `needless_range_loop` flags. Iterate the slice directly; `.sum()`
+    consumes the iterator.
+  source: "clippy::needless_range_loop"
+  tags: [rust, review, idiom]
+- instruction: |
+    Review & fix. `first_word` panics on an empty or all-whitespace string.
+    Rewrite it to return `Option<&str>` instead of unwrapping.
+  starter: |
+    fn first_word(s: &str) -> &str {
+        s.split_whitespace().next().unwrap()
+    }
+  solution: |
+    fn first_word(s: &str) -> Option<&str> {
+        s.split_whitespace().next()
+    }
+  notes: |
+    `.unwrap()` turns a legitimately-empty input into a panic. `next()` already
+    returns an `Option`; hand it back and let the caller decide, rather than
+    crashing. Push the "might be missing" fact into the type.
+  source: "Code review · panic safety"
+  tags: [rust, review, safety]
+- instruction: |
+    Review & fix. `score_of` allocates a `String` on every call just to look up a
+    `&str` key. Rewrite the lookup with no allocation.
+  starter: |
+    use std::collections::HashMap;
+
+    fn score_of(table: &HashMap<String, i32>, name: &str) -> i32 {
+        *table.get(&name.to_string()).unwrap_or(&0)
+    }
+  solution: |
+    use std::collections::HashMap;
+
+    fn score_of(table: &HashMap<String, i32>, name: &str) -> i32 {
+        *table.get(name).unwrap_or(&0)
+    }
+  notes: |
+    `HashMap::get` takes `&Q where String: Borrow<Q>`, and `String: Borrow<str>`,
+    so a `&str` looks up a `String` key directly — the `.to_string()` was a wasted
+    heap allocation. Reads borrow the key; only inserts need an owned `String`.
+  source: "std Borrow · needless allocation"
+  tags: [rust, review, alloc]
+- instruction: |
+    Review & fix. `contains_zero` copies the whole slice onto the heap just to
+    read it. Rewrite without the allocation.
+  starter: |
+    fn contains_zero(v: &[i32]) -> bool {
+        let copy = v.to_vec();
+        copy.contains(&0)
+    }
+  solution: |
+    fn contains_zero(v: &[i32]) -> bool {
+        v.contains(&0)
+    }
+  notes: |
+    `to_vec()` clones every element onto a fresh heap buffer; `contains` works on
+    the borrowed slice directly, so the copy is pure waste.
+  source: "Code review · needless allocation"
+  tags: [rust, review, alloc]
+  tests: |
+    assert!(contains_zero(&[1, 0, 2]));
+    assert!(!contains_zero(&[1, 2, 3]));
+    assert!(!contains_zero(&[]));
+- instruction: |
+    Review & fix. Rewrite `label` without the `format!` machinery.
+  starter: |
+    fn label(n: i32) -> String {
+        format!("{}", n)
+    }
+  solution: |
+    fn label(n: i32) -> String {
+        n.to_string()
+    }
+  notes: |
+    `format!("{}", x)` just to stringify one value is what clippy's `useless_format`
+    flags — it spins up the formatting machinery for nothing. `to_string()` (via
+    `Display`) is clearer and cheaper.
+  source: "clippy::useless_format"
+  tags: [rust, review, alloc]
+  tests: |
+    assert_eq!(label(42), "42");
+    assert_eq!(label(-3), "-3");
+- instruction: |
+    Review & fix. `sum_all` clones the whole Vec just to iterate it. Rewrite
+    without the clone.
+  starter: |
+    fn sum_all(v: Vec<i32>) -> i32 {
+        let mut sum = 0;
+        for x in v.clone() {
+            sum += x;
+        }
+        sum
+    }
+  solution: |
+    fn sum_all(v: Vec<i32>) -> i32 {
+        v.iter().sum()
+    }
+  notes: |
+    Iterating `v.clone()` duplicates the whole buffer for no reason — borrow it with
+    `iter()` instead. `.sum()` then folds the borrowed elements.
+  source: "Code review · needless clone"
+  tags: [rust, review, alloc]
+  tests: |
+    assert_eq!(sum_all(vec![1, 2, 3]), 6);
+    assert_eq!(sum_all(vec![]), 0);
+- instruction: |
+    Review & fix. Rewrite `or_zero` without the explicit match.
+  starter: |
+    fn or_zero(x: Option<i32>) -> i32 {
+        match x {
+            Some(v) => v,
+            None => 0,
+        }
+    }
+  solution: |
+    fn or_zero(x: Option<i32>) -> i32 {
+        x.unwrap_or(0)
+    }
+  notes: |
+    A `match` that returns the inner value or a fallback is exactly `unwrap_or`
+    (clippy's `manual_unwrap_or`). Use the combinator; it reads as "the value, or 0".
+  source: "clippy::manual_unwrap_or"
+  tags: [rust, review, idiom]
+  tests: |
+    assert_eq!(or_zero(Some(5)), 5);
+    assert_eq!(or_zero(None), 0);
+- instruction: |
+    Review & fix. Rewrite `is_even` without the if/else returning bools.
+  starter: |
+    fn is_even(n: i32) -> bool {
+        if n % 2 == 0 {
+            true
+        } else {
+            false
+        }
+    }
+  solution: |
+    fn is_even(n: i32) -> bool {
+        n % 2 == 0
+    }
+  notes: |
+    `if cond { true } else { false }` is just `cond` — clippy's `needless_bool`. The
+    condition is already the boolean you want to return.
+  source: "clippy::needless_bool"
+  tags: [rust, review, idiom]
+  tests: |
+    assert!(is_even(4));
+    assert!(!is_even(3));
+- instruction: |
+    Review & fix. Rewrite `has_items` to use the idiomatic emptiness check.
+  starter: |
+    fn has_items(v: &[i32]) -> bool {
+        v.len() > 0
+    }
+  solution: |
+    fn has_items(v: &[i32]) -> bool {
+        !v.is_empty()
+    }
+  notes: |
+    `v.len() > 0` is what clippy's `len_zero` rewrites to `!v.is_empty()` — it reads
+    better and, for some types, `is_empty` can be cheaper than computing the length.
+  source: "clippy::len_zero"
+  tags: [rust, review, idiom]
+  tests: |
+    assert!(has_items(&[1]));
+    assert!(!has_items(&[]));
+- instruction: |
+    Review & fix. Remove the needless `return` from `double`.
+  starter: |
+    fn double(x: i32) -> i32 {
+        return x * 2;
+    }
+  solution: |
+    fn double(x: i32) -> i32 {
+        x * 2
+    }
+  notes: |
+    Rust is expression-based: the last expression of a block is its value, so an
+    explicit `return` on the final line is redundant (clippy's `needless_return`).
+  source: "clippy::needless_return"
+  tags: [rust, review, idiom]
+  tests: |
+    assert_eq!(double(3), 6);
+- instruction: |
+    Review & fix. `total_ref` demands a `&Vec<i32>`, so callers can't pass an
+    array or a slice. Loosen the parameter to accept any slice.
+  starter: |
+    fn total_ref(v: &Vec<i32>) -> i32 {
+        v.iter().sum()
+    }
+  solution: |
+    fn total_ref(v: &[i32]) -> i32 {
+        v.iter().sum()
+    }
+  notes: |
+    Taking `&Vec<T>` needlessly restricts callers; `&[T]` accepts a `Vec`, an array,
+    or any slice, and the body is identical. This is clippy's `ptr_arg`.
+  source: "clippy::ptr_arg"
+  tags: [rust, review, api]
+  tests: |
+    assert_eq!(total_ref(&[1, 2, 3]), 6);
+- instruction: |
+    Review & fix. `second` panics when the slice has fewer than 2 elements.
+    Rewrite it to return `Option<i32>`.
+  starter: |
+    fn second(v: &[i32]) -> i32 {
+        v[1]
+    }
+  solution: |
+    fn second(v: &[i32]) -> Option<i32> {
+        v.get(1).copied()
+    }
+  notes: |
+    Indexing `v[1]` panics out of bounds. `get` returns `Option<&i32>`, and
+    `.copied()` turns it into `Option<i32>` — the missing case is now in the type
+    instead of a crash.
+  source: "Code review · panic safety"
+  tags: [rust, review, safety]
+  tests: |
+    assert_eq!(second(&[1, 2, 3]), Some(2));
+    assert_eq!(second(&[9]), None);
+- instruction: |
+    Review & fix. `add` overflows (panicking in debug, wrapping in release) when
+    the sum exceeds `u8`. Rewrite it to return `Option<u8>`, `None` on overflow.
+  starter: |
+    fn add(a: u8, b: u8) -> u8 {
+        a + b
+    }
+  solution: |
+    fn add(a: u8, b: u8) -> Option<u8> {
+        a.checked_add(b)
+    }
+  notes: |
+    Plain `+` on integers can overflow. `checked_add` returns `None` instead of
+    panicking/wrapping, forcing the caller to handle the out-of-range case.
+  source: "Code review · integer overflow"
+  tags: [rust, review, safety]
+  tests: |
+    assert_eq!(add(200, 55), Some(255));
+    assert_eq!(add(200, 100), None);
+- instruction: |
+    Review & fix. `ratio` panics when `b` is 0. Rewrite it to return
+    `Option<i32>`, `None` on a zero divisor.
+  starter: |
+    fn ratio(a: i32, b: i32) -> i32 {
+        a / b
+    }
+  solution: |
+    fn ratio(a: i32, b: i32) -> Option<i32> {
+        a.checked_div(b)
+    }
+  notes: |
+    Integer division by zero panics. `checked_div` returns `None` on a zero divisor
+    (and on the `i32::MIN / -1` overflow), so the danger is encoded in the type.
+  source: "Code review · division by zero"
+  tags: [rust, review, safety]
+  tests: |
+    assert_eq!(ratio(10, 2), Some(5));
+    assert_eq!(ratio(10, 0), None);
+- instruction: |
+    Review & fix. `last` panics on an empty slice (both the `len() - 1` and the
+    index). Rewrite it with the safe accessor, returning `Option<i32>`.
+  starter: |
+    fn last(v: &[i32]) -> Option<i32> {
+        Some(v[v.len() - 1])
+    }
+  solution: |
+    fn last(v: &[i32]) -> Option<i32> {
+        v.last().copied()
+    }
+  notes: |
+    On an empty slice `v.len() - 1` underflows (it's `usize`) and the index would be
+    out of bounds anyway. `slice::last` already returns `Option<&T>`; `.copied()`
+    gives `Option<i32>`.
+  source: "Code review · panic safety"
+  tags: [rust, review, safety]
+  tests: |
+    assert_eq!(last(&[1, 2, 3]), Some(3));
+    assert_eq!(last(&[]), None);
+- instruction: |
+    Review & fix. Rewrite `parse_sum` using the `?` operator instead of the two
+    verbose matches.
+  starter: |
+    fn parse_sum(a: &str, b: &str) -> Option<i32> {
+        let x = match a.parse::<i32>() {
+            Ok(v) => v,
+            Err(_) => return None,
+        };
+        let y = match b.parse::<i32>() {
+            Ok(v) => v,
+            Err(_) => return None,
+        };
+        Some(x + y)
+    }
+  solution: |
+    fn parse_sum(a: &str, b: &str) -> Option<i32> {
+        let x = a.parse::<i32>().ok()?;
+        let y = b.parse::<i32>().ok()?;
+        Some(x + y)
+    }
+  notes: |
+    `.ok()` turns `Result` into `Option`, and `?` returns `None` early on failure —
+    collapsing each match-and-early-return into one line while keeping identical
+    behaviour.
+  source: "book §9.2 (the ? operator)"
+  tags: [rust, review, error-handling]
+  tests: |
+    assert_eq!(parse_sum("2", "3"), Some(5));
+    assert_eq!(parse_sum("x", "3"), None);
+- instruction: |
+    Review & fix. `parse_one` returns a `Result` but still `unwrap`s the parse.
+    Propagate the error with `?` instead.
+  starter: |
+    fn parse_one(s: &str) -> Result<i32, std::num::ParseIntError> {
+        let n = s.parse::<i32>().unwrap();
+        Ok(n * 2)
+    }
+  solution: |
+    fn parse_one(s: &str) -> Result<i32, std::num::ParseIntError> {
+        let n: i32 = s.parse()?;
+        Ok(n * 2)
+    }
+  notes: |
+    Unwrapping inside a function that already returns `Result` throws away the whole
+    point of the return type — a bad input panics instead of returning `Err`. `?`
+    forwards the error to the caller.
+  source: "book §9.2 (propagating errors)"
+  tags: [rust, review, error-handling]
+  tests: |
+    assert_eq!(parse_one("5").unwrap(), 10);
+    assert!(parse_one("x").is_err());
+- instruction: |
+    Review & fix. `midpoint` computes `(a + b) / 2`, which overflows for large
+    `a + b`. Rewrite it to find the midpoint without overflowing (assume a <= b).
+  starter: |
+    fn midpoint(a: i32, b: i32) -> i32 {
+        (a + b) / 2
+    }
+  solution: |
+    fn midpoint(a: i32, b: i32) -> i32 {
+        a + (b - a) / 2
+    }
+  notes: |
+    `a + b` can exceed `i32::MAX` even when the midpoint fits. `a + (b - a) / 2`
+    keeps every intermediate in range — the same trick used for a binary-search
+    midpoint.
+  source: "Code review · overflow-safe midpoint"
+  tags: [rust, review, correctness]
+  tests: |
+    assert_eq!(midpoint(2, 8), 5);
+    assert_eq!(midpoint(2_000_000_000, 2_000_000_000), 2_000_000_000);
+- instruction: |
+    Review & fix. `abs_diff` returns a negative number when `b > a`; it should be
+    the absolute difference. Fix the bug.
+  starter: |
+    fn abs_diff(a: i32, b: i32) -> i32 {
+        a - b
+    }
+  solution: |
+    fn abs_diff(a: i32, b: i32) -> i32 {
+        (a - b).abs()
+    }
+  notes: |
+    Subtraction alone is signed, so `abs_diff(3, 7)` gave -4. `.abs()` makes it a
+    true distance. (For very large gaps, `a.abs_diff(b) -> u32` avoids overflow
+    entirely.)
+  source: "Code review · correctness"
+  tags: [rust, review, correctness]
+  tests: |
+    assert_eq!(abs_diff(3, 7), 4);
+    assert_eq!(abs_diff(7, 3), 4);
+- instruction: |
+    Review & fix. `char_count` builds a whole `Vec<char>` just to measure it.
+    Rewrite it to count characters without allocating.
+  starter: |
+    fn char_count(s: &str) -> usize {
+        s.chars().collect::<Vec<char>>().len()
+    }
+  solution: |
+    fn char_count(s: &str) -> usize {
+        s.chars().count()
+    }
+  notes: |
+    Collecting into a `Vec` only to call `.len()` is a wasted allocation
+    (`needless_collect`). `Iterator::count` consumes the iterator and counts. Note
+    this counts CHARS, unlike `s.len()` which counts bytes.
+  source: "clippy::needless_collect"
+  tags: [rust, review, alloc]
+  tests: |
+    assert_eq!(char_count("abc"), 3);
+    assert_eq!(char_count("héllo"), 5);
+- instruction: |
+    Review & fix. Rewrite `doubled` as an iterator map/collect instead of a manual
+    push loop.
+  starter: |
+    fn doubled(v: &[i32]) -> Vec<i32> {
+        let mut out = Vec::new();
+        for &x in v {
+            out.push(x * 2);
+        }
+        out
+    }
+  solution: |
+    fn doubled(v: &[i32]) -> Vec<i32> {
+        v.iter().map(|&x| x * 2).collect()
+    }
+  notes: |
+    "Start an empty Vec, loop, push a transformed element" is exactly `map` +
+    `collect` — shorter, and it can pre-size the output from the iterator.
+  source: "Code review · idiomatic iterators"
+  tags: [rust, review, idiom]
+  tests: |
+    assert_eq!(doubled(&[1, 2, 3]), vec![2, 4, 6]);
+- instruction: |
+    Review & fix. `shout` takes its input by value (`String`) but only reads it,
+    forcing every caller to hand over ownership. Loosen the parameter.
+  starter: |
+    fn shout(s: String) -> String {
+        s.to_uppercase()
+    }
+  solution: |
+    fn shout(s: &str) -> String {
+        s.to_uppercase()
+    }
+  notes: |
+    A function that only reads a string should take `&str`: it then accepts a
+    `&String`, a string literal, or any slice, without the caller giving up (or
+    cloning) an owned `String`. Take by value only when you actually need ownership.
+  source: "Code review · API design (&str vs String)"
+  tags: [rust, review, api]
+  tests: |
+    assert_eq!(shout("hi"), "HI");
+    assert_eq!(shout(&String::from("ok")), "OK");
+- instruction: |
+    Review & fix. `largest` sorts a copy (O(n log n) plus an allocation) just to
+    read the max. Rewrite it as an O(n) scan returning `Option<i32>`.
+  starter: |
+    fn largest(v: &[i32]) -> Option<i32> {
+        let mut sorted = v.to_vec();
+        sorted.sort();
+        sorted.last().copied()
+    }
+  solution: |
+    fn largest(v: &[i32]) -> Option<i32> {
+        v.iter().max().copied()
+    }
+  notes: |
+    Sorting to grab one element is overkill: `Iterator::max` finds it in a single
+    O(n) pass with no allocation, and returns `None` for an empty slice.
+  source: "Code review · O(n log n) -> O(n)"
+  tags: [rust, review, perf]
+  tests: |
+    assert_eq!(largest(&[3, 1, 4, 1, 5]), Some(5));
+    assert_eq!(largest(&[]), None);

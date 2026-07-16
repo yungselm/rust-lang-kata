@@ -1,0 +1,194 @@
+# Debugging — read a snippet plus the real compiler error, then explain the CAUSE
+# and the FIX. Trains diagnosing rustc/borrow-checker messages, not writing code.
+- type: concept
+  question: |
+    Why won't this compile, and how do you fix it?
+
+        let s = String::from("hi");
+        let t = s;
+        println!("{s}");   // error[E0382]: borrow of moved value: `s`
+  answer: |
+    `String` is not `Copy`, so `let t = s` MOVES ownership out of `s`; using `s`
+    afterward is a use-after-move.
+    Fixes: borrow (`let t = &s;`), clone if you need a second owner
+    (`let t = s.clone();`), or just use `t`. (An `i32` here would be fine — it's `Copy`.)
+  source: "rustc E0382 (borrow of moved value)"
+  tags: [rust, debugging, ownership, concept]
+- type: concept
+  question: |
+    Why the error, and the fix?
+
+        let mut v = vec![1, 2, 3];
+        let a = &mut v;
+        let b = &mut v;   // error[E0499]: cannot borrow `v` as mutable more than once
+        a.push(4);
+  answer: |
+    Rust allows only ONE active `&mut` at a time (aliasing XOR mutation). `a` is
+    still used after `b` is created, so both mutable borrows are live and overlap.
+    Fix: don't overlap them — finish using `a` before making `b`, or take a single
+    `&mut` and do all the mutation through it.
+  source: "rustc E0499 (multiple mutable borrows)"
+  tags: [rust, debugging, borrowck, concept]
+- type: concept
+  question: |
+    Why the error, and the fix?
+
+        let mut v = vec![1, 2, 3];
+        let first = &v[0];
+        v.push(4);   // error[E0502]: cannot borrow `v` as mutable ... also borrowed as immutable
+        println!("{first}");
+  answer: |
+    `first` is an immutable borrow of `v` and is used AFTER `push`, which needs a
+    `&mut`. `push` may reallocate the buffer, which would dangle `first` — so the
+    borrow checker forbids it.
+    Fix: copy the value out (`let first = v[0];`) or finish using `first` before the
+    `push`.
+  source: "rustc E0502 (mutable + immutable borrow)"
+  tags: [rust, debugging, borrowck, concept]
+- type: concept
+  question: |
+    Why does the last line fail, and the fix?
+
+        let words = vec![String::from("a")];
+        for w in words { println!("{w}"); }   // moves each String out of `words`
+        println!("{}", words.len());   // error[E0382]: borrow of moved value: `words`
+  answer: |
+    `for w in words` calls `into_iter`, consuming `words` by value and moving its
+    elements out; `words` no longer exists afterward.
+    Fix: iterate by reference — `for w in &words` — so the Vec stays usable.
+  source: "rustc E0382 (moved by into_iter)"
+  tags: [rust, debugging, ownership, iterators, concept]
+- type: concept
+  question: |
+    Why won't this compile, and the fix?
+
+        fn take_first(v: &Vec<String>) -> String {
+            v[0]   // error[E0507]: cannot move out of index of `Vec<String>`
+        }
+  answer: |
+    `v` is a shared borrow, so you can't move a `String` out of it — that would
+    leave the Vec with a hole while the caller still owns it.
+    Fix: clone (`v[0].clone()`), return a reference (`-> &String`), or take the Vec
+    by value if the caller can give up ownership.
+  source: "rustc E0507 (cannot move out of borrow)"
+  tags: [rust, debugging, ownership, concept]
+- type: concept
+  question: |
+    Why the error, and the one-word fix?
+
+        let count = 0;
+        count += 1;   // error[E0384]: cannot assign twice to immutable variable `count`
+  answer: |
+    Bindings are immutable by default, so `count` can't be reassigned.
+    Fix: declare it mutable — `let mut count = 0;`.
+  source: "rustc E0384 (assign to immutable)"
+  tags: [rust, debugging, mutability, concept]
+- type: concept
+  question: |
+    Why won't `push_zero` compile, and the fix?
+
+        fn push_zero(v: &Vec<i32>) {
+            v.push(0);   // error[E0596]: cannot borrow `*v` as mutable
+        }
+  answer: |
+    `v` is a shared reference (`&Vec<i32>`), but `push` needs `&mut self`. You can't
+    mutate through a `&`.
+    Fix: take `v: &mut Vec<i32>` (and call it as `push_zero(&mut my_vec)`).
+  source: "rustc E0596 (borrow as mutable)"
+  tags: [rust, debugging, borrowck, concept]
+- type: concept
+  question: |
+    Why the type error, and the fix?
+
+        fn count(v: &[i32]) -> i32 {
+            v.len()   // error[E0308]: mismatched types: expected `i32`, found `usize`
+        }
+  answer: |
+    `len()` returns `usize`, and Rust never implicitly converts between integer
+    types.
+    Fix: cast — `v.len() as i32` — or change the return type to `usize`.
+  source: "rustc E0308 (mismatched integer types)"
+  tags: [rust, debugging, types, concept]
+- type: concept
+  question: |
+    Why does `longer` need something the compiler can't infer, and the fix?
+
+        fn longer(a: &str, b: &str) -> &str {   // error[E0106]: missing lifetime specifier
+            if a.len() >= b.len() { a } else { b }
+        }
+  answer: |
+    With TWO input references, lifetime elision can't tell which one the returned
+    reference borrows from, so you must say it.
+    Fix: tie them together — `fn longer<'a>(a: &'a str, b: &'a str) -> &'a str`. (A
+    single input reference would elide fine.)
+  source: "rustc E0106 (missing lifetime specifier)"
+  tags: [rust, debugging, lifetimes, concept]
+- type: concept
+  question: |
+    Why can't you return this reference, and the fix?
+
+        fn make() -> &String {
+            let s = String::from("hi");
+            &s   // error[E0515]: cannot return reference to local variable `s`
+        }
+  answer: |
+    `s` is dropped when the function returns, so a reference to it would dangle.
+    Fix: return the OWNED value — `fn make() -> String { s }` — moving ownership to
+    the caller.
+  source: "rustc E0515 (return reference to local)"
+  tags: [rust, debugging, lifetimes, ownership, concept]
+- type: concept
+  question: |
+    Why won't `a + b` compile, and the fix?
+
+        let a = String::from("foo");
+        let b = String::from("bar");
+        let c = a + b;   // error[E0308]: expected `&str`, found `String`
+  answer: |
+    `String`'s `+` is `Add<&str>`: it takes the left side by value and the right by
+    reference.
+    Fix: borrow the right — `let c = a + &b;`. (`a` is moved into the result; `b` is
+    still usable.)
+  source: "rustc E0308 / std String Add"
+  tags: [rust, debugging, strings, concept]
+- type: concept
+  question: |
+    Why the error, and the fix?
+
+        struct P { x: i32 }
+        let p = P { x: 1 };
+        println!("{:?}", p);   // error[E0277]: `P` doesn't implement `Debug`
+  answer: |
+    `{:?}` requires the `Debug` trait, which isn't automatic.
+    Fix: derive it — `#[derive(Debug)] struct P { x: i32 }`. (`{}` would instead need
+    `Display`, which you implement by hand.)
+  source: "rustc E0277 (trait bound not satisfied)"
+  tags: [rust, debugging, traits, concept]
+- type: concept
+  question: |
+    Why does `f` fail to type-check, and the fix?
+
+        fn f() {
+            1 + 1   // error[E0308]: mismatched types: expected `()`, found integer
+        }
+  answer: |
+    Without a trailing `;`, `1 + 1` is the block's VALUE, but `f` returns `()`.
+    Fix: add the semicolon (make it a statement), or change the signature to
+    `-> i32` if you meant to return the value.
+  source: "rustc E0308 (trailing expression)"
+  tags: [rust, debugging, types, concept]
+- type: concept
+  question: |
+    Why won't the spawned closure compile, and the fix?
+
+        let data = vec![1, 2, 3];
+        std::thread::spawn(|| {
+            println!("{:?}", data);   // error[E0373]: closure may outlive `data`
+        });
+  answer: |
+    The new thread can outlive the current function, so a closure that BORROWS
+    `data` could read freed memory.
+    Fix: `move ||` to move `data` into the closure, transferring ownership to the
+    thread.
+  source: "rustc E0373 (closure may outlive)"
+  tags: [rust, debugging, closures, concurrency, concept]
