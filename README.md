@@ -11,15 +11,9 @@ Anki decks for learning **Rust**, built from plain YAML. The idea is to create a
 ## Contributing
 
 **The primary goal is building the best possible Rust card set together.**
-If you want to help, the most valuable contribution is adding or improving cards in `cards/*.yaml`. No Rust toolchain is required just to edit YAML (though running `python check_cards.py` before a PR is appreciated so all solutions stay warning-free).
+The most valuable contribution is adding or improving cards in `cards/*.yaml` — no Rust toolchain is required just to edit YAML. See [CONTRIBUTING.md](CONTRIBUTING.md) for the full workflow (`lint_cards.py` / `check_cards.py` / `build.py`) and how to report card issues or suggest new ones. CI runs the same checks on every PR.
 
-Improving the build system or templates is also welcome. The one hard requirement for code changes is that clippy passes without warnings to keep solutions idiomatic.
-
-Quick card-contribution workflow:
-1. Fork → edit a `cards/*.yaml` file (or add a new one)
-2. `python check_cards.py` to verify solutions compile cleanly
-3. `python build.py` to rebuild the `.apkg` and smoke-test in Anki
-4. Open a PR
+My focus so far has been on the card content itself; the build system, templates, and check scripts were written quickly to serve that goal and haven't had much dedicated code-quality attention. If you'd like to dig into `build.py`, `check_cards.py`, `lint_cards.py`, or the templates and tighten them up, that's very welcome too.
 
 ## The code base
 
