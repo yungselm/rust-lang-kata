@@ -1,8 +1,8 @@
 """Build CodeCards.apkg from the YAML card files in cards/.
 
-Deck layout:
-  - cards/<topic>.yaml            -> Rust::Core::<Topic>      (concept/idiom decks)
-  - cards/neetcode__<cat>.yaml    -> Rust::Neetcode::<Cat>    (interview problems)
+Deck layout (root name set by DECK_ROOT below):
+  - cards/<topic>.yaml            -> <DECK_ROOT>::Core::<Topic>      (concept/idiom decks)
+  - cards/neetcode__<cat>.yaml    -> <DECK_ROOT>::Neetcode::<Cat>    (interview problems)
 
 Each card is a YAML list item:
   - type: code            # default
@@ -43,6 +43,7 @@ ASSETS = os.path.join(OUT, "_assets")
 CODE_MODEL_ID = 1607392319
 CONCEPT_MODEL_ID = 1607392321
 ASSET_VER = "8"   # bump on any vendor/_cards.js change
+DECK_ROOT = "Rust Language Kata"   # top-level deck name shown in Anki
 
 # ---- shipped deck-options settings -------------------------------------------
 # These apply under BOTH schedulers. The SM-2 fields (initial factor, easy bonus,
@@ -69,26 +70,26 @@ NEW_ORDER_SEQUENTIAL = 1       # 1 = order added (NeetCode easy->hard), 0 = rand
 NEW_ORDER_RANDOM = 0
 
 # Canonical NeetCode topic order (deck names as produced by deck_for).
-NEETCODE_ORDER = [
-    "Rust::Neetcode::Arrays Hashing",
-    "Rust::Neetcode::Two Pointers",
-    "Rust::Neetcode::Sliding Window",
-    "Rust::Neetcode::Stack",
-    "Rust::Neetcode::Binary Search",
-    "Rust::Neetcode::Linked List",
-    "Rust::Neetcode::Trees",
-    "Rust::Neetcode::Tries",
-    "Rust::Neetcode::Heap",
-    "Rust::Neetcode::Backtracking",
-    "Rust::Neetcode::Graphs",
-    "Rust::Neetcode::Advanced Graphs",
-    "Rust::Neetcode::Dp 1D",
-    "Rust::Neetcode::Dp 2D",
-    "Rust::Neetcode::Greedy",
-    "Rust::Neetcode::Intervals",
-    "Rust::Neetcode::Math Geometry",
-    "Rust::Neetcode::Bit Manipulation",
-]
+NEETCODE_ORDER = [f"{DECK_ROOT}::Neetcode::{t}" for t in [
+    "Arrays Hashing",
+    "Two Pointers",
+    "Sliding Window",
+    "Stack",
+    "Binary Search",
+    "Linked List",
+    "Trees",
+    "Tries",
+    "Heap",
+    "Backtracking",
+    "Graphs",
+    "Advanced Graphs",
+    "Dp 1D",
+    "Dp 2D",
+    "Greedy",
+    "Intervals",
+    "Math Geometry",
+    "Bit Manipulation",
+]]
 
 # Anki positions new cards by IMPORT order, so we add the NeetCode files in
 # canonical topic order (easy->hard) here; core files come first, alphabetical.
@@ -193,14 +194,14 @@ def titled(seg):
 
 def deck_for(stem):
     # NeetCode subdecks get a 2-digit topic-order prefix so alphabetical order
-    # == NeetCode order under any gather setting. Core -> Rust::Core::<Topic>.
+    # == NeetCode order under any gather setting. Core -> <DECK_ROOT>::Core::<Topic>.
     if stem in NEETCODE_FILE_ORDER:
         idx = NEETCODE_FILE_ORDER.index(stem) + 1
-        name = f"Rust::Neetcode::{idx:02d} {titled(stem.split('__', 1)[1])}"
+        name = f"{DECK_ROOT}::Neetcode::{idx:02d} {titled(stem.split('__', 1)[1])}"
     elif "__" in stem:
-        name = "Rust::" + "::".join(titled(s) for s in stem.split("__"))
+        name = DECK_ROOT + "::" + "::".join(titled(s) for s in stem.split("__"))
     else:
-        name = "Rust::Core::" + titled(stem)
+        name = f"{DECK_ROOT}::Core::" + titled(stem)
     deck_id = 1700000000 + (zlib.crc32(stem.encode()) % 100000000)
     return genanki.Deck(deck_id, name)
 
@@ -249,16 +250,16 @@ def postprocess(apkg_path):
     decks = json.loads(cur.execute("select decks from col").fetchone()[0])
     dconf = json.loads(cur.execute("select dconf from col").fetchone()[0])
 
-    dconf[str(CORE_CONF_ID)] = make_conf(CORE_CONF_ID, "Rust Core",
+    dconf[str(CORE_CONF_ID)] = make_conf(CORE_CONF_ID, f"{DECK_ROOT} Core",
                                          CORE_NEW_PER_DAY, NEW_ORDER_RANDOM)
-    dconf[str(NEETCODE_CONF_ID)] = make_conf(NEETCODE_CONF_ID, "Rust NeetCode",
+    dconf[str(NEETCODE_CONF_ID)] = make_conf(NEETCODE_CONF_ID, f"{DECK_ROOT} NeetCode",
                                              NEETCODE_NEW_PER_DAY, NEW_ORDER_SEQUENTIAL)
 
     # ensure parent decks exist with the right preset (Anki would otherwise
     # auto-create them with the default preset, ignoring our daily limits).
     existing = {d["name"] for d in decks.values()}
-    parents = [("Rust", CORE_CONF_ID), ("Rust::Core", CORE_CONF_ID),
-               ("Rust::Neetcode", NEETCODE_CONF_ID)]
+    parents = [(DECK_ROOT, CORE_CONF_ID), (f"{DECK_ROOT}::Core", CORE_CONF_ID),
+               (f"{DECK_ROOT}::Neetcode", NEETCODE_CONF_ID)]
     pid = 1690000001
     for pname, cid in parents:
         if pname not in existing:
@@ -270,7 +271,7 @@ def postprocess(apkg_path):
         name = d.get("name", "")
         if did == "1" or name == "Default":
             continue
-        if name == "Rust::Neetcode" or name.startswith("Rust::Neetcode::"):
+        if name == f"{DECK_ROOT}::Neetcode" or name.startswith(f"{DECK_ROOT}::Neetcode::"):
             d["conf"] = NEETCODE_CONF_ID
         else:
             d["conf"] = CORE_CONF_ID
@@ -285,7 +286,7 @@ def postprocess(apkg_path):
     nc = []
     for cid, nid, did in rows:
         nm = name_by_id.get(did, "")
-        if nm.startswith("Rust::Neetcode::"):
+        if nm.startswith(f"{DECK_ROOT}::Neetcode::"):
             nc.append((order_index.get(nm, 999), nid, cid))
     nc.sort()
     for pos, (_idx, _nid, cid) in enumerate(nc, start=1):
