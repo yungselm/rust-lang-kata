@@ -415,11 +415,11 @@
     use std::hash::Hash;
 
     fn counts_by<T, K: Eq + Hash, F: Fn(&T) -> K>(items: &[T], key: F) -> HashMap<K, usize> {
-        let mut map = HashMap::new();
+        let mut m = HashMap::new();
         for item in items {
-            *map.entry(key(item)).or_insert(0) += 1;
+            *m.entry(key(item)).or_insert(0) += 1;
         }
-        map
+        m
     }
   notes: |
     A user-supplied key closure makes one function serve every grouping — this
