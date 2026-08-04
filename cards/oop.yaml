@@ -276,12 +276,11 @@
   tags: [rust, oop, concept]
 
 - instruction: |
-    Implement the classic blog-post state pattern: a `Post` holds text plus
-    a `Box<dyn State>`, starting as `Draft`. `add_text` appends text
-    unconditionally. `content()` returns the text only once `Published`
-    (empty string in every other state). `request_review()` transitions
-    Draft→PendingReview; `approve()` transitions PendingReview→Published;
-    both are no-ops in any other state.
+    Blog-post state pattern — everything is scaffolded; fill the 7 `TODO`
+    holes. Each state's `request_review` / `approve` returns the NEXT state
+    (Draft -> PendingReview, PendingReview -> Published) or `self` for a
+    no-op, and `Published` overrides `content` to return the post's text
+    (other states inherit the default "").
   starter: |
     trait State {
         fn request_review(self: Box<Self>) -> Box<dyn State>;
@@ -292,8 +291,44 @@
     }
 
     struct Draft;
+
+    impl State for Draft {
+        fn request_review(self: Box<Self>) -> Box<dyn State> {
+            // TODO: Draft -> PendingReview
+        }
+
+        fn approve(self: Box<Self>) -> Box<dyn State> {
+            // TODO: no-op (return self)
+        }
+    }
+
     struct PendingReview;
+
+    impl State for PendingReview {
+        fn request_review(self: Box<Self>) -> Box<dyn State> {
+            // TODO: no-op (return self)
+        }
+
+        fn approve(self: Box<Self>) -> Box<dyn State> {
+            // TODO: PendingReview -> Published
+        }
+    }
+
     struct Published;
+
+    impl State for Published {
+        fn request_review(self: Box<Self>) -> Box<dyn State> {
+            // TODO: no-op (return self)
+        }
+
+        fn approve(self: Box<Self>) -> Box<dyn State> {
+            // TODO: no-op (return self)
+        }
+
+        fn content<'a>(&self, post: &'a Post) -> &'a str {
+            // TODO: return the post's text
+        }
+    }
 
     struct Post {
         state: Option<Box<dyn State>>,
@@ -317,11 +352,15 @@
         }
 
         fn request_review(&mut self) {
-
+            if let Some(s) = self.state.take() {
+                self.state = Some(s.request_review());
+            }
         }
 
         fn approve(&mut self) {
-
+            if let Some(s) = self.state.take() {
+                self.state = Some(s.approve());
+            }
         }
     }
   solution: |

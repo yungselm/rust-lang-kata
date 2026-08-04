@@ -429,13 +429,11 @@
   tags: [rust, async, concept]
 
 - instruction: |
-    Implement `CountUp { current: u32, target: u32 }` as a `Future<Output =
-    u32>` that increments (returning `Pending` each time) until `current ==
-    target`, then a `JoinTwo { a: CountUp, b: CountUp, a_done: Option<u32>,
-    b_done: Option<u32> }` future that polls BOTH inner futures independently
-    every poll and completes with `(a, b)` once each has finished (even if
-    one finishes before the other). Drive it with the `block_on` executor
-    from before (provided below unchanged).
+    Fill in the two `poll` methods (the structs and the `block_on` executor
+    are provided below). `CountUp` increments `current` each poll, returning
+    `Poll::Pending` until `current == target`, then `Poll::Ready(current)`.
+    `JoinTwo` polls BOTH inner futures every call, storing each result in
+    `a_done` / `b_done`, and returns `Ready((a, b))` only once both finished.
   starter: |
     use std::future::Future;
     use std::pin::Pin;
