@@ -386,3 +386,21 @@
     need repeated access to the current min/max -> BinaryHeap.
   source: "std collections (side-by-side complexity)"
   tags: [bigo, vec, hashmap, btreemap, heap, vecdeque, concept]
+
+- type: concept
+  question: |
+    In Rust, what is the difference between iterating a string with `s.bytes()`
+    and `s.chars()`, and which is faster?
+  answer: |
+    `s.bytes()` yields the raw UTF-8 bytes (u8): essentially a pointer walk with
+    zero decoding, so it is the fastest. `s.chars()` decodes UTF-8 into Unicode
+    scalar values (`char`, 32-bit): it must inspect continuation bytes and build
+    each char, which is more work per element.
+    Use `bytes()` when the input is ASCII (e.g. constraints say "lowercase a-z") --
+    there one byte equals one character. Use `chars()` when the text may contain
+    non-ASCII (accents, emoji), because a single character then spans several bytes
+    and counting raw bytes would be wrong.
+    Gotcha: `s.len()` is the BYTE length, not the character count -- use
+    `s.chars().count()` for characters.
+  source: "book §8.2 (bytes, scalars, graphemes)"
+  tags: [rust, strings, bytes, chars, performance, concept]
