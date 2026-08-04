@@ -44,9 +44,9 @@ python build.py                 # writes output/CodeCards.apkg
 Import `output/CodeCards.apkg` into Anki (keep "Update notetypes" checked).
 Preview the look without Anki by opening `preview.html` in a browser.
 
-## Current decks (696 cards)
+## Current decks (697 cards)
 
-**Core Rust (452)** — idiomatic patterns to drill to fluency (decks under `Rust Language Kata::Core::…`), covering the full book front-to-back:
+**Core Rust (453)** — idiomatic patterns to drill to fluency (decks under `Rust Language Kata::Core::…`), covering the full book front-to-back:
 
 | File | Cards | Focus |
 |------|-------|-------|
@@ -56,7 +56,7 @@ Preview the look without Anki by opening `preview.html` in a browser.
 | `vectors.yaml` | 32 | build/access/mutate, sort/dedup/retain, slicing, windows/chunks, binary_search, drain, enum-in-Vec, rotate_left/right, split_at, sort_by; `&[T]` vs `&Vec<T>` |
 | `hashmaps.yaml` | 30 | insert/get, entry API (or_insert/_with/_default/and_modify), literal construction, iteration, accumulate structs, HashSet & set ops (union/difference/intersection) |
 | `traits.yaml` | 29 | implement Display/From/TryFrom/Default/PartialEq/Add/Ord/Iterator, custom traits, default methods, `derive`, `impl Trait`, `dyn` objects, supertraits, multiple bounds, blanket impls; Copy vs Clone & `.copied()`/`.cloned()` |
-| `datastructures.yaml` | 27 | Big-O of Vec/VecDeque/HashMap/BTreeMap/BinaryHeap, search/sort complexity, recursion space, when-to-use cheat sheet, amortization |
+| `datastructures.yaml` | 28 | Big-O of Vec/VecDeque/HashMap/BTreeMap/BinaryHeap, search/sort complexity, recursion space, when-to-use cheat sheet, amortization |
 | `closures.yaml` | 25 | Fn/FnMut/FnOnce, capture modes, `move`, returning closures, `Box<dyn Fn>`, closures in structs, fn pointers, choosing the right bound for APIs |
 | `testing.yaml` | 21 | `#[test]`, assert!/assert_eq!/assert_ne!, custom failure messages, `#[should_panic]` (+ `expected`), tests returning `Result`, `#[ignore]`, unit vs integration tests, private-function testing, doc-tests, table-driven tests, `--nocapture` |
 | `async.yaml` | 21 | async fns are lazy state machines, `Future`/`Poll`/`Waker`, hand-rolled `block_on`, chained/multi-poll futures, a join combinator, `#[tokio::main]`, `spawn`, `join!`/`select!`, blocking pitfalls, async-vs-threads tradeoffs, Pin/Unpin |
