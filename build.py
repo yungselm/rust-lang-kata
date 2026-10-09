@@ -1,8 +1,12 @@
-"""Build CodeCards.apkg from the YAML card files in cards/.
+"""Build CodeCards.apkg (cards/) and AdditionalCards.apkg (additional_cards/).
 
 Deck layout (root name set by DECK_ROOT below):
   - cards/<topic>.yaml            -> <DECK_ROOT>::Core::<Topic>      (concept/idiom decks)
   - cards/neetcode__<cat>.yaml    -> <DECK_ROOT>::Neetcode::<Cat>    (interview problems)
+  - additional_cards/{checked,unchecked}/<topic>.yaml
+                                  -> <DECK_ROOT>::Additional::<Topic> (personal topics,
+                                     separate .apkg; same stem in both folders = one deck;
+                                     `_`-prefixed example files are skipped, see card_paths.py)
 
 Each card is a YAML list item:
   - type: code            # default
@@ -16,11 +20,11 @@ After genanki writes the package, `postprocess()` injects two deck-options
 presets and stamps the NeetCode new-card order (see SETTINGS below).
 
 Usage:
-    python build.py                  # all cards/*.yaml
-    python build.py cards/x.yaml     # just one file
+    python build.py                  # all cards/*.yaml + additional_cards/*/*.yaml
+    python build.py cards/x.yaml     # just one file (any path outside cards/ is
+                                     # built into AdditionalCards.apkg)
 """
 import base64
-import glob
 import html
 import json
 import os
@@ -34,6 +38,8 @@ import zlib
 
 import yaml
 import genanki
+
+import card_paths
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 TPL = os.path.join(HERE, "templates")
@@ -192,18 +198,37 @@ def titled(seg):
     return seg.replace("_", " ").replace("-", " ").title()
 
 
-def deck_for(stem):
+def deck_key(stem, additional):
+    # Namespaces deck ids and note guids, so an additional `strings.yaml` can't
+    # collide with the core one. Core keys stay the bare stem (stable guids).
+    return f"additional__{stem}" if additional else stem
+
+
+def deck_for(stem, additional=False):
     # NeetCode subdecks get a 2-digit topic-order prefix so alphabetical order
     # == NeetCode order under any gather setting. Core -> <DECK_ROOT>::Core::<Topic>.
-    if stem in NEETCODE_FILE_ORDER:
+    if additional:
+        name = f"{DECK_ROOT}::Additional::" + "::".join(
+            titled(s) for s in stem.lstrip("_").split("__"))
+    elif stem in NEETCODE_FILE_ORDER:
         idx = NEETCODE_FILE_ORDER.index(stem) + 1
         name = f"{DECK_ROOT}::Neetcode::{idx:02d} {titled(stem.split('__', 1)[1])}"
     elif "__" in stem:
         name = DECK_ROOT + "::" + "::".join(titled(s) for s in stem.split("__"))
     else:
         name = f"{DECK_ROOT}::Core::" + titled(stem)
-    deck_id = 1700000000 + (zlib.crc32(stem.encode()) % 100000000)
+    deck_id = 1700000000 + (zlib.crc32(deck_key(stem, additional).encode()) % 100000000)
     return genanki.Deck(deck_id, name)
+
+
+# Parent decks genanki doesn't create itself. Fixed ids for the known ones,
+# name-derived for nested parents (e.g. Additional::Iced from iced__widgets.yaml).
+PARENT_IDS = {DECK_ROOT: 1690000001, f"{DECK_ROOT}::Core": 1690000002,
+              f"{DECK_ROOT}::Neetcode": 1690000003, f"{DECK_ROOT}::Additional": 1690000004}
+
+
+def parent_id(name):
+    return PARENT_IDS.get(name, 1600000000 + zlib.crc32(name.encode()) % 90000000)
 
 
 # ---- deck-options preset (legacy dconf format genanki writes) ----------------
@@ -255,16 +280,15 @@ def postprocess(apkg_path):
     dconf[str(NEETCODE_CONF_ID)] = make_conf(NEETCODE_CONF_ID, f"{DECK_ROOT} NeetCode",
                                              NEETCODE_NEW_PER_DAY, NEW_ORDER_SEQUENTIAL)
 
-    # ensure parent decks exist with the right preset (Anki would otherwise
-    # auto-create them with the default preset, ignoring our daily limits).
+    # ensure parent decks exist (Anki would otherwise auto-create them with the
+    # default preset, ignoring our daily limits); presets are assigned below.
     existing = {d["name"] for d in decks.values()}
-    parents = [(DECK_ROOT, CORE_CONF_ID), (f"{DECK_ROOT}::Core", CORE_CONF_ID),
-               (f"{DECK_ROOT}::Neetcode", NEETCODE_CONF_ID)]
-    pid = 1690000001
-    for pname, cid in parents:
-        if pname not in existing:
-            decks[str(pid)] = _deck_obj(pid, pname, cid)
-            pid += 1
+    parents = sorted({"::".join(parts[:i])
+                      for parts in (n.split("::") for n in existing)
+                      for i in range(1, len(parts))} - existing)
+    for pname in parents:
+        pid = parent_id(pname)
+        decks[str(pid)] = _deck_obj(pid, pname, CORE_CONF_ID)
 
     # assign every deck to a preset by name
     for did, d in decks.items():
@@ -302,22 +326,13 @@ def postprocess(apkg_path):
     shutil.rmtree(tmp)
 
 
-def main():
-    args = sys.argv[1:]
-    paths = ([os.path.join(HERE, a) for a in args] if args
-             else glob.glob(os.path.join(HERE, "cards", "*.yaml")))
-    if not paths:
-        print("No card files found in cards/.")
-        return
-    paths = sorted(paths, key=_path_order)   # NeetCode in canonical topic order
-
-    media = stage_assets()
-    code_model, concept_model = build_models()
-    decks, total = [], 0
-
+def build_package(paths, dest, code_model, concept_model, media, additional):
+    """Write one .apkg from `paths`; files sharing a stem share a deck."""
+    decks, total = {}, 0
     for p in paths:
         stem = os.path.splitext(os.path.basename(p))[0]
-        deck = deck_for(stem)
+        key = deck_key(stem, additional)
+        deck = decks.setdefault(stem, deck_for(stem, additional))
         for c in (yaml.safe_load(read(p)) or []):
             kind = c.get("type", "code")
             tags = [str(t) for t in c.get("tags", [])]
@@ -327,7 +342,7 @@ def main():
                     fields=[text(c["question"]), text(c.get("answer", "")),
                             b64(c.get("code", "")), c.get("lang", "rust"),
                             text(c.get("source", ""))],
-                    guid=genanki.guid_for(stem, "concept", c["question"]),
+                    guid=genanki.guid_for(key, "concept", c["question"]),
                     tags=tags,
                 )
             else:
@@ -337,22 +352,45 @@ def main():
                             b64(c.get("starter", "")), b64(c.get("solution", "")),
                             c.get("lang", "rust"), text(c.get("notes", "")),
                             text(c.get("source", "")), b64(c.get("walkthrough", ""))],
-                    guid=genanki.guid_for(stem, "code", c["instruction"]),
+                    guid=genanki.guid_for(key, "code", c["instruction"]),
                     tags=tags,
                 )
             deck.add_note(note)
             total += 1
-        decks.append(deck)
 
-    os.makedirs(OUT, exist_ok=True)
-    pkg = genanki.Package(decks)
+    pkg = genanki.Package(list(decks.values()))
     pkg.media_files = media
-    dest = os.path.join(OUT, "CodeCards.apkg")
     pkg.write_to_file(dest)
     postprocess(dest)
-    print(f"Wrote {dest}: {total} cards in {len(decks)} deck(s), assets {ASSET_VER}. "
-          f"Presets: Core ({CORE_NEW_PER_DAY}/day, random), "
-          f"NeetCode ({NEETCODE_NEW_PER_DAY}/day, in order).")
+    print(f"Wrote {dest}: {total} cards in {len(decks)} deck(s), assets {ASSET_VER}.")
+
+
+def main():
+    args = sys.argv[1:]
+    if args:
+        paths = card_paths.resolve(args)
+        core = [p for p in paths if card_paths.is_core(p)]
+        additional = [p for p in paths if not card_paths.is_core(p)]
+    else:
+        core, additional = card_paths.core_files(), card_paths.deck_files()
+    if not core and not additional:
+        print("No card files found in cards/ or additional_cards/.")
+        return
+
+    media = stage_assets()
+    code_model, concept_model = build_models()
+    os.makedirs(OUT, exist_ok=True)
+    if core:
+        core = sorted(core, key=_path_order)   # NeetCode in canonical topic order
+        build_package(core, os.path.join(OUT, "CodeCards.apkg"),
+                      code_model, concept_model, media, additional=False)
+        print(f"  Presets: Core ({CORE_NEW_PER_DAY}/day, random), "
+              f"NeetCode ({NEETCODE_NEW_PER_DAY}/day, in order).")
+    if additional:
+        build_package(sorted(additional, key=lambda p: os.path.basename(p)),
+                      os.path.join(OUT, "AdditionalCards.apkg"),
+                      code_model, concept_model, media, additional=True)
+        print(f"  Preset: Core ({CORE_NEW_PER_DAY}/day, random).")
 
 
 if __name__ == "__main__":

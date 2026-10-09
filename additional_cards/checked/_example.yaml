@@ -1,0 +1,46 @@
+# Example additional deck — std-only, so it lives in checked/ and goes through
+# `python check_cards.py` (clippy -D warnings + the `tests:` blocks) like any
+# core card. Copy this file to e.g. `checked/my_project.yaml` to start your own;
+# `_`-prefixed files are examples and are NOT built into AdditionalCards.apkg.
+
+- instruction: |
+    Settings arrive as `key=value` lines. Write `parse_setting(line: &str) ->
+    Option<(&str, &str)>` returning the trimmed key and value, or `None` when
+    the line has no `=` or the key is empty.
+  starter: |
+    fn parse_setting(line: &str) -> Option<(&str, &str)> {
+
+    }
+  solution: |
+    fn parse_setting(line: &str) -> Option<(&str, &str)> {
+        let (key, value) = line.split_once('=')?;
+        let key = key.trim();
+        (!key.is_empty()).then_some((key, value.trim()))
+    }
+  notes: |
+    `split_once` splits at the FIRST `=` only, so values may contain `=`
+    themselves. `bool::then_some` turns the empty-key check into an `Option`
+    without an `if`/`else`.
+  source: "example side project: config loader"
+  tags: [rust, example, strings, options]
+  tests: |
+    assert_eq!(parse_setting("width = 800"), Some(("width", "800")));
+    assert_eq!(parse_setting("expr=a=b"), Some(("expr", "a=b")));
+    assert_eq!(parse_setting("no separator"), None);
+    assert_eq!(parse_setting(" = 3"), None);
+
+- type: concept
+  question: |
+    Why does `parse_setting` return `Option<(&str, &str)>` instead of
+    `Option<(String, String)>`?
+  answer: |
+    **Both slices borrow from the input line, so returning them costs no
+    allocation; the caller decides whether to copy them into `String`s.**
+    Lifetime elision ties the output to the single `&str` input, so no
+    annotation is needed.
+  code: |
+    let line = String::from("height=600");
+    let parsed: Option<(&str, &str)> = line.split_once('=');
+    assert_eq!(parsed, Some(("height", "600")));
+  source: "example side project: config loader"
+  tags: [rust, example, lifetimes]

@@ -12,7 +12,7 @@ Dead-code from the wrapping is suppressed on purpose.
 
 Requires a local Rust toolchain (`rustup component add clippy`). From repo root:
 
-    python check_cards.py                          # all cards/*.yaml
+    python check_cards.py                          # cards/ + additional_cards/checked/
     python check_cards.py cards/neetcode__arrays_hashing.yaml
     python check_cards.py --build                  # skip clippy (compile+test only)
 
@@ -23,10 +23,13 @@ A card adds tests like:
       assert_eq!(two_sum(&[3, 2, 4], 6), Some((1, 2)));
 
 The asserts run inside the solution's module, so they can call its functions
-directly. Each block is module `sol_<topic>_<n>` / `ex_<topic>_<n>`, with a
-comment naming the card, so failures are easy to trace back.
+directly. Each block is module `sol_<topic>_<n>` / `ex_<topic>_<n>` (topic
+prefixed `add_` for additional cards), with a comment naming the card, so
+failures are easy to trace back.
+
+Files in additional_cards/unchecked/ (external crates, code fragments) are
+never compiled, even when passed explicitly.
 """
-import glob
 import os
 import re
 import shutil
@@ -35,6 +38,8 @@ import sys
 import textwrap
 
 import yaml
+
+import card_paths
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 CHECK = os.path.join(HERE, "_check")
@@ -61,6 +66,8 @@ def collect(paths):
     for p in paths:
         stem = os.path.splitext(os.path.basename(p))[0]
         ident = re.sub(r"_+", "_", re.sub(r"[^a-z0-9_]", "_", stem.lower())).strip("_")
+        if not card_paths.is_core(p):
+            ident = f"add_{ident}"   # can't clash with a core file of the same name
         for i, c in enumerate(yaml.safe_load(read(p)) or []):
             if c.get("type", "code") == "concept":
                 code = c.get("code")
@@ -116,8 +123,11 @@ def have(cmd):
 def main():
     argv = [a for a in sys.argv[1:] if a != "--build"]
     skip_clippy = "--build" in sys.argv
-    paths = ([os.path.join(HERE, a) for a in argv] if argv
-             else sorted(glob.glob(os.path.join(HERE, "cards", "*.yaml"))))
+    paths = (card_paths.resolve(argv) if argv
+             else card_paths.core_files() + card_paths.checked_files())
+    for p in [p for p in paths if card_paths.is_unchecked(p)]:
+        print(f"Skipping {os.path.relpath(p, HERE)} (unchecked/ is never compiled).")
+    paths = [p for p in paths if not card_paths.is_unchecked(p)]
     items = collect(paths)
     write_crate(items)
     print(f"Generated {len(items)} checkable blocks in {CHECK}/src/lib.rs")

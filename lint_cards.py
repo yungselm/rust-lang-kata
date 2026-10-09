@@ -11,11 +11,16 @@ Comments and panic/expect/unreachable messages are stripped before the literal
 check (the learner isn't expected to reproduce those from the prompt). Known
 implementation-detail literals can be allow-listed below.
 
+Lints cards/ and both additional_cards/ folders (self-containment matters
+whether or not a card compiles).
+
 Run from the repo root:  python lint_cards.py
 Exits non-zero if anything is flagged, so it can gate a commit; review flags —
 some may be acceptable and belong in ALLOW.
 """
-import glob, os, re, sys, yaml
+import os, re, sys, yaml
+
+import card_paths
 
 COMMENT = re.compile(r"//[^\n]*")
 MACROMSG = re.compile(r'(?:\.expect|panic!|unreachable!|unimplemented!|todo!)\s*\(\s*"(?:[^"\\]|\\.)*"\s*\)')
@@ -38,8 +43,11 @@ def norm(s):
 
 def main():
     flags = 0
-    for f in sorted(glob.glob(os.path.join("cards", "*.yaml"))):
-        base = os.path.basename(f)
+    files = (card_paths.core_files() + card_paths.checked_files()
+             + card_paths.unchecked_files())
+    for f in files:
+        base = (os.path.basename(f) if card_paths.is_core(f)
+                else os.path.relpath(f, card_paths.HERE).replace(os.sep, "/"))
         for c in (yaml.safe_load(open(f, encoding="utf-8")) or []):
             if c.get("type", "code") == "concept":
                 continue

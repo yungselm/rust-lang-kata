@@ -183,3 +183,9 @@ output/
 _check/
 node_modules/
 
+
+# Personal additional-card topics stay local; only the examples are tracked.
+additional_cards/checked/*.yaml
+additional_cards/unchecked/*.yaml
+!additional_cards/checked/_example.yaml
+!additional_cards/unchecked/_example.yaml

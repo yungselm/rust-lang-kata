@@ -1,0 +1,58 @@
+# Example additional deck — uses an external crate (serde / serde_json), so it
+# lives in unchecked/: built into AdditionalCards.apkg, never compiled by
+# `python check_cards.py`. Also the place for code FRAGMENTS (a single match arm,
+# a builder chain) that can't compile on their own.
+# `_`-prefixed files are examples and are NOT built into AdditionalCards.apkg.
+
+- instruction: |
+    Derive what's needed so `Config` can be read from JSON, then write
+    `load(json: &str) -> Result<Config, serde_json::Error>`. A missing
+    `"verbose"` field should default to `false` instead of failing.
+  starter: |
+    use serde::Deserialize;
+
+    struct Config {
+        name: String,
+        verbose: bool,
+    }
+
+    fn load(json: &str) -> Result<Config, serde_json::Error> {
+
+    }
+  solution: |
+    use serde::Deserialize;
+
+    #[derive(Debug, Deserialize)]
+    struct Config {
+        name: String,
+        #[serde(default)]
+        verbose: bool,
+    }
+
+    fn load(json: &str) -> Result<Config, serde_json::Error> {
+        serde_json::from_str(json)
+    }
+  notes: |
+    `#[serde(default)]` on a field falls back to `Default::default()` (here
+    `false`) when the key is absent. The return type tells `from_str` which
+    type to deserialize into.
+  source: "serde docs: field attributes"
+  tags: [rust, example, serde]
+
+- type: concept
+  question: |
+    A serde struct has `name: String`. What happens when the JSON contains an
+    extra, unknown key like `"color": "red"`?
+  answer: |
+    **It's silently ignored by default; add `#[serde(deny_unknown_fields)]` on
+    the struct to make it an error instead.**
+    Ignoring unknown keys keeps old binaries compatible with newer config
+    files; denying them catches typos like `"verbos"`.
+  code: |
+    #[derive(serde::Deserialize)]
+    #[serde(deny_unknown_fields)]
+    struct Config {
+        name: String,
+    }
+  source: "serde docs: container attributes"
+  tags: [rust, example, serde]

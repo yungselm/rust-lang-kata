@@ -2,9 +2,10 @@
 
 **The primary goal is building the best possible Rust card set together.**
 
-The most valuable contribution is adding or improving cards in `cards/*.yaml` —
-no Rust toolchain is required just to edit YAML. Improving the build system or
-templates is also welcome. The one hard requirement for code changes is that
+The most valuable contribution is adding or improving cards in `cards/*.yaml` 
+(no Rust toolchain is required just to edit YAML). For the time being the 
+build and check code was mainly vibecoded, improving the build system or
+templates is therefore also welcome. The one hard requirement for code changes is that
 `clippy` passes without warnings, to keep solutions idiomatic.
 
 ## Workflow
@@ -32,6 +33,12 @@ compiles, lints clean, and builds.
 ## Card budget
 
 The deck is capped at roughly 2000 cards (a rough "basic vocabulary" size for
-a language). New cards should earn their place — prefer improving or
+a language, even though I would argue for these patterns 1000 would be more
+appropriate). New cards should earn their place — prefer improving or
 tightening an existing card over adding a marginal one once a topic is well
 covered.
+
+Niche topics (a specific framework, your own project) don't belong in
+`cards/` — put them in `additional_cards/` instead. They build into a separate
+`AdditionalCards.apkg` and stay gitignored; see
+[additional_cards/README.md](additional_cards/README.md).

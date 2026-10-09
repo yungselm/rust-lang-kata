@@ -198,6 +198,20 @@ Rebuild with `python build.py` (or `python build.py cards/match.yaml` for one
 file). Re-importing **updates** existing cards (guids are stable per instruction /
 question); changing that text creates a new card.
 
+## Additional cards (your own topics)
+
+For topics that aren't for everyone (e.g. a framework like `iced`, patterns from your
+own project), drop YAML files in `additional_cards/`. They use the same format,
+note types and checks, but build into a **separate** `output/AdditionalCards.apkg`
+(`Rust Language Kata::Additional::<Topic>`), and they're gitignored so private code
+stays out of commits.
+
+- `additional_cards/checked/`: std-only cards, compiled and tested by `check_cards.py`.
+- `additional_cards/unchecked/`: external crates or code fragments, built but never compiled.
+
+See [additional_cards/README.md](additional_cards/README.md) for details and the
+`_example.yaml` templates.
+
 ## Compile-checking the Rust
 
 `check_cards.py` extracts every code-card `solution` (plus concept `code`
@@ -210,7 +224,7 @@ snippets), wraps each in its own module in a generated crate, and runs two gates
    *correct*, not just compile. Dead-code from the wrapping is suppressed.
 
 ```bash
-python check_cards.py                              # all cards (needs cargo; clippy via `rustup component add clippy`)
+python check_cards.py                              # all cards + additional_cards/checked/ (needs cargo; clippy via `rustup component add clippy`)
 python check_cards.py cards/neetcode__trees.yaml   # just one file
 ```
 
@@ -225,7 +239,9 @@ after editing solutions, before rebuilding the deck.
 
 - `build.py`: reads the YAML, builds two note types, one subdeck per file,
   HTML-escapes text fields (so `Vec<T>` renders) and turns `backticks` into
-  `<code>`, version-stamps the JS/CSS assets, writes the `.apkg`.
+  `<code>`, version-stamps the JS/CSS assets, writes `CodeCards.apkg` (and
+  `AdditionalCards.apkg` when `additional_cards/` has topics).
+- `card_paths.py`: which folders each script reads (core, checked, unchecked).
 - `templates/`: `front.html`/`back.html` (code), `front_concept.html`/
   `back_concept.html` (concept), `_cards.js` (editor + line diff), `style.css`
   (layout + the `vscdark` CodeMirror theme).
