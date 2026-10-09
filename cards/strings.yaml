@@ -396,39 +396,6 @@
     assert_eq!(reversed("abc"), "cba");
     assert_eq!(reversed("héllo"), "olléh");
 
-- instruction: |
-    Write `caesar(s: &str, shift: u8) -> String` shifting ASCII letters by
-    `shift` (wrapping within a-z / A-Z), leaving everything else unchanged —
-    chars ↔ bytes arithmetic.
-  starter: |
-    fn caesar(s: &str, shift: u8) -> String {
-
-    }
-  solution: |
-    fn caesar(s: &str, shift: u8) -> String {
-        s.chars()
-            .map(|c| {
-                let base = if c.is_ascii_lowercase() {
-                    b'a'
-                } else if c.is_ascii_uppercase() {
-                    b'A'
-                } else {
-                    return c;
-                };
-                (((c as u8 - base + shift % 26) % 26) + base) as char
-            })
-            .collect()
-    }
-  notes: |
-    `c as u8` / `as char` round-trips safely only for ASCII — hence the
-    explicit `is_ascii_*` guards. The early `return c` inside the closure
-    returns from the CLOSURE, not the function.
-  source: "std char (ASCII methods) + Rust by Example"
-  tags: [rust, strings, chars, bytes, ascii]
-  tests: |
-    assert_eq!(caesar("abc XYZ!", 3), "def ABC!");
-    assert_eq!(caesar("zZ", 1), "aA");
-
 - type: concept
   question: |
     `bytes()` vs `chars()` vs `char_indices()` — what does each iterator yield

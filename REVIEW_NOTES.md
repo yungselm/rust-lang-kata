@@ -20,8 +20,7 @@ verified.
 - `most_common` (hashmaps) tie-break risk addressed: its test input has a
   unique winner, so the unspecified HashMap iteration order can't flake it.
 - **High-yield cards added to every deck on the original list:**
-  - iterators: `unzip`, `reduce` (`overall_max`), `peekable`/`peek`
-    (`count_leading_dupes`).
+  - iterators: `unzip`, `reduce` (`overall_max`).
   - matching: `_` vs `..` concept card, or-pattern + `@` binding
     (`classify_die`), nested enum-in-struct destructure (`click_coords`).
   - results: `transpose`, `or_else` (`first_available`), `Option::zip` (`pair`).
@@ -53,13 +52,13 @@ verified.
     and without `expected`), tests returning `Result`, `#[ignore]`, unit vs
     integration tests, testing private functions, doc-tests, table-driven
     tests via `match ....cmp()`, `--nocapture`.
-  - `async.yaml` (21 cards, ch. 17 async/await) — async fns as lazy state
+  - `async.yaml` (18 cards, ch. 17 async/await) — async fns as lazy state
     machines, `Future`/`Poll`/`Waker`, a hand-rolled `block_on` executor
-    (`RawWaker`/`RawWakerVTable`), chained `.await`, multi-poll
-    Pending→Ready futures, a hand-rolled join combinator, plus prose-only
-    concept cards for runtime-specific APIs (`#[tokio::main]`, `spawn`,
-    `join!`/`select!`, blocking pitfalls, async-vs-threads tradeoffs,
-    Pin/Unpin) since the harness has no network access to pull in tokio.
+    (`RawWaker`/`RawWakerVTable`), multi-poll Pending→Ready futures, plus
+    prose-only concept cards for runtime-specific APIs (`#[tokio::main]`,
+    `spawn`, `join!`/`select!`, blocking pitfalls, async-vs-threads
+    tradeoffs, Pin/Unpin) since the harness has no network access to pull in
+    tokio.
   - `modules.yaml` (20 cards, ch. 7 packages/crates/modules) — module tree,
     `mod`, `pub`/`pub(crate)`/`pub(in path)`, `use`, re-exports, paths
     (`self`/`super`/`crate`), splitting modules across files.

@@ -44,26 +44,26 @@ python build.py                 # writes output/CodeCards.apkg
 Import `output/CodeCards.apkg` into Anki (keep "Update notetypes" checked).
 Preview the look without Anki by opening `preview.html` in a browser.
 
-## Current decks (697 cards)
+## Current decks (690 cards)
 
-**Core Rust (453)** — idiomatic patterns to drill to fluency (decks under `Rust Language Kata::Core::…`), covering the full book front-to-back:
+**Core Rust (446)** — idiomatic patterns to drill to fluency (decks under `Rust Language Kata::Core::…`), covering the full book front-to-back:
 
 | File | Cards | Focus |
 |------|-------|-------|
-| `iterators.yaml` | 41 | map/filter/filter_map, collect into Result, fold, zip/unzip, flat_map, partition, scan, windows; `product`, capitalize, HashMap counting; reduce, peekable/peek; iter vs into_iter, laziness |
+| `iterators.yaml` | 40 | map/filter/filter_map, collect into Result, fold, zip/unzip, flat_map, partition, scan, windows; `product`, capitalize, HashMap counting; reduce; iter vs into_iter, laziness |
 | `matching.yaml` | 28 | enums, `if let`/`while let`/`let else`, guards, `@` bindings (incl. combined with or-patterns), or/range/tuple/struct/slice patterns, match ergonomics, rich-enum dispatch, deep nested destructuring |
 | `results.yaml` | 33 | `?`, unwrap_or family, map/map_err/and_then, ok_or, Option↔Result, transpose, or_else, zip, custom error enum, `Box<dyn Error>`, `Result<Vec>` vs `Vec<Result>` |
 | `vectors.yaml` | 32 | build/access/mutate, sort/dedup/retain, slicing, windows/chunks, binary_search, drain, enum-in-Vec, rotate_left/right, split_at, sort_by; `&[T]` vs `&Vec<T>` |
-| `hashmaps.yaml` | 30 | insert/get, entry API (or_insert/_with/_default/and_modify), literal construction, iteration, accumulate structs, HashSet & set ops (union/difference/intersection) |
+| `hashmaps.yaml` | 29 | insert/get, entry API (or_insert/_with/_default/and_modify), literal construction, iteration, HashSet & set ops (union/difference/intersection) |
 | `traits.yaml` | 29 | implement Display/From/TryFrom/Default/PartialEq/Add/Ord/Iterator, custom traits, default methods, `derive`, `impl Trait`, `dyn` objects, supertraits, multiple bounds, blanket impls; Copy vs Clone & `.copied()`/`.cloned()` |
 | `datastructures.yaml` | 28 | Big-O of Vec/VecDeque/HashMap/BTreeMap/BinaryHeap, search/sort complexity, recursion space, when-to-use cheat sheet, amortization |
 | `closures.yaml` | 25 | Fn/FnMut/FnOnce, capture modes, `move`, returning closures, `Box<dyn Fn>`, closures in structs, fn pointers, choosing the right bound for APIs |
 | `testing.yaml` | 21 | `#[test]`, assert!/assert_eq!/assert_ne!, custom failure messages, `#[should_panic]` (+ `expected`), tests returning `Result`, `#[ignore]`, unit vs integration tests, private-function testing, doc-tests, table-driven tests, `--nocapture` |
-| `async.yaml` | 21 | async fns are lazy state machines, `Future`/`Poll`/`Waker`, hand-rolled `block_on`, chained/multi-poll futures, a join combinator, `#[tokio::main]`, `spawn`, `join!`/`select!`, blocking pitfalls, async-vs-threads tradeoffs, Pin/Unpin |
+| `async.yaml` | 18 | async fns are lazy state machines, `Future`/`Poll`/`Waker`, hand-rolled `block_on`, multi-poll futures, `#[tokio::main]`, `spawn`, `join!`/`select!`, blocking pitfalls, async-vs-threads tradeoffs, Pin/Unpin |
 | `generics.yaml` | 23 | rewrite a concrete fn to generic: PartialOrd/Copy/Clone/PartialEq/Display/Sum bounds, `where` clauses, `Fn` bound, generic struct, const generics, generic methods; monomorphization |
-| `lifetimes.yaml` | 22 | annotations vs elision (the three rules), structs/enums holding references, `'_`, `'static` vs `T: 'static`, `split_at_mut`, NLL, zero-copy parser shapes |
+| `lifetimes.yaml` | 21 | annotations vs elision (the three rules), structs/enums holding references, `'_`, `'static` vs `T: 'static`, `split_at_mut`, NLL, zero-copy tokenizing |
 | `smartpointers.yaml` | 21 | Box (recursive types, `dyn`), Deref & coercion, Drop, Rc/`Rc::clone`/counts, RefCell & interior mutability, Cell vs RefCell, Weak & cycles, get_mut |
-| `strings.yaml` | 22 | String vs &str, UTF-8 (bytes/chars/char_indices), building & joining, split/split_once/lines, find/replace/strip_prefix, parse pipelines, from_utf8 |
+| `strings.yaml` | 21 | String vs &str, UTF-8 (bytes/chars/char_indices), building & joining, split/split_once/lines, find/replace/strip_prefix, parse pipelines, from_utf8 |
 | `concurrency.yaml` | 20 | thread::spawn/join, `move`, scoped threads, mpsc (fan-in, pipelines, shutdown via drop), Mutex/MutexGuard, Arc, RwLock, atomics, Send/Sync |
 | `modules.yaml` | 20 | packages/crates, module tree, `mod`, `pub`/`pub(crate)`/`pub(in path)`, `use`, re-exports, paths (`self`/`super`/`crate`), splitting modules across files |
 | `oop.yaml` | 18 | encapsulation, trait objects (`dyn`), default methods, the state pattern (`Post`/`Draft`/`Published`), typestate pattern, object safety (`where Self: Sized`), builder pattern, trait objects vs enum match |

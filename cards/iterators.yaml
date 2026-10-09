@@ -551,42 +551,6 @@
     assert_eq!(overall_max(&[3, 7, 2, 9, 4]), Some(9));
     assert_eq!(overall_max(&[]), None);
 
-- instruction: |
-    Write `count_leading_dupes(v: &[i32]) -> usize`: how many times the FIRST
-    value repeats consecutively at the start (e.g. [5, 5, 5, 2, 5] -> 3), using
-    a `Peekable` iterator with `peek`.
-  starter: |
-    fn count_leading_dupes(v: &[i32]) -> usize {
-
-    }
-  solution: |
-    fn count_leading_dupes(v: &[i32]) -> usize {
-        let mut it = v.iter().peekable();
-        let Some(&first) = it.next() else {
-            return 0;
-        };
-        let mut count = 1;
-        while let Some(&&next) = it.peek() {
-            if next != first {
-                break;
-            }
-            count += 1;
-            it.next();
-        }
-        count
-    }
-  notes: |
-    `peekable()` wraps an iterator so you can look at the next item with
-    `peek()` WITHOUT consuming it — essential when whether you advance depends
-    on what's next.
-  source: "std Iterator::peekable"
-  tags: [rust, iterators, peekable]
-  tests: |
-    assert_eq!(count_leading_dupes(&[5, 5, 5, 2, 5]), 3);
-    assert_eq!(count_leading_dupes(&[1, 2, 3]), 1);
-    assert_eq!(count_leading_dupes(&[]), 0);
-    assert_eq!(count_leading_dupes(&[7, 7, 7]), 3);
-
 # --- concept cards ---
 - type: concept
   question: |

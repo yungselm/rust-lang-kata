@@ -228,53 +228,6 @@
         vec![Token::Word("add"), Token::Num(2), Token::Word("and"), Token::Num(40)]
     );
 
-- instruction: |
-    Define `struct Parser<'a> { input: &'a str }` with
-    `next_word(&mut self) -> Option<&'a str>`: return the next
-    whitespace-separated word and advance. Key: the return is `&'a str`
-    (borrowing the ORIGINAL input), not tied to `&mut self`.
-  starter: |
-    struct Parser<'a> {
-        input: &'a str,
-    }
-
-    impl<'a> Parser<'a> {
-        fn next_word(&mut self) -> Option<&'a str> {
-
-        }
-    }
-  solution: |
-    struct Parser<'a> {
-        input: &'a str,
-    }
-
-    impl<'a> Parser<'a> {
-        fn next_word(&mut self) -> Option<&'a str> {
-            let trimmed = self.input.trim_start();
-            if trimmed.is_empty() {
-                self.input = trimmed;
-                return None;
-            }
-            let end = trimmed.find(char::is_whitespace).unwrap_or(trimmed.len());
-            let (word, rest) = trimmed.split_at(end);
-            self.input = rest;
-            Some(word)
-        }
-    }
-  notes: |
-    If the return were elided it would borrow from `&mut self` (rule 3), locking
-    the parser while any word is alive. Naming `'a` says: the word borrows from
-    the original input — so you can collect many words AND keep parsing.
-  source: "book §10.3 (advanced elision) + common parser idiom"
-  tags: [rust, lifetimes, structs, parsing]
-  tests: |
-    let mut p = Parser { input: "one two  three" };
-    let a = p.next_word();
-    let b = p.next_word();
-    assert_eq!((a, b), (Some("one"), Some("two")));
-    assert_eq!(p.next_word(), Some("three"));
-    assert_eq!(p.next_word(), None);
-
 - type: concept
   question: |
     `&'static str` vs a generic bound `T: 'static` — what does each mean?
