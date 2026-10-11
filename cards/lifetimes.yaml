@@ -208,8 +208,7 @@
     }
 
     fn tokenize(input: &str) -> Vec<Token<'_>> {
-        input
-            .split_whitespace()
+        input.split_whitespace()
             .map(|s| match s.parse::<i32>() {
                 Ok(n) => Token::Num(n),
                 Err(_) => Token::Word(s),
