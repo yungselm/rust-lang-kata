@@ -8,7 +8,8 @@ Two checks per code card:
      (e.g. a solution returning "empty" while the prompt never says "empty").
 
 Comments and panic/expect/unreachable messages are stripped before the literal
-check (the learner isn't expected to reproduce those from the prompt). Known
+check (the learner isn't expected to reproduce those from the prompt), and so are
+literals already in the starter (pre-filled context is read, not typed). Known
 implementation-detail literals can be allow-listed below.
 
 Lints cards/ and both additional_cards/ folders (self-containment matters
@@ -59,8 +60,9 @@ def main():
                 print(f"[xref]    {base}: {title}")
                 flags += 1
             clean = MACROMSG.sub("", COMMENT.sub("", sol))
+            given = set(STR.findall(COMMENT.sub("", c.get("starter", "") or "")))
             for lit in sorted(set(STR.findall(clean))):
-                if (base, lit) in ALLOW:
+                if (base, lit) in ALLOW or lit in given:
                     continue
                 sig = [w for w in words(lit) if w not in STOP]
                 if sig and any(w not in ctx for w in sig):
