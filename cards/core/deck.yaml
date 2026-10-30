@@ -1,0 +1,11 @@
+# Core Rust: idioms, std library, reading & judgment (agentic-studying-loop deck).
+deck: "Rust Language Kata::Core"      # <file>.yaml -> Rust Language Kata::Core::<File>
+pack: rust
+prefix: rlk                            # card ids rlk-NNN (`asl fix` assigns new ones)
+retired_ids: []
+presets:
+  default:
+    name: "Rust Language Kata Core"
+    conf_id: 1001                      # same options group as the old build.py
+    new_per_day: 14
+    order: random

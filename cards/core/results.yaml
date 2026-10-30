@@ -1,0 +1,840 @@
+# Result & Option handling — ?, the unwrap_or family, combinators, conversions.
+# Eager (unwrap_or/ok_or) is used only with cheap values; lazy (_else) only when
+# the closure does real work — this is what clippy enforces.
+- id: rlk-359
+  guid: "KL)wvKxNh@"
+  instruction: |
+    Write `first_num(s: &str) -> Result<i32, std::num::ParseIntError>`: parse s
+    with `?`, then return Ok of twice the value.
+  starter: |
+    fn first_num(s: &str) -> Result<i32, std::num::ParseIntError> {
+
+    }
+  solution: |
+    fn first_num(s: &str) -> Result<i32, std::num::ParseIntError> {
+        let n = s.parse::<i32>()?;
+        Ok(n * 2)
+    }
+  notes: |
+    `?` unwraps `Ok(v)` to `v`, or returns the `Err` early. The return type must
+    be a `Result` whose error the `?` can produce.
+  source: "book §9.2 (the ? operator)"
+  tags: [rust, results, question-mark]
+  tests: |
+    assert_eq!(first_num("21"), Ok(42));
+    assert!(first_num("x").is_err());
+
+- id: rlk-360
+  guid: "FZY}!93#+@"
+  instruction: |
+    Write `parse_or(s: &str, default: i32) -> i32` returning the parsed value or
+    `default` on failure.
+  starter: |
+    fn parse_or(s: &str, default: i32) -> i32 {
+
+    }
+  solution: |
+    fn parse_or(s: &str, default: i32) -> i32 {
+        s.parse::<i32>().unwrap_or(default)
+    }
+  notes: |
+    `unwrap_or(x)` returns the inner value or `x`. Use the eager form when the
+    default is already available and cheap (here, a parameter).
+  source: "std Result::unwrap_or"
+  tags: [rust, results, unwrap_or]
+  tests: |
+    assert_eq!(parse_or("7", 0), 7);
+    assert_eq!(parse_or("x", -1), -1);
+
+- id: rlk-361
+  guid: "Od,ht9@p]"
+  instruction: |
+    Write `parse_or_err_len(s: &str) -> usize`: parse `s` as a `usize`; on failure
+    return the length of the parse error's message instead.
+    Example: parse_or_err_len("42") -> 42; parse_or_err_len("x") -> the error length.
+  starter: |
+    fn parse_or_err_len(s: &str) -> usize {
+
+    }
+  solution: |
+    fn parse_or_err_len(s: &str) -> usize {
+        s.parse::<usize>().unwrap_or_else(|e| e.to_string().len())
+    }
+  notes: |
+    `unwrap_or_else(|e| ...)` runs only on failure AND receives the error — the
+    two reasons to pick it over `unwrap_or`. (For a cheap, error-independent
+    default, clippy would tell you to use `unwrap_or`.)
+  source: "std Result::unwrap_or_else"
+  tags: [rust, results, unwrap_or_else]
+  tests: |
+    assert_eq!(parse_or_err_len("42"), 42);
+    assert_eq!(parse_or_err_len("x"), "invalid digit found in string".len());
+
+- id: rlk-362
+  guid: "jMN2uz+W?$"
+  instruction: |
+    Write `parse_or_default(s: &str) -> i32` returning the parsed value or the
+    type's default.
+  starter: |
+    fn parse_or_default(s: &str) -> i32 {
+
+    }
+  solution: |
+    fn parse_or_default(s: &str) -> i32 {
+        s.parse::<i32>().unwrap_or_default()
+    }
+  notes: |
+    `unwrap_or_default()` falls back to `Default::default()` (0 for i32, "" for
+    String, empty Vec, ...).
+  source: "std Result::unwrap_or_default"
+  tags: [rust, results, unwrap_or_default]
+  tests: |
+    assert_eq!(parse_or_default("5"), 5);
+    assert_eq!(parse_or_default("x"), 0);
+
+- id: rlk-363
+  guid: "vL`mT=t2-#"
+  instruction: |
+    Write `doubled(s: &str) -> Result<i32, std::num::ParseIntError>`: parse then
+    double, using `map` (not `?`).
+  starter: |
+    fn doubled(s: &str) -> Result<i32, std::num::ParseIntError> {
+
+    }
+  solution: |
+    fn doubled(s: &str) -> Result<i32, std::num::ParseIntError> {
+        s.parse::<i32>().map(|n| n * 2)
+    }
+  notes: |
+    `Result::map` transforms the Ok value and leaves an Err untouched.
+  source: "std Result::map"
+  tags: [rust, results, map]
+  tests: |
+    assert_eq!(doubled("21"), Ok(42));
+    assert!(doubled("x").is_err());
+
+- id: rlk-364
+  guid: "ojvh^<qL&2"
+  instruction: |
+    Write `parse_msg(s: &str) -> Result<i32, String>`: parse `s` as i32, and on
+    failure use `map_err` to return the error as the message `"bad: <error>"`.
+    Example: parse_msg("x") -> Err("bad: invalid digit found in string").
+  starter: |
+    fn parse_msg(s: &str) -> Result<i32, String> {
+
+    }
+  solution: |
+    fn parse_msg(s: &str) -> Result<i32, String> {
+        s.parse::<i32>().map_err(|e| format!("bad: {e}"))
+    }
+  notes: |
+    `map_err` transforms the Err value (here changing its TYPE), leaving Ok
+    untouched. Common for adapting library errors to your own.
+  source: "std Result::map_err"
+  tags: [rust, results, map_err]
+  tests: |
+    assert_eq!(parse_msg("3"), Ok(3));
+    assert_eq!(parse_msg("x"), Err("bad: invalid digit found in string".to_string()));
+
+- id: rlk-365
+  guid: "s3%kxtQp,j"
+  instruction: |
+    Write `half_of(s: &str) -> Result<i32, String>`: parse (map error to String),
+    then with `and_then` return n/2 if even, else Err("odd").
+  starter: |
+    fn half_of(s: &str) -> Result<i32, String> {
+
+    }
+  solution: |
+    fn half_of(s: &str) -> Result<i32, String> {
+        s.parse::<i32>()
+            .map_err(|e| e.to_string())
+            .and_then(|n| {
+                if n % 2 == 0 {
+                    Ok(n / 2)
+                } else {
+                    Err("odd".to_string())
+                }
+            })
+    }
+  notes: |
+    `and_then` chains a second fallible step: it runs the closure only on Ok and
+    the closure returns a `Result`, so errors short-circuit.
+  source: "std Result::and_then"
+  tags: [rust, results, and_then]
+  tests: |
+    assert_eq!(half_of("8"), Ok(4));
+    assert_eq!(half_of("7"), Err("odd".to_string()));
+    assert!(half_of("x").is_err());
+
+- id: rlk-366
+  guid: "Ie:+LO:;?/"
+  instruction: |
+    Write `get_first(v: &[i32]) -> Result<i32, &'static str>`: the first element,
+    or `Err("empty")`. Convert the Option with `ok_or`.
+  starter: |
+    fn get_first(v: &[i32]) -> Result<i32, &'static str> {
+
+    }
+  solution: |
+    fn get_first(v: &[i32]) -> Result<i32, &'static str> {
+        v.first().copied().ok_or("empty")
+    }
+  notes: |
+    `Option::ok_or(err)` turns `Some(v)` into `Ok(v)` and `None` into `Err(err)`.
+    The eager `ok_or` is fine here because the error is a cheap `&'static str`.
+  source: "std Option::ok_or"
+  tags: [rust, results, ok_or, option]
+  tests: |
+    assert_eq!(get_first(&[3, 4]), Ok(3));
+    assert_eq!(get_first(&[]), Err("empty"));
+
+- id: rlk-367
+  guid: "g<4OY1uvJb"
+  instruction: |
+    Write `get_first_owned(v: &[i32]) -> Result<i32, String>`: return the first
+    element as `Ok`, or an owned `Err("empty".to_string())` if the slice is empty.
+    Build the error lazily (allocate only when the slice is actually empty).
+    Example: get_first_owned(&[7, 8]) -> Ok(7); get_first_owned(&[]) -> Err("empty").
+  starter: |
+    fn get_first_owned(v: &[i32]) -> Result<i32, String> {
+
+    }
+  solution: |
+    fn get_first_owned(v: &[i32]) -> Result<i32, String> {
+        v.first().copied().ok_or_else(|| "empty".to_string())
+    }
+  notes: |
+    Because the error ALLOCATES (`to_string`), use `ok_or_else` so it's built
+    only on the `None` path. (Using eager `ok_or("empty".to_string())` would
+    allocate every call — clippy's `or_fun_call` flags exactly that.)
+  source: "std Option::ok_or_else"
+  tags: [rust, results, ok_or_else]
+  tests: |
+    assert_eq!(get_first_owned(&[7, 8]), Ok(7));
+    assert_eq!(get_first_owned(&[]), Err("empty".to_string()));
+
+- id: rlk-368
+  guid: "LM3dNJ5f,"
+  instruction: |
+    Write `len_of(opt: Option<&str>) -> Option<usize>`: map the inner string to
+    its length.
+  starter: |
+    fn len_of(opt: Option<&str>) -> Option<usize> {
+
+    }
+  solution: |
+    fn len_of(opt: Option<&str>) -> Option<usize> {
+        opt.map(|s| s.len())
+    }
+  source: "std Option::map"
+  tags: [rust, results, option, map]
+  tests: |
+    assert_eq!(len_of(Some("abc")), Some(3));
+    assert_eq!(len_of(None), None);
+
+- id: rlk-369
+  guid: "y>p3Y~2{%o"
+  instruction: |
+    Write `first_char_upper(opt: Option<&str>) -> Option<char>`: first char of
+    the inner string, uppercased. Combine `and_then` and `map`.
+  starter: |
+    fn first_char_upper(opt: Option<&str>) -> Option<char> {
+
+    }
+  solution: |
+    fn first_char_upper(opt: Option<&str>) -> Option<char> {
+        opt.and_then(|s| s.chars().next()).map(|c| c.to_ascii_uppercase())
+    }
+  notes: |
+    `and_then` flattens (the closure returns another Option, avoiding
+    `Option<Option<char>>`); `map` then transforms the char.
+  source: "std Option::and_then"
+  tags: [rust, results, option, and_then]
+  tests: |
+    assert_eq!(first_char_upper(Some("hi")), Some('H'));
+    assert_eq!(first_char_upper(Some("")), None);
+    assert_eq!(first_char_upper(None), None);
+
+- id: rlk-370
+  guid: "AW;x,Lw|MZ"
+  instruction: |
+    Write `first_plus_one(v: &[i32]) -> Option<i32>` using `?` on an Option:
+    first element plus one, or None if empty.
+  starter: |
+    fn first_plus_one(v: &[i32]) -> Option<i32> {
+
+    }
+  solution: |
+    fn first_plus_one(v: &[i32]) -> Option<i32> {
+        let x = v.first()?;
+        Some(x + 1)
+    }
+  notes: |
+    `?` works on `Option` too: unwraps `Some` or returns `None` early. The
+    function must return an `Option`.
+  source: "book §9 / std Option"
+  tags: [rust, results, question-mark, option]
+  tests: |
+    assert_eq!(first_plus_one(&[5, 6]), Some(6));
+    assert_eq!(first_plus_one(&[]), None);
+
+- id: rlk-371
+  guid: "uc6*_(&2)}"
+  instruction: |
+    Write `try_parse(s: &str) -> Option<i32>`: parse, discarding the error.
+  starter: |
+    fn try_parse(s: &str) -> Option<i32> {
+
+    }
+  solution: |
+    fn try_parse(s: &str) -> Option<i32> {
+        s.parse::<i32>().ok()
+    }
+  notes: |
+    `Result::ok()` drops the error, converting `Result<T, E>` to `Option<T>`.
+    (Mirror: `Option::ok_or` goes the other way.)
+  source: "std Result::ok"
+  tags: [rust, results, option]
+  tests: |
+    assert_eq!(try_parse("12"), Some(12));
+    assert_eq!(try_parse("x"), None);
+
+- id: rlk-372
+  guid: "F~It(&6CB5"
+  instruction: |
+    Write `parsed_or_msg(s: &str) -> String` using `if let Ok(n)`: "ok N" or
+    "bad".
+  starter: |
+    fn parsed_or_msg(s: &str) -> String {
+
+    }
+  solution: |
+    fn parsed_or_msg(s: &str) -> String {
+        if let Ok(n) = s.parse::<i32>() {
+            format!("ok {n}")
+        } else {
+            "bad".to_string()
+        }
+    }
+  source: "book §9.2 (if let Ok)"
+  tags: [rust, results, if-let]
+  tests: |
+    assert_eq!(parsed_or_msg("5"), "ok 5");
+    assert_eq!(parsed_or_msg("x"), "bad");
+
+- id: rlk-373
+  guid: "G[g:M.6~eH"
+  instruction: |
+    Write `len_or_zero(opt: Option<&str>) -> usize` using `map_or` (default 0).
+  starter: |
+    fn len_or_zero(opt: Option<&str>) -> usize {
+
+    }
+  solution: |
+    fn len_or_zero(opt: Option<&str>) -> usize {
+        opt.map_or(0, |s| s.len())
+    }
+  notes: |
+    `map_or(default, f)` = map with `f` then unwrap_or `default`, in one step.
+  source: "std Option::map_or"
+  tags: [rust, results, map_or]
+  tests: |
+    assert_eq!(len_or_zero(Some("abcd")), 4);
+    assert_eq!(len_or_zero(None), 0);
+
+- id: rlk-374
+  guid: "P@ct{`jN`]"
+  instruction: |
+    Write `describe_parse(s: &str) -> String` using `map_or_else`: "ok N" on
+    success, "err E" on failure.
+  starter: |
+    fn describe_parse(s: &str) -> String {
+
+    }
+  solution: |
+    fn describe_parse(s: &str) -> String {
+        s.parse::<i32>()
+            .map_or_else(|e| format!("err {e}"), |n| format!("ok {n}"))
+    }
+  notes: |
+    For a `Result`, `map_or_else(err_fn, ok_fn)` handles both arms and returns
+    one value — a compact `match`.
+  source: "std Result::map_or_else"
+  tags: [rust, results, map_or_else]
+  tests: |
+    assert_eq!(describe_parse("7"), "ok 7");
+    assert_eq!(describe_parse("x"), "err invalid digit found in string");
+
+- id: rlk-375
+  guid: "LUgQ)<IL0i"
+  instruction: |
+    Write `even_only(opt: Option<i32>) -> Option<i32>` keeping the value only if
+    it is even, using `filter`.
+  starter: |
+    fn even_only(opt: Option<i32>) -> Option<i32> {
+
+    }
+  solution: |
+    fn even_only(opt: Option<i32>) -> Option<i32> {
+        opt.filter(|&n| n % 2 == 0)
+    }
+  notes: |
+    `Option::filter` keeps `Some(v)` only if the predicate holds, else `None`.
+  source: "std Option::filter"
+  tags: [rust, results, option, filter]
+  tests: |
+    assert_eq!(even_only(Some(4)), Some(4));
+    assert_eq!(even_only(Some(3)), None);
+    assert_eq!(even_only(None), None);
+
+- id: rlk-376
+  guid: "nXy[X@NiAi"
+  instruction: |
+    Define a `MyErr` type that converts from `ParseIntError`, then write
+    `parse2(s: &str) -> Result<i32, MyErr>` using `?` (the error converts
+    automatically via `From`).
+  starter: |
+    #[derive(Debug)]
+    struct MyErr;
+
+    impl From<std::num::ParseIntError> for MyErr {
+        fn from(_: std::num::ParseIntError) -> Self {
+            MyErr
+        }
+    }
+
+    fn parse2(s: &str) -> Result<i32, MyErr> {
+
+    }
+  solution: |
+    #[derive(Debug)]
+    struct MyErr;
+
+    impl From<std::num::ParseIntError> for MyErr {
+        fn from(_: std::num::ParseIntError) -> Self {
+            MyErr
+        }
+    }
+
+    fn parse2(s: &str) -> Result<i32, MyErr> {
+        let n: i32 = s.parse()?;
+        Ok(n)
+    }
+  notes: |
+    `?` calls `From::from` on the error, so a function can use `?` on any error
+    that implements `Into<YourErr>`. This is how anyhow/thiserror feel seamless.
+  source: "book §9.2 (? and From)"
+  tags: [rust, results, question-mark, from]
+  tests: |
+    assert_eq!(parse2("9").unwrap(), 9);
+    assert!(parse2("x").is_err());
+
+- id: rlk-377
+  guid: "J`V$(mvBii"
+  instruction: |
+    Write `count_ok(results: &[Result<i32, String>]) -> usize`: how many are Ok.
+  starter: |
+    fn count_ok(results: &[Result<i32, String>]) -> usize {
+
+    }
+  solution: |
+    fn count_ok(results: &[Result<i32, String>]) -> usize {
+        results.iter().filter(|r| r.is_ok()).count()
+    }
+  notes: |
+    `is_ok`/`is_err` (and `is_some`/`is_none`) give a quick boolean without
+    consuming or destructuring.
+  source: "std Result::is_ok"
+  tags: [rust, results, predicates]
+  tests: |
+    assert_eq!(count_ok(&[Ok(1), Err("e".to_string()), Ok(3)]), 2);
+    assert_eq!(count_ok(&[]), 0);
+
+- id: rlk-378
+  guid: "Qe[=nHY&kO"
+  instruction: |
+    Write `config_value(primary: Option<i32>, fallback: Option<i32>) -> i32`:
+    use `primary`, else `fallback`, else 0.
+  starter: |
+    fn config_value(primary: Option<i32>, fallback: Option<i32>) -> i32 {
+
+    }
+  solution: |
+    fn config_value(primary: Option<i32>, fallback: Option<i32>) -> i32 {
+        primary.or(fallback).unwrap_or(0)
+    }
+  notes: |
+    `Option::or(other)` returns the first `Some`, else `other`. Chain `or` for
+    layered fallbacks, then `unwrap_or` for the final default.
+  source: "std Option::or"
+  tags: [rust, results, option, or]
+  tests: |
+    assert_eq!(config_value(Some(1), Some(2)), 1);
+    assert_eq!(config_value(None, Some(2)), 2);
+    assert_eq!(config_value(None, None), 0);
+
+- id: rlk-379
+  guid: "fT/wt48Z},"
+  instruction: |
+    Write `items(opt: Option<Vec<i32>>) -> Vec<i32>`: the inner Vec or an empty
+    one.
+  starter: |
+    fn items(opt: Option<Vec<i32>>) -> Vec<i32> {
+
+    }
+  solution: |
+    fn items(opt: Option<Vec<i32>>) -> Vec<i32> {
+        opt.unwrap_or_default()
+    }
+  notes: |
+    `unwrap_or_default()` works for any `T: Default` — here an empty `Vec`.
+  source: "std Option::unwrap_or_default"
+  tags: [rust, results, option, unwrap_or_default]
+  tests: |
+    assert_eq!(items(Some(vec![1, 2])), vec![1, 2]);
+    assert_eq!(items(None), Vec::<i32>::new());
+
+- id: rlk-380
+  guid: "E#O:*!Vl7n"
+  instruction: |
+    Write `sum_two(a: &str, b: &str) -> Result<i32, std::num::ParseIntError>`:
+    parse both with `?` on one line and return their sum.
+  starter: |
+    fn sum_two(a: &str, b: &str) -> Result<i32, std::num::ParseIntError> {
+
+    }
+  solution: |
+    fn sum_two(a: &str, b: &str) -> Result<i32, std::num::ParseIntError> {
+        Ok(a.parse::<i32>()? + b.parse::<i32>()?)
+    }
+  notes: |
+    Multiple `?` in one expression short-circuit left to right.
+  source: "book §9.2 (the ? operator)"
+  tags: [rust, results, question-mark]
+  tests: |
+    assert_eq!(sum_two("2", "3"), Ok(5));
+    assert!(sum_two("2", "x").is_err());
+    assert!(sum_two("x", "3").is_err());
+
+- id: rlk-381
+  guid: "zVUWIdjX/E"
+  instruction: |
+    Write `greeting(name: &Option<String>) -> String`: "Hi NAME" if present,
+    else "Hi there". Use `as_deref` so you don't move the String.
+  starter: |
+    fn greeting(name: &Option<String>) -> String {
+
+    }
+  solution: |
+    fn greeting(name: &Option<String>) -> String {
+        match name.as_deref() {
+            Some(n) => format!("Hi {n}"),
+            None => "Hi there".to_string(),
+        }
+    }
+  notes: |
+    `as_deref()` turns `&Option<String>` into `Option<&str>` — you borrow the
+    contents instead of consuming the `Option`.
+  source: "std Option::as_deref"
+  tags: [rust, results, option, as_deref]
+  tests: |
+    assert_eq!(greeting(&Some("Ana".to_string())), "Hi Ana");
+    assert_eq!(greeting(&None), "Hi there");
+
+# --- concept cards ---
+- id: rlk-382
+  guid: "Qlih,96NvZ"
+  type: concept
+  question: |
+    When should you reach for `Option<T>` versus `Result<T, E>`?
+  answer: |
+    **Use `Option<T>` when a value may simply be absent with no explanation
+    needed, and `Result<T, E>` when an operation may fail and you want to
+    carry why.**
+
+    `Option<T>`: `Some`/`None`, no error info. `Result<T, E>`: `Ok`/`Err`
+    with an error. Use Result for fallible work.
+  source: "book §9"
+  tags: [rust, results, concept]
+
+- id: rlk-383
+  guid: "N1??raI@Cs"
+  type: concept
+  question: |
+    What does `?` do, and what does it require of the enclosing function?
+  answer: |
+    **`?` evaluates to the inner value on `Ok`/`Some`, or returns early with
+    the `Err`/`None` on failure — requiring the enclosing function to return
+    a compatible `Result`/`Option`.**
+
+    On `Ok(v)`/`Some(v)` it evaluates to `v`; on `Err(e)`/`None` it returns
+    early with that `Err`/`None`. For `Result`, the error converts via
+    `From`.
+  source: "book §9.2"
+  tags: [rust, results, concept]
+
+- id: rlk-384
+  guid: "cnu|=akD6F"
+  type: concept
+  question: |
+    When is it acceptable to use `unwrap` / `expect`, and what do they do on
+    failure?
+  answer: |
+    **`unwrap`/`expect` return the inner value or panic on `None`/`Err`; use
+    them only when failure is genuinely impossible or a bug.**
+
+    Acceptable for tests, prototypes, checked invariants. In real code prefer
+    `?`, the `unwrap_or*` family, or matching. `expect("why")` documents the
+    assumption in the panic message.
+  source: "book §9.3"
+  tags: [rust, results, concept]
+
+- id: rlk-385
+  guid: "uEL~z:Pd~}"
+  type: concept
+  question: |
+    Difference between `unwrap_or(x)` and `unwrap_or_else(|| x)` — and why does
+    clippy care?
+  answer: |
+    **`unwrap_or(x)` is eager (x is always evaluated), while
+    `unwrap_or_else(f)` is lazy (f runs only on `None`/`Err`).**
+
+    Use `_else` when the fallback is expensive, allocates, or needs the
+    error. clippy flags an eager call with an expensive argument
+    (`or_fun_call`) and a lazy call with a trivial one
+    (`unnecessary_lazy_evaluations`).
+  source: "std Option/Result; clippy"
+  tags: [rust, results, concept]
+
+- id: rlk-386
+  guid: "y:h|M(mWb1"
+  instruction: |
+    Define `enum DivisionError { DivideByZero, IntegerOverflow, NotDivisible }` and
+    write `divide(a: i64, b: i64) -> Result<i64, DivisionError>`: Err `DivideByZero`
+    if b is 0; `IntegerOverflow` if a is i64::MIN and b is -1; `NotDivisible` if a is
+    not a multiple of b; otherwise Ok(a / b).
+  starter: |
+    #[derive(Debug, PartialEq, Eq)]
+    enum DivisionError {
+        DivideByZero,
+        IntegerOverflow,
+        NotDivisible,
+    }
+
+    fn divide(a: i64, b: i64) -> Result<i64, DivisionError> {
+
+    }
+  solution: |
+    #[derive(Debug, PartialEq, Eq)]
+    enum DivisionError {
+        DivideByZero,
+        IntegerOverflow,
+        NotDivisible,
+    }
+
+    fn divide(a: i64, b: i64) -> Result<i64, DivisionError> {
+        if b == 0 {
+            return Err(DivisionError::DivideByZero);
+        }
+        if a == i64::MIN && b == -1 {
+            return Err(DivisionError::IntegerOverflow);
+        }
+        if a % b != 0 {
+            return Err(DivisionError::NotDivisible);
+        }
+        Ok(a / b)
+    }
+  notes: |
+    A domain-specific error enum makes each failure a distinct, matchable value (and
+    derives let you compare/inspect them). Guard the overflow case explicitly:
+    `i64::MIN / -1` would otherwise panic.
+  source: "Rustlings iterators3 · Book §9 (custom error types)"
+  tags: [rust, results, errors, rustlings]
+  tests: |
+    assert_eq!(divide(81, 9), Ok(9));
+    assert_eq!(divide(81, 0), Err(DivisionError::DivideByZero));
+    assert_eq!(divide(i64::MIN, -1), Err(DivisionError::IntegerOverflow));
+    assert_eq!(divide(81, 6), Err(DivisionError::NotDivisible));
+
+- id: rlk-387
+  guid: "GM=,=@JD*r"
+  instruction: |
+    Given `divide(a, b) -> Result<i64, DivisionError>`, divide [27, 297, 38502, 81]
+    each by 27 and write two collectors: `result_with_list() -> Result<Vec<i64>,
+    DivisionError>` (stop at the first error) and `list_of_results() -> Vec<Result<i64,
+    DivisionError>>` (keep every outcome). Same iterator — only the return type differs.
+  starter: |
+    #[derive(Debug, PartialEq, Eq)]
+    enum DivisionError {
+        DivideByZero,
+        IntegerOverflow,
+        NotDivisible,
+    }
+
+    fn divide(a: i64, b: i64) -> Result<i64, DivisionError> {
+        if b == 0 {
+            return Err(DivisionError::DivideByZero);
+        }
+        if a % b != 0 {
+            return Err(DivisionError::NotDivisible);
+        }
+        Ok(a / b)
+    }
+
+    fn result_with_list() -> Result<Vec<i64>, DivisionError> {
+
+    }
+
+    fn list_of_results() -> Vec<Result<i64, DivisionError>> {
+
+    }
+  solution: |
+    #[derive(Debug, PartialEq, Eq)]
+    enum DivisionError {
+        DivideByZero,
+        IntegerOverflow,
+        NotDivisible,
+    }
+
+    fn divide(a: i64, b: i64) -> Result<i64, DivisionError> {
+        if b == 0 {
+            return Err(DivisionError::DivideByZero);
+        }
+        if a % b != 0 {
+            return Err(DivisionError::NotDivisible);
+        }
+        Ok(a / b)
+    }
+
+    fn result_with_list() -> Result<Vec<i64>, DivisionError> {
+        let numbers = [27, 297, 38502, 81];
+        numbers.into_iter().map(|n| divide(n, 27)).collect()
+    }
+
+    fn list_of_results() -> Vec<Result<i64, DivisionError>> {
+        let numbers = [27, 297, 38502, 81];
+        numbers.into_iter().map(|n| divide(n, 27)).collect()
+    }
+  notes: |
+    `collect()` is driven by the target type: into `Result<Vec<_>, _>` it
+    short-circuits on the first `Err`; into `Vec<Result<_, _>>` it keeps every
+    success and failure. Identical iterator, different collection.
+  source: "Rustlings iterators3 · std FromIterator"
+  tags: [rust, results, iterators, rustlings]
+  tests: |
+    assert_eq!(result_with_list(), Ok(vec![1, 11, 1426, 3]));
+    assert_eq!(
+        list_of_results(),
+        vec![Ok(1), Ok(11), Ok(1426), Ok(3)]
+    );
+
+- id: rlk-388
+  guid: "dFpytAcNt0"
+  instruction: |
+    Write `parse_then_sqrt(s: &str) -> Result<f64, Box<dyn std::error::Error>>`:
+    parse `s` as f64 with `?`; if it's negative return the error "negative input";
+    otherwise return its square root.
+    Example: "16" -> Ok(4.0); "x" -> Err; "-1" -> Err.
+  starter: |
+    fn parse_then_sqrt(s: &str) -> Result<f64, Box<dyn std::error::Error>> {
+
+    }
+  solution: |
+    fn parse_then_sqrt(s: &str) -> Result<f64, Box<dyn std::error::Error>> {
+        let n: f64 = s.parse()?;
+        if n < 0.0 {
+            return Err("negative input".into());
+        }
+        Ok(n.sqrt())
+    }
+  notes: |
+    `Box<dyn Error>` is a trait object holding ANY error type, so `?` can mix
+    different errors in one function: the parse error converts via `From`, and a
+    `&str` becomes a boxed error with `.into()`. Great for app code where you don't
+    need a precise error enum.
+  source: "Rust Book §9.2 / §12 (Box<dyn Error>)"
+  tags: [rust, results, errors]
+  tests: |
+    assert_eq!(parse_then_sqrt("16").unwrap(), 4.0);
+    assert!(parse_then_sqrt("x").is_err());
+    assert!(parse_then_sqrt("-1").is_err());
+
+- id: rlk-389
+  guid: "bhVf:BA~bc"
+  instruction: |
+    Write `flip(r: Result<Option<i32>, String>) -> Option<Result<i32, String>>`
+    using `transpose`.
+  starter: |
+    fn flip(r: Result<Option<i32>, String>) -> Option<Result<i32, String>> {
+
+    }
+  solution: |
+    fn flip(r: Result<Option<i32>, String>) -> Option<Result<i32, String>> {
+        r.transpose()
+    }
+  notes: |
+    `transpose()` swaps `Result<Option<T>, E>` and `Option<Result<T, E>>` —
+    handy after a fallible step that may also be absent (e.g. parsing an
+    optional field), so you can use `?` inside an `Option`-returning function.
+  source: "std Result::transpose / Option::transpose"
+  tags: [rust, results, option, transpose]
+  tests: |
+    assert_eq!(flip(Ok(Some(3))), Some(Ok(3)));
+    assert_eq!(flip(Ok(None)), None);
+    assert_eq!(flip(Err("e".to_string())), Some(Err("e".to_string())));
+
+- id: rlk-390
+  guid: "z[OP7^5$.z"
+  instruction: |
+    Write `first_available(primary: Option<i32>, compute_fallback: impl Fn() ->
+    Option<i32>) -> Option<i32>`: return `primary` if present, otherwise call
+    `compute_fallback`. Use `or_else` so the fallback only runs when needed.
+  starter: |
+    fn first_available(primary: Option<i32>, compute_fallback: impl Fn() -> Option<i32>) -> Option<i32> {
+
+    }
+  solution: |
+    fn first_available(primary: Option<i32>, compute_fallback: impl Fn() -> Option<i32>) -> Option<i32> {
+        primary.or_else(compute_fallback)
+    }
+  notes: |
+    `or_else(f)` is the lazy sibling of `or(other)`: `f` runs only when
+    `primary` is `None`. Prefer it whenever computing the fallback is
+    expensive or has side effects — the test below proves it's skipped when
+    `primary` is already `Some`.
+  source: "std Option::or_else"
+  tags: [rust, results, option, or_else]
+  tests: |
+    use std::cell::Cell;
+    let calls = Cell::new(0);
+    let fallback = || { calls.set(calls.get() + 1); Some(9) };
+    assert_eq!(first_available(Some(1), fallback), Some(1));
+    assert_eq!(calls.get(), 0);
+    assert_eq!(first_available(None, fallback), Some(9));
+    assert_eq!(calls.get(), 1);
+
+- id: rlk-391
+  guid: "lx`m;s~K(F"
+  instruction: |
+    Write `pair(a: Option<i32>, b: Option<&str>) -> Option<(i32, String)>`
+    combining both into a tuple only if BOTH are present, using `zip`.
+  starter: |
+    fn pair(a: Option<i32>, b: Option<&str>) -> Option<(i32, String)> {
+
+    }
+  solution: |
+    fn pair(a: Option<i32>, b: Option<&str>) -> Option<(i32, String)> {
+        a.zip(b).map(|(n, s)| (n, s.to_string()))
+    }
+  notes: |
+    `Option::zip` combines two Options into `Option<(A, B)>` — `Some` only
+    when both are `Some`, else `None`. Chain `.map` to reshape the pair
+    afterward.
+  source: "std Option::zip"
+  tags: [rust, results, option, zip]
+  tests: |
+    assert_eq!(pair(Some(1), Some("a")), Some((1, "a".to_string())));
+    assert_eq!(pair(None, Some("a")), None);
+    assert_eq!(pair(Some(1), None), None);
+

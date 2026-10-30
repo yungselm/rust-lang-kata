@@ -17,29 +17,28 @@ jobs:
 
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
-          cache: 'pip'
+          python-version: '3.12'
 
-      - name: Install Python dependencies
-        run: pip install -r requirements.txt
+      - name: Install agentic-studying-loop (asl)
+        run: pip install git+https://github.com/yungselm/agentic-studying-loop
 
       - name: Install Rust (with clippy)
         uses: dtolnay/rust-toolchain@stable
         with:
           components: clippy
 
-      - name: Lint cards (self-contained, no cross-references)
-        # Non-blocking for now: the current card set has some known/reviewable
-        # flags not yet triaged into lint_cards.py's ALLOW list. Remove
-        # continue-on-error once the backlog is clean.
+      - name: Lint cards (ids, duplicates, self-contained)
+        run: asl lint -q --skip size,literal cards/core cards/neetcode additional_cards/_example
+
+      - name: Literal check (non-blocking until the known flags are triaged)
         continue-on-error: true
-        run: python lint_cards.py
+        run: asl lint -q --skip size cards/core cards/neetcode
 
       - name: Check cards (clippy + cargo test on every solution)
-        run: python check_cards.py
+        run: asl check cards/core cards/neetcode additional_cards/_example
 
       - name: Build .apkg
-        run: python build.py
+        run: asl build cards/core cards/neetcode -o output/CodeCards.apkg
 
       - name: Upload CodeCards.apkg
         uses: actions/upload-artifact@v4

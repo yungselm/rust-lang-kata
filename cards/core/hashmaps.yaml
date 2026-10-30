@@ -1,0 +1,791 @@
+# HashMap & HashSet operations — insert/get, the entry API, iteration, sets.
+- id: rlk-177
+  guid: "h3$fL)GMl8"
+  instruction: |
+    Write `build() -> HashMap<String, i32>` inserting "a" -> 1 and "b" -> 2.
+  starter: |
+    use std::collections::HashMap;
+
+    fn build() -> HashMap<String, i32> {
+
+    }
+  solution: |
+    use std::collections::HashMap;
+
+    fn build() -> HashMap<String, i32> {
+        let mut m = HashMap::new();
+        m.insert("a".to_string(), 1);
+        m.insert("b".to_string(), 2);
+        m
+    }
+  notes: |
+    `insert(k, v)` adds or overwrites, returning the OLD value as `Option<V>`.
+  source: "std HashMap::insert"
+  tags: [rust, hashmap]
+  tests: |
+    let m = build();
+    assert_eq!(m.get("a"), Some(&1));
+    assert_eq!(m.get("b"), Some(&2));
+    assert_eq!(m.len(), 2);
+
+- id: rlk-178
+  guid: "lNN^2ToOYQ"
+  instruction: |
+    Write `lookup(m: &HashMap<String, i32>, key: &str) -> Option<i32>` returning
+    a copy of the value if present.
+  starter: |
+    use std::collections::HashMap;
+
+    fn lookup(m: &HashMap<String, i32>, key: &str) -> Option<i32> {
+
+    }
+  solution: |
+    use std::collections::HashMap;
+
+    fn lookup(m: &HashMap<String, i32>, key: &str) -> Option<i32> {
+        m.get(key).copied()
+    }
+  notes: |
+    `get` returns `Option<&V>`. You can pass a `&str` even though keys are
+    `String`, because `String: Borrow<str>`.
+  source: "std HashMap::get"
+  tags: [rust, hashmap]
+  tests: |
+    let mut m = HashMap::new();
+    m.insert("a".to_string(), 1);
+    assert_eq!(lookup(&m, "a"), Some(1));
+    assert_eq!(lookup(&m, "z"), None);
+
+- id: rlk-179
+  guid: "v9n,pbGF[W"
+  instruction: |
+    Write `has_key(m: &HashMap<String, i32>, key: &str) -> bool`.
+  starter: |
+    use std::collections::HashMap;
+
+    fn has_key(m: &HashMap<String, i32>, key: &str) -> bool {
+
+    }
+  solution: |
+    use std::collections::HashMap;
+
+    fn has_key(m: &HashMap<String, i32>, key: &str) -> bool {
+        m.contains_key(key)
+    }
+  source: "std HashMap::contains_key"
+  tags: [rust, hashmap]
+  tests: |
+    let mut m = HashMap::new();
+    m.insert("a".to_string(), 1);
+    assert!(has_key(&m, "a"));
+    assert!(!has_key(&m, "z"));
+
+- id: rlk-180
+  guid: "y7cg89NAM*"
+  instruction: |
+    Write `char_counts(s: &str) -> HashMap<char, usize>` counting each character
+    using the `entry` API.
+  starter: |
+    use std::collections::HashMap;
+
+    fn char_counts(s: &str) -> HashMap<char, usize> {
+
+    }
+  solution: |
+    use std::collections::HashMap;
+
+    fn char_counts(s: &str) -> HashMap<char, usize> {
+        let mut m = HashMap::new();
+        for c in s.chars() {
+            *m.entry(c).or_insert(0) += 1;
+        }
+        m
+    }
+  notes: |
+    `entry(k).or_insert(0)` returns a `&mut V` to the existing or newly inserted
+    value — one lookup for the classic counter idiom.
+  source: "std HashMap::entry"
+  tags: [rust, hashmap, entry]
+  tests: |
+    let counts = char_counts("aab");
+    assert_eq!(counts.get(&'a'), Some(&2));
+    assert_eq!(counts.get(&'b'), Some(&1));
+    assert_eq!(counts.get(&'z'), None);
+
+- id: rlk-181
+  guid: "z@?!{!]7x`"
+  instruction: |
+    Write `group_by_len(words: &[&str]) -> HashMap<usize, Vec<String>>` grouping
+    words by their length.
+  starter: |
+    use std::collections::HashMap;
+
+    fn group_by_len(words: &[&str]) -> HashMap<usize, Vec<String>> {
+
+    }
+  solution: |
+    use std::collections::HashMap;
+
+    fn group_by_len(words: &[&str]) -> HashMap<usize, Vec<String>> {
+        let mut m: HashMap<usize, Vec<String>> = HashMap::new();
+        for w in words {
+            m.entry(w.len()).or_default().push(w.to_string());
+        }
+        m
+    }
+  notes: |
+    `or_default()` inserts an empty `Vec` when the key is new, then we push into
+    the returned `&mut Vec`. (clippy prefers `or_default()` over
+    `or_insert_with(Vec::new)`.)
+  source: "std Entry::or_default"
+  tags: [rust, hashmap, entry]
+  tests: |
+    let groups = group_by_len(&["a", "bb", "cc", "d"]);
+    let mut one = groups[&1].clone();
+    one.sort();
+    assert_eq!(one, vec!["a".to_string(), "d".to_string()]);
+    let mut two = groups[&2].clone();
+    two.sort();
+    assert_eq!(two, vec!["bb".to_string(), "cc".to_string()]);
+
+- id: rlk-182
+  guid: "dNo>K|?+L("
+  instruction: |
+    Write `add_to(m: &mut HashMap<String, i32>, key: &str, delta: i32)` adding
+    `delta` to an existing value (do nothing if absent). Use `get_mut`.
+  starter: |
+    use std::collections::HashMap;
+
+    fn add_to(m: &mut HashMap<String, i32>, key: &str, delta: i32) {
+
+    }
+  solution: |
+    use std::collections::HashMap;
+
+    fn add_to(m: &mut HashMap<String, i32>, key: &str, delta: i32) {
+        if let Some(v) = m.get_mut(key) {
+            *v += delta;
+        }
+    }
+  notes: |
+    `get_mut` returns `Option<&mut V>` to edit a value in place.
+  source: "std HashMap::get_mut"
+  tags: [rust, hashmap]
+  tests: |
+    let mut m = HashMap::new();
+    m.insert("a".to_string(), 10);
+    add_to(&mut m, "a", 5);
+    assert_eq!(m["a"], 15);
+    add_to(&mut m, "z", 5);
+    assert_eq!(m.get("z"), None);
+
+- id: rlk-183
+  guid: "Fc>Z`Ow*qu"
+  instruction: |
+    Write `take(m: &mut HashMap<String, i32>, key: &str) -> Option<i32>` removing
+    and returning a value.
+  starter: |
+    use std::collections::HashMap;
+
+    fn take(m: &mut HashMap<String, i32>, key: &str) -> Option<i32> {
+
+    }
+  solution: |
+    use std::collections::HashMap;
+
+    fn take(m: &mut HashMap<String, i32>, key: &str) -> Option<i32> {
+        m.remove(key)
+    }
+  notes: |
+    `remove` returns the value as `Option<V>` (None if the key was absent).
+  source: "std HashMap::remove"
+  tags: [rust, hashmap]
+  tests: |
+    let mut m = HashMap::new();
+    m.insert("a".to_string(), 1);
+    assert_eq!(take(&mut m, "a"), Some(1));
+    assert_eq!(take(&mut m, "a"), None);
+
+- id: rlk-184
+  guid: "dj+i84EL_K"
+  instruction: |
+    Write `total(m: &HashMap<String, i32>) -> i32` summing all values.
+  starter: |
+    use std::collections::HashMap;
+
+    fn total(m: &HashMap<String, i32>) -> i32 {
+
+    }
+  solution: |
+    use std::collections::HashMap;
+
+    fn total(m: &HashMap<String, i32>) -> i32 {
+        m.values().sum()
+    }
+  notes: |
+    `values()` iterates `&V`; `keys()` iterates `&K`; `iter()` iterates
+    `(&K, &V)`.
+  source: "std HashMap::values"
+  tags: [rust, hashmap]
+  tests: |
+    let mut m = HashMap::new();
+    m.insert("a".to_string(), 3);
+    m.insert("b".to_string(), 4);
+    assert_eq!(total(&m), 7);
+    assert_eq!(total(&HashMap::new()), 0);
+
+- id: rlk-185
+  guid: "d[oH0VHaMo"
+  instruction: |
+    Write `keys_sorted(m: &HashMap<String, i32>) -> Vec<String>`: the keys,
+    sorted (since HashMap order is undefined).
+  starter: |
+    use std::collections::HashMap;
+
+    fn keys_sorted(m: &HashMap<String, i32>) -> Vec<String> {
+
+    }
+  solution: |
+    use std::collections::HashMap;
+
+    fn keys_sorted(m: &HashMap<String, i32>) -> Vec<String> {
+        let mut ks: Vec<String> = m.keys().cloned().collect();
+        ks.sort();
+        ks
+    }
+  notes: |
+    HashMap iteration order is unspecified; collect and `sort` for deterministic
+    output (or use a `BTreeMap`).
+  source: "std HashMap::keys"
+  tags: [rust, hashmap]
+  tests: |
+    let mut m = HashMap::new();
+    m.insert("b".to_string(), 1);
+    m.insert("a".to_string(), 2);
+    assert_eq!(keys_sorted(&m), vec!["a".to_string(), "b".to_string()]);
+
+- id: rlk-186
+  guid: "yJ1:*$B0[G"
+  instruction: |
+    Write `double_values(m: &mut HashMap<String, i32>)` doubling every value
+    in place.
+  starter: |
+    use std::collections::HashMap;
+
+    fn double_values(m: &mut HashMap<String, i32>) {
+
+    }
+  solution: |
+    use std::collections::HashMap;
+
+    fn double_values(m: &mut HashMap<String, i32>) {
+        for v in m.values_mut() {
+            *v *= 2;
+        }
+    }
+  notes: |
+    `values_mut()` yields `&mut V` for each value.
+  source: "std HashMap::values_mut"
+  tags: [rust, hashmap]
+  tests: |
+    let mut m = HashMap::new();
+    m.insert("a".to_string(), 2);
+    m.insert("b".to_string(), 3);
+    double_values(&mut m);
+    assert_eq!(m["a"], 4);
+    assert_eq!(m["b"], 6);
+
+- id: rlk-187
+  guid: "Hs]$2bXQbm"
+  instruction: |
+    Write `index_by_len(words: &[&str]) -> HashMap<usize, String>` mapping each
+    length to a word of that length (later wins). Build it with `collect`.
+  starter: |
+    use std::collections::HashMap;
+
+    fn index_by_len(words: &[&str]) -> HashMap<usize, String> {
+
+    }
+  solution: |
+    use std::collections::HashMap;
+
+    fn index_by_len(words: &[&str]) -> HashMap<usize, String> {
+        words.iter().map(|w| (w.len(), w.to_string())).collect()
+    }
+  notes: |
+    An iterator of `(K, V)` tuples collects straight into a `HashMap`; duplicate
+    keys keep the last value.
+  source: "std FromIterator for HashMap"
+  tags: [rust, hashmap]
+  tests: |
+    let m = index_by_len(&["a", "bb", "cc"]);
+    assert_eq!(m.get(&1), Some(&"a".to_string()));
+    assert_eq!(m.get(&2), Some(&"cc".to_string()));
+
+- id: rlk-188
+  guid: "OMK=gn[og_"
+  instruction: |
+    Write `count_with_default(s: &str) -> HashMap<char, i32>` returning how many
+    times each character appears in `s`, using the entry API's `or_default()`.
+    Example: "aab" -> {'a': 2, 'b': 1}.
+  starter: |
+    use std::collections::HashMap;
+
+    fn count_with_default(s: &str) -> HashMap<char, i32> {
+
+    }
+  solution: |
+    use std::collections::HashMap;
+
+    fn count_with_default(s: &str) -> HashMap<char, i32> {
+        let mut m: HashMap<char, i32> = HashMap::new();
+        for c in s.chars() {
+            *m.entry(c).or_default() += 1;
+        }
+        m
+    }
+  notes: |
+    `or_default()` inserts `V::default()` when absent — 0 for integers. Needs
+    `V: Default`.
+  source: "std Entry::or_default"
+  tags: [rust, hashmap, entry]
+  tests: |
+    let counts = count_with_default("aab");
+    assert_eq!(counts.get(&'a'), Some(&2));
+    assert_eq!(counts.get(&'b'), Some(&1));
+
+- id: rlk-189
+  guid: "EGT9k6troJ"
+  instruction: |
+    Write `bump(m: &mut HashMap<String, i32>, key: &str)`: increment the value,
+    or insert 1 if absent, using `and_modify` + `or_insert`.
+  starter: |
+    use std::collections::HashMap;
+
+    fn bump(m: &mut HashMap<String, i32>, key: &str) {
+
+    }
+  solution: |
+    use std::collections::HashMap;
+
+    fn bump(m: &mut HashMap<String, i32>, key: &str) {
+        m.entry(key.to_string()).and_modify(|v| *v += 1).or_insert(1);
+    }
+  notes: |
+    `and_modify(f)` runs `f` on an existing value; `or_insert(d)` supplies the
+    value when the key is new. Together: "update or initialize".
+  source: "std Entry::and_modify"
+  tags: [rust, hashmap, entry]
+  tests: |
+    let mut m = HashMap::new();
+    bump(&mut m, "a");
+    bump(&mut m, "a");
+    bump(&mut m, "b");
+    assert_eq!(m["a"], 2);
+    assert_eq!(m["b"], 1);
+
+- id: rlk-190
+  guid: "r##V%tC]lj"
+  instruction: |
+    Write `score(m: &HashMap<String, i32>, key: &str) -> i32` returning the
+    value or 0 if missing.
+  starter: |
+    use std::collections::HashMap;
+
+    fn score(m: &HashMap<String, i32>, key: &str) -> i32 {
+
+    }
+  solution: |
+    use std::collections::HashMap;
+
+    fn score(m: &HashMap<String, i32>, key: &str) -> i32 {
+        m.get(key).copied().unwrap_or(0)
+    }
+  source: "std HashMap::get"
+  tags: [rust, hashmap]
+  tests: |
+    let mut m = HashMap::new();
+    m.insert("a".to_string(), 9);
+    assert_eq!(score(&m, "a"), 9);
+    assert_eq!(score(&m, "z"), 0);
+
+- id: rlk-191
+  guid: "kcX)Z<YjLN"
+  instruction: |
+    Write `distinct_count(m: &HashMap<String, i32>) -> usize` returning how many
+    keys are stored.
+  starter: |
+    use std::collections::HashMap;
+
+    fn distinct_count(m: &HashMap<String, i32>) -> usize {
+
+    }
+  solution: |
+    use std::collections::HashMap;
+
+    fn distinct_count(m: &HashMap<String, i32>) -> usize {
+        m.len()
+    }
+  notes: |
+    `len()` is the entry count; `is_empty()` and `clear()` are the companions.
+  source: "std HashMap::len"
+  tags: [rust, hashmap]
+  tests: |
+    let mut m = HashMap::new();
+    m.insert("a".to_string(), 1);
+    m.insert("b".to_string(), 2);
+    assert_eq!(distinct_count(&m), 2);
+    assert_eq!(distinct_count(&HashMap::new()), 0);
+
+- id: rlk-192
+  guid: "Oltv-,`:Qb"
+  instruction: |
+    Write `merge(into: &mut HashMap<String, i32>, other: HashMap<String, i32>)`
+    folding `other` into `into` (other's values win on conflict).
+  starter: |
+    use std::collections::HashMap;
+
+    fn merge(into: &mut HashMap<String, i32>, other: HashMap<String, i32>) {
+
+    }
+  solution: |
+    use std::collections::HashMap;
+
+    fn merge(into: &mut HashMap<String, i32>, other: HashMap<String, i32>) {
+        into.extend(other);
+    }
+  notes: |
+    A HashMap is `IntoIterator` of `(K, V)`, so `extend` inserts each pair,
+    overwriting existing keys.
+  source: "std HashMap::extend"
+  tags: [rust, hashmap]
+  tests: |
+    let mut a = HashMap::new();
+    a.insert("x".to_string(), 1);
+    let mut b = HashMap::new();
+    b.insert("x".to_string(), 2);
+    b.insert("y".to_string(), 3);
+    merge(&mut a, b);
+    assert_eq!(a["x"], 2);
+    assert_eq!(a["y"], 3);
+
+- id: rlk-193
+  guid: "PfD,Zo.5uy"
+  instruction: |
+    Write `unique(v: &[i32]) -> HashSet<i32>` collecting the distinct values.
+  starter: |
+    use std::collections::HashSet;
+
+    fn unique(v: &[i32]) -> HashSet<i32> {
+
+    }
+  solution: |
+    use std::collections::HashSet;
+
+    fn unique(v: &[i32]) -> HashSet<i32> {
+        v.iter().copied().collect()
+    }
+  notes: |
+    A `HashSet` stores unique values with O(1) average membership. Collecting an
+    iterator dedups automatically.
+  source: "std FromIterator for HashSet"
+  tags: [rust, hashset]
+  tests: |
+    let s = unique(&[1, 2, 2, 3, 1]);
+    assert_eq!(s.len(), 3);
+    assert!(s.contains(&1) && s.contains(&2) && s.contains(&3));
+
+- id: rlk-194
+  guid: "vf>%1wPR~9"
+  instruction: |
+    Write `add_new(set: &mut HashSet<i32>, x: i32) -> bool` returning whether the
+    value was newly added.
+  starter: |
+    use std::collections::HashSet;
+
+    fn add_new(set: &mut HashSet<i32>, x: i32) -> bool {
+
+    }
+  solution: |
+    use std::collections::HashSet;
+
+    fn add_new(set: &mut HashSet<i32>, x: i32) -> bool {
+        set.insert(x)
+    }
+  notes: |
+    `HashSet::insert` returns `true` if the value was not already present.
+  source: "std HashSet::insert"
+  tags: [rust, hashset]
+  tests: |
+    let mut s = HashSet::new();
+    assert!(add_new(&mut s, 1));
+    assert!(!add_new(&mut s, 1));
+
+- id: rlk-195
+  guid: "n=7rzWAmxN"
+  instruction: |
+    Write `common(a: &HashSet<i32>, b: &HashSet<i32>) -> Vec<i32>` returning the
+    values present in both.
+  starter: |
+    use std::collections::HashSet;
+
+    fn common(a: &HashSet<i32>, b: &HashSet<i32>) -> Vec<i32> {
+
+    }
+  solution: |
+    use std::collections::HashSet;
+
+    fn common(a: &HashSet<i32>, b: &HashSet<i32>) -> Vec<i32> {
+        a.intersection(b).copied().collect()
+    }
+  notes: |
+    `intersection`, `union`, `difference`, and `symmetric_difference` all return
+    iterators of `&T`.
+  source: "std HashSet::intersection"
+  tags: [rust, hashset]
+  tests: |
+    let a: HashSet<i32> = [1, 2, 3].into_iter().collect();
+    let b: HashSet<i32> = [2, 3, 4].into_iter().collect();
+    let mut c = common(&a, &b);
+    c.sort();
+    assert_eq!(c, vec![2, 3]);
+
+- id: rlk-196
+  guid: "vayzhw<=4K"
+  instruction: |
+    Write `count_unique(v: &[i32]) -> usize`: number of distinct values, via a
+    `HashSet`.
+  starter: |
+    use std::collections::HashSet;
+
+    fn count_unique(v: &[i32]) -> usize {
+
+    }
+  solution: |
+    use std::collections::HashSet;
+
+    fn count_unique(v: &[i32]) -> usize {
+        v.iter().collect::<HashSet<_>>().len()
+    }
+  notes: |
+    Collecting `&i32`s into a `HashSet<&i32>` then `len()` counts distinct values
+    in O(n).
+  source: "std HashSet"
+  tags: [rust, hashset]
+  tests: |
+    assert_eq!(count_unique(&[1, 2, 2, 3, 1]), 3);
+    assert_eq!(count_unique(&[]), 0);
+
+- id: rlk-197
+  guid: "Gear=t&O@B"
+  instruction: |
+    Write `most_common(s: &str) -> Option<char>`: the most frequent character
+    (None if empty). Count with a HashMap, then pick the max.
+  starter: |
+    use std::collections::HashMap;
+
+    fn most_common(s: &str) -> Option<char> {
+
+    }
+  solution: |
+    use std::collections::HashMap;
+
+    fn most_common(s: &str) -> Option<char> {
+        let mut m: HashMap<char, usize> = HashMap::new();
+        for c in s.chars() {
+            *m.entry(c).or_insert(0) += 1;
+        }
+        m.into_iter().max_by_key(|&(_, count)| count).map(|(c, _)| c)
+    }
+  notes: |
+    `into_iter()` consumes the map into `(char, usize)` pairs; `max_by_key` finds
+    the largest count; `map` keeps just the char.
+  source: "std Iterator::max_by_key"
+  tags: [rust, hashmap, iterators]
+  tests: |
+    assert_eq!(most_common("aab"), Some('a'));
+    assert_eq!(most_common(""), None);
+
+- id: rlk-198
+  guid: "Fu@iu=XHHL"
+  instruction: |
+    Write `build_lit() -> HashMap<&'static str, i32>` using the
+    `HashMap::from([...])` array literal — no `mut`/`insert` chain.
+  starter: |
+    use std::collections::HashMap;
+
+    fn build_lit() -> HashMap<&'static str, i32> {
+
+    }
+  solution: |
+    use std::collections::HashMap;
+
+    fn build_lit() -> HashMap<&'static str, i32> {
+        HashMap::from([("a", 1), ("b", 2)])
+    }
+  notes: |
+    `HashMap::from([(k, v), ...])` builds a map straight from an array of
+    pairs — the most idiomatic way to write a small literal map, without a
+    `mut` binding and repeated `insert` calls.
+  source: "std HashMap::from"
+  tags: [rust, hashmap]
+  tests: |
+    let m = build_lit();
+    assert_eq!(m.get("a"), Some(&1));
+    assert_eq!(m.get("b"), Some(&2));
+    assert_eq!(m.len(), 2);
+
+- id: rlk-199
+  guid: "o~z=eGq4:N"
+  instruction: |
+    Write `first_seen(m: &mut HashMap<char, Vec<usize>>, c: char, idx: usize)`
+    recording `idx` under `c`; when `c` is new, pre-size the Vec with
+    `Vec::with_capacity(4)` via `or_insert_with` (a non-default initializer,
+    so `or_default()` wouldn't fit).
+  starter: |
+    use std::collections::HashMap;
+
+    fn first_seen(m: &mut HashMap<char, Vec<usize>>, c: char, idx: usize) {
+
+    }
+  solution: |
+    use std::collections::HashMap;
+
+    fn first_seen(m: &mut HashMap<char, Vec<usize>>, c: char, idx: usize) {
+        m.entry(c).or_insert_with(|| Vec::with_capacity(4)).push(idx);
+    }
+  notes: |
+    `or_insert_with(f)` calls `f` only when the key is absent — the right tool
+    when the default ISN'T simply `Default::default()` (here, a pre-sized
+    Vec). Reach for `or_default()` instead when the default really is the
+    type's `Default`.
+  source: "std Entry::or_insert_with"
+  tags: [rust, hashmap, entry]
+  tests: |
+    let mut m = HashMap::new();
+    first_seen(&mut m, 'a', 0);
+    first_seen(&mut m, 'a', 5);
+    first_seen(&mut m, 'b', 2);
+    assert_eq!(m[&'a'], vec![0, 5]);
+    assert_eq!(m[&'b'], vec![2]);
+
+- id: rlk-200
+  guid: "vsJVTfg*kY"
+  instruction: |
+    Write `all_and_only_a(a: &HashSet<i32>, b: &HashSet<i32>) -> (Vec<i32>, Vec<i32>)`
+    returning (sorted union, sorted values only in `a`), using `union` and
+    `difference`.
+  starter: |
+    use std::collections::HashSet;
+
+    fn all_and_only_a(a: &HashSet<i32>, b: &HashSet<i32>) -> (Vec<i32>, Vec<i32>) {
+
+    }
+  solution: |
+    use std::collections::HashSet;
+
+    fn all_and_only_a(a: &HashSet<i32>, b: &HashSet<i32>) -> (Vec<i32>, Vec<i32>) {
+        let mut all: Vec<i32> = a.union(b).copied().collect();
+        all.sort();
+        let mut only_a: Vec<i32> = a.difference(b).copied().collect();
+        only_a.sort();
+        (all, only_a)
+    }
+  notes: |
+    `union` yields every value in EITHER set (no duplicates); `difference`
+    yields values in `a` but NOT in `b` (order matters — swap the receiver and
+    argument for the reverse). Sort before comparing, since set iteration
+    order is unspecified.
+  source: "std HashSet::union / HashSet::difference"
+  tags: [rust, hashset]
+  tests: |
+    let a: HashSet<i32> = [1, 2, 3].into_iter().collect();
+    let b: HashSet<i32> = [2, 3, 4].into_iter().collect();
+    let (all, only_a) = all_and_only_a(&a, &b);
+    assert_eq!(all, vec![1, 2, 3, 4]);
+    assert_eq!(only_a, vec![1]);
+
+# --- concept cards ---
+- id: rlk-201
+  guid: "Cz<E^Rm1~0"
+  type: concept
+  question: |
+    What problem does the `entry` API solve, and what are its main methods?
+  answer: |
+    **The `entry` API avoids looking a key up twice for "insert if missing /
+    update if present" — one lookup instead of two.**
+
+    `map.entry(k)` returns a handle; then `.or_insert(d)`, `.or_insert_with(f)`,
+    `.or_default()`, or `.and_modify(f)` operate with a single lookup. Idiomatic
+    for counters and grouping.
+  source: "book §8.3 / std HashMap::entry"
+  tags: [rust, hashmap, concept]
+
+- id: rlk-202
+  guid: "oS5M)7_]?b"
+  type: concept
+  question: |
+    Why can you call `map.get("x")` when the keys are `String`?
+  answer: |
+    **Because `get` is generic over a borrowed key form via `Borrow`, and
+    `String: Borrow<str>`, so a `&str` works directly.**
+
+    `get<Q>(&self, k: &Q) where K: Borrow<Q>, Q: Hash + Eq` — no allocating a
+    `String` just to look something up.
+  source: "std HashMap::get"
+  tags: [rust, hashmap, concept]
+
+- id: rlk-203
+  guid: "fUMr?4drt5"
+  type: concept
+  question: |
+    Is HashMap (and HashSet) iteration order stable or predictable?
+  answer: |
+    **No — HashMap/HashSet iteration order is unspecified and randomized per
+    run (HashDoS resistance), so never rely on it.**
+
+    For ordered output, collect into a Vec and sort, or use a
+    `BTreeMap`/`BTreeSet` (sorted, O(log n)).
+  source: "std HashMap"
+  tags: [rust, hashmap, concept]
+
+- id: rlk-204
+  guid: "AY[Laf}Pyv"
+  type: concept
+  question: |
+    Difference between `entry(k).or_insert(v)` and `or_insert_with(f)` /
+    `or_default()`?
+  answer: |
+    **`or_insert(v)` is eager (the value is always built), while
+    `or_insert_with(f)` is lazy (`f` runs only when the key is absent).**
+
+    Use `or_insert_with` when the default allocates or is costly.
+    `or_default()` is shorthand for `or_insert_with(Default::default)`, which
+    clippy prefers for an empty `Vec`, `0`, and similar defaults.
+  source: "std Entry (or_insert / or_insert_with / or_default)"
+  tags: [rust, hashmap, concept]
+
+- id: rlk-205
+  guid: "Aw<uT[/nb6"
+  type: concept
+  question: |
+    On a `HashMap<String, V>`, when can you pass a `&str` directly and when do you
+    still need `.to_string()`?
+  answer: |
+    **Reads (`get`, `contains_key`, `remove`) accept a borrowed `&str`
+    directly; writes that store a new key (`insert`, `entry`) need an owned
+    `String`.**
+
+    READS take a BORROWED key, so pass `&str` with no allocation: `get`, `get_mut`,
+    `contains_key`, and `remove` are generic over `&Q where String: Borrow<Q>`, and
+    `String: Borrow<str>` — so `map.get("foo")` or `map.contains_key(name)` just
+    work (no `.to_string()`).
+    WRITES that store a NEW key take it BY VALUE (`K = String`), so you must own it:
+    `insert(k, v)` and `entry(k)` need a `String` — hence `key.to_string()` (or
+    `key.to_owned()` / `String::from(key)`).
+    Rule of thumb: looking something UP -> `&str` is fine; putting a new key IN ->
+    you allocate the owned `String`. clippy's `unnecessary_to_owned` flags a
+    needless `.to_string()` on the lookup side, but can't remove the required one on
+    `insert` / `entry`.
+  source: "std collections::HashMap; std::borrow::Borrow"
+  tags: [rust, hashmap, borrow, concept]

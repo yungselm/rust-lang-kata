@@ -1,0 +1,58 @@
+# Example: cards using an external crate (serde / serde_json) or code fragments
+# (a single match arm, a builder chain). Marked `check: false` in deck.yaml, so
+# they are built but never compiled.
+
+- id: ex-003
+  instruction: |
+    Derive what's needed so `Config` can be read from JSON, then write
+    `load(json: &str) -> Result<Config, serde_json::Error>`. A missing
+    `"verbose"` field should default to `false` instead of failing.
+  starter: |
+    use serde::Deserialize;
+
+    struct Config {
+        name: String,
+        verbose: bool,
+    }
+
+    fn load(json: &str) -> Result<Config, serde_json::Error> {
+
+    }
+  solution: |
+    use serde::Deserialize;
+
+    #[derive(Debug, Deserialize)]
+    struct Config {
+        name: String,
+        #[serde(default)]
+        verbose: bool,
+    }
+
+    fn load(json: &str) -> Result<Config, serde_json::Error> {
+        serde_json::from_str(json)
+    }
+  notes: |
+    `#[serde(default)]` on a field falls back to `Default::default()` (here
+    `false`) when the key is absent. The return type tells `from_str` which
+    type to deserialize into.
+  source: "serde docs: field attributes"
+  tags: [rust, example, serde]
+
+- id: ex-004
+  type: concept
+  question: |
+    A serde struct has `name: String`. What happens when the JSON contains an
+    extra, unknown key like `"color": "red"`?
+  answer: |
+    **It's silently ignored by default; add `#[serde(deny_unknown_fields)]` on
+    the struct to make it an error instead.**
+    Ignoring unknown keys keeps old binaries compatible with newer config
+    files; denying them catches typos like `"verbos"`.
+  code: |
+    #[derive(serde::Deserialize)]
+    #[serde(deny_unknown_fields)]
+    struct Config {
+        name: String,
+    }
+  source: "serde docs: container attributes"
+  tags: [rust, example, serde]

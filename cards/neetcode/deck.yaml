@@ -1,0 +1,12 @@
+# NeetCode 150 in Rust. Files are numbered in NeetCode's topic order (easy -> hard);
+# new cards are shown in that order, one per day.
+deck: "Rust Language Kata::Neetcode"  # 01_arrays_hashing.yaml -> ...::Neetcode::01 Arrays Hashing
+pack: rust
+prefix: nc
+retired_ids: []
+presets:
+  default:
+    name: "Rust Language Kata NeetCode"
+    conf_id: 1002
+    new_per_day: 1
+    order: sequential

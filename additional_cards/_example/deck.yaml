@@ -1,0 +1,8 @@
+# Example deck for your own topics (a framework, a work project). Copy this folder
+# without the leading underscore, rename the files, and edit deck/prefix below.
+deck: "Rust Language Kata::Additional::Example"
+pack: rust
+prefix: ex
+files:
+  example_ext.yaml:
+    check: false          # code that needs external crates: not compiled

@@ -12,7 +12,7 @@ File (e.g. `cards/iterators.yaml`) and the card's instruction/question (first li
 **What's wrong?**
 - [ ] Solution doesn't compile / fails `clippy`
 - [ ] Solution is wrong or a test is missing/incorrect
-- [ ] Instruction is ambiguous or not self-contained (see `lint_cards.py`)
+- [ ] Instruction is ambiguous or not self-contained (see `asl lint`)
 - [ ] Typo / formatting / rendering issue
 - [ ] Other
 

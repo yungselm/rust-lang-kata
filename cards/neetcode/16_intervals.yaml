@@ -1,0 +1,345 @@
+# NeetCode 150 — Intervals. Original prompts; idiomatic, clippy-clean
+# Rust; example tests run by `asl check`.
+- id: nc-090
+  guid: "tIKaEI)vl{"
+  instruction: |
+    Insert Interval. Write `insert(intervals: &[[i32; 2]], new_interval: [i32; 2]) -> Vec<[i32; 2]>`.
+    `intervals` is sorted and non-overlapping; insert `new_interval`, merging any
+    overlaps, keeping the result sorted.
+    Example: ([[1,3],[6,9]], [2,5]) -> [[1,5],[6,9]].
+  starter: |
+    fn insert(intervals: &[[i32; 2]], new_interval: [i32; 2]) -> Vec<[i32; 2]> {
+
+    }
+  solution: |
+    fn insert(intervals: &[[i32; 2]], new_interval: [i32; 2]) -> Vec<[i32; 2]> {
+        let mut res = Vec::new();
+        let [mut start, mut end] = new_interval;
+        let mut i = 0;
+        while i < intervals.len() && intervals[i][1] < start {
+            res.push(intervals[i]);
+            i += 1;
+        }
+        while i < intervals.len() && intervals[i][0] <= end {
+            start = start.min(intervals[i][0]);
+            end = end.max(intervals[i][1]);
+            i += 1;
+        }
+        res.push([start, end]);
+        res.extend_from_slice(&intervals[i..]);
+        res
+    }
+  notes: |
+    Three phases: copy intervals ending before the new one starts, absorb every
+    interval that overlaps (widening start/end), then append the merged interval and
+    the untouched tail in a single pass.
+    Time O(n), Space O(n).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>Three sweeps: copy intervals that end before the new one starts, <b>absorb</b> every overlapping interval into one widened interval, then append that merged piece plus the untouched tail.</p>
+      <div class="vz-flow"><span class="vz-step">copy ones ending before</span><span class="vz-arr">&rarr;</span><span class="vz-step">absorb overlaps (widen start/end)</span><span class="vz-arr">&rarr;</span><span class="vz-step win">append merged + the rest</span></div>
+    </div>
+    ===
+    5-8 | Copy intervals that end before the new one starts.
+    ===
+    9-13 | Absorb every overlapping interval, widening start/end.
+    ===
+    14 | Append the merged interval.
+    ===
+    15-17 | Then the untouched tail.
+  source: "NeetCode 150 · Intervals"
+  tags: [rust, neetcode, intervals]
+  tests: |
+    assert_eq!(insert(&[[1, 3], [6, 9]], [2, 5]), vec![[1, 5], [6, 9]]);
+    assert_eq!(
+        insert(&[[1, 2], [3, 5], [6, 7], [8, 10], [12, 16]], [4, 8]),
+        vec![[1, 2], [3, 10], [12, 16]]
+    );
+    assert_eq!(insert(&[], [5, 7]), vec![[5, 7]]);
+
+- id: nc-091
+  guid: "dtN?%2t|Q2"
+  instruction: |
+    Merge Intervals. Write `merge(intervals: &[[i32; 2]]) -> Vec<[i32; 2]>`:
+    combine all overlapping intervals and return them sorted by start.
+    Example: [[1,3],[2,6],[8,10],[15,18]] -> [[1,6],[8,10],[15,18]].
+  starter: |
+    fn merge(intervals: &[[i32; 2]]) -> Vec<[i32; 2]> {
+
+    }
+  solution: |
+    fn merge(intervals: &[[i32; 2]]) -> Vec<[i32; 2]> {
+        let mut sorted = intervals.to_vec();
+        sorted.sort_unstable();
+        let mut res: Vec<[i32; 2]> = Vec::new();
+        for iv in sorted {
+            match res.last_mut() {
+                Some(last) if iv[0] <= last[1] => last[1] = last[1].max(iv[1]),
+                _ => res.push(iv),
+            }
+        }
+        res
+    }
+  notes: |
+    Sort by start, then sweep: if the next interval starts at or before the last
+    merged interval's end, extend that end; otherwise begin a new interval.
+    `last_mut` lets us widen in place; the sort dominates the cost.
+    Time O(n log n), Space O(n).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>Sort by start, then sweep: if the next interval starts <b>at or before</b> the current end, extend the end; otherwise begin a new interval.</p>
+      <div class="vz-flow"><span class="vz-step">sort by start</span><span class="vz-arr">&rarr;</span><span class="vz-step">next starts &le; last end?</span><span class="vz-arr">&rarr;</span><span class="vz-step">yes &rarr; extend the end</span><span class="vz-arr">&rarr;</span><span class="vz-step win">no &rarr; new interval</span></div>
+    </div>
+    ===
+    3-4 | Sort intervals by start.
+    ===
+    5-6 | Sweep through them.
+    ===
+    7 | Overlaps the last kept one -> extend its end.
+    ===
+    8-12 | Otherwise start a new interval.
+  source: "NeetCode 150 · Intervals"
+  tags: [rust, neetcode, intervals]
+  tests: |
+    assert_eq!(
+        merge(&[[1, 3], [2, 6], [8, 10], [15, 18]]),
+        vec![[1, 6], [8, 10], [15, 18]]
+    );
+    assert_eq!(merge(&[[1, 4], [4, 5]]), vec![[1, 5]]);
+    assert_eq!(merge(&[[1, 4]]), vec![[1, 4]]);
+
+- id: nc-092
+  guid: "Jm~mTd:Q?n"
+  instruction: |
+    Non-overlapping Intervals. Write `erase_overlap_intervals(intervals: &[[i32; 2]]) -> i32`:
+    the minimum number of intervals to remove so the rest don't overlap (touching
+    endpoints are allowed).
+    Example: [[1,2],[2,3],[3,4],[1,3]] -> 1.
+  starter: |
+    fn erase_overlap_intervals(intervals: &[[i32; 2]]) -> i32 {
+
+    }
+  solution: |
+    fn erase_overlap_intervals(intervals: &[[i32; 2]]) -> i32 {
+        let mut sorted = intervals.to_vec();
+        sorted.sort_unstable_by_key(|iv| iv[1]);
+        let mut removed = 0;
+        let mut prev_end = i32::MIN;
+        for iv in sorted {
+            if iv[0] >= prev_end {
+                prev_end = iv[1];
+            } else {
+                removed += 1;
+            }
+        }
+        removed
+    }
+  notes: |
+    Greedy activity selection: sort by end time and always keep the interval that
+    finishes earliest, since it leaves the most room. Any interval starting before
+    the kept one's end must be removed.
+    Time O(n log n), Space O(n).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>Greedy activity selection: sort by end time and always keep the interval that <b>finishes earliest</b> (it leaves the most room). Anything starting before the kept one's end must be removed.</p>
+      <div class="vz-flow"><span class="vz-step">sort by end time</span><span class="vz-arr">&rarr;</span><span class="vz-step">keep earliest-finishing</span><span class="vz-arr">&rarr;</span><span class="vz-step">starts before kept end &rarr; remove</span><span class="vz-arr">&rarr;</span><span class="vz-step win">count removals</span></div>
+    </div>
+    ===
+    3-6 | Sort by end time (greedy activity selection).
+    ===
+    7-9 | Fits after the last kept one -> keep it.
+    ===
+    10-14 | Otherwise it overlaps and must be removed.
+  source: "NeetCode 150 · Intervals"
+  tags: [rust, neetcode, intervals]
+  tests: |
+    assert_eq!(
+        erase_overlap_intervals(&[[1, 2], [2, 3], [3, 4], [1, 3]]),
+        1
+    );
+    assert_eq!(erase_overlap_intervals(&[[1, 2], [1, 2], [1, 2]]), 2);
+    assert_eq!(erase_overlap_intervals(&[[1, 2], [2, 3]]), 0);
+
+- id: nc-093
+  guid: "zk-ub8yys%"
+  instruction: |
+    Meeting Rooms. Write `can_attend_meetings(intervals: &[[i32; 2]]) -> bool`: true
+    if a single person can attend every meeting, i.e. no two intervals overlap
+    (touching endpoints are fine).
+    Example: [[0,30],[5,10],[15,20]] -> false; [[7,10],[2,4]] -> true.
+  starter: |
+    fn can_attend_meetings(intervals: &[[i32; 2]]) -> bool {
+
+    }
+  solution: |
+    fn can_attend_meetings(intervals: &[[i32; 2]]) -> bool {
+        let mut sorted = intervals.to_vec();
+        sorted.sort_unstable();
+        sorted.windows(2).all(|w| w[0][1] <= w[1][0])
+    }
+  notes: |
+    Sort by start, then a conflict can only occur between neighbours: every meeting
+    must end no later than the next one begins. `windows(2)` checks each adjacent
+    pair.
+    Time O(n log n), Space O(n).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>Sort by start; a conflict can only occur between <b>neighbours</b>, so every meeting must end no later than the next one begins.</p>
+      <div class="vz-flow"><span class="vz-step">sort by start</span><span class="vz-arr">&rarr;</span><span class="vz-step">check each adjacent pair</span><span class="vz-arr">&rarr;</span><span class="vz-step">end &le; next start?</span><span class="vz-arr">&rarr;</span><span class="vz-step win">any overlap &rarr; false</span></div>
+    </div>
+    ===
+    3 | Sort meetings by start.
+    ===
+    4-5 | Each must end by the time the next begins (check neighbours).
+  source: "NeetCode 150 · Intervals"
+  tags: [rust, neetcode, intervals]
+  tests: |
+    assert!(!can_attend_meetings(&[[0, 30], [5, 10], [15, 20]]));
+    assert!(can_attend_meetings(&[[7, 10], [2, 4]]));
+    assert!(can_attend_meetings(&[]));
+
+- id: nc-094
+  guid: "vvVRIw??{x"
+  instruction: |
+    Meeting Rooms II. Write `min_meeting_rooms(intervals: &[[i32; 2]]) -> i32`: the
+    minimum number of rooms needed so no two concurrent meetings share a room
+    (a meeting ending at time t frees the room for one starting at t).
+    Example: [[0,30],[5,10],[15,20]] -> 2.
+  starter: |
+    fn min_meeting_rooms(intervals: &[[i32; 2]]) -> i32 {
+
+    }
+  solution: |
+    fn min_meeting_rooms(intervals: &[[i32; 2]]) -> i32 {
+        let mut starts: Vec<i32> = intervals.iter().map(|iv| iv[0]).collect();
+        let mut ends: Vec<i32> = intervals.iter().map(|iv| iv[1]).collect();
+        starts.sort_unstable();
+        ends.sort_unstable();
+        let mut rooms = 0;
+        let mut max_rooms = 0;
+        let mut j = 0;
+        for &s in &starts {
+            while j < ends.len() && ends[j] <= s {
+                rooms -= 1;
+                j += 1;
+            }
+            rooms += 1;
+            max_rooms = max_rooms.max(rooms);
+        }
+        max_rooms
+    }
+  notes: |
+    Sort start and end times separately and sweep a timeline. Before each start, free
+    every room whose meeting has already ended (`ends[j] <= s`), then claim a room.
+    The peak concurrency is the answer.
+    Time O(n log n), Space O(n).
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>Sort start and end times <b>separately</b> and sweep a timeline. Before each start, free every room whose meeting already ended; the peak concurrency is the answer.</p>
+      <div class="vz-flow"><span class="vz-step">sort starts &amp; ends</span><span class="vz-arr">&rarr;</span><span class="vz-step">free rooms that ended</span><span class="vz-arr">&rarr;</span><span class="vz-step">claim a room</span><span class="vz-arr">&rarr;</span><span class="vz-step win">peak concurrency</span></div>
+    </div>
+    ===
+    4-8 | Sort start and end times separately.
+    ===
+    9 | Sweep a timeline by start time.
+    ===
+    10-14 | Free rooms whose meeting already ended.
+    ===
+    15-18 | Peak concurrency = rooms needed.
+  source: "NeetCode 150 · Intervals"
+  tags: [rust, neetcode, intervals]
+  tests: |
+    assert_eq!(min_meeting_rooms(&[[0, 30], [5, 10], [15, 20]]), 2);
+    assert_eq!(min_meeting_rooms(&[[7, 10], [2, 4]]), 1);
+    assert_eq!(min_meeting_rooms(&[]), 0);
+
+- id: nc-095
+  guid: "r=qb)c4JPy"
+  instruction: |
+    Minimum Interval to Include Each Query. Write
+    `min_interval(intervals: &[[i32; 2]], queries: &[i32]) -> Vec<i32>`: for each
+    query q, the size (end - start + 1) of the smallest interval [a, b] with
+    a <= q <= b, or -1 if none.
+    Example: (intervals [[1,4],[2,4],[3,6],[4,4]], queries [2,3,4,5]) -> [3,3,1,4].
+  starter: |
+    use std::cmp::Reverse;
+    use std::collections::BinaryHeap;
+
+    fn min_interval(intervals: &[[i32; 2]], queries: &[i32]) -> Vec<i32> {
+
+    }
+  solution: |
+    use std::cmp::Reverse;
+    use std::collections::BinaryHeap;
+
+    fn min_interval(intervals: &[[i32; 2]], queries: &[i32]) -> Vec<i32> {
+        let mut sorted = intervals.to_vec();
+        sorted.sort_unstable_by_key(|iv| iv[0]);
+        let mut order: Vec<usize> = (0..queries.len()).collect();
+        order.sort_unstable_by_key(|&i| queries[i]);
+        let mut res = vec![-1; queries.len()];
+        // Min-heap of (interval_size, interval_end) for intervals already started.
+        let mut heap: BinaryHeap<Reverse<(i32, i32)>> = BinaryHeap::new();
+        let mut i = 0;
+        for &qi in &order {
+            let q = queries[qi];
+            while i < sorted.len() && sorted[i][0] <= q {
+                let size = sorted[i][1] - sorted[i][0] + 1;
+                heap.push(Reverse((size, sorted[i][1])));
+                i += 1;
+            }
+            while let Some(&Reverse((_, end))) = heap.peek() {
+                if end < q {
+                    heap.pop();
+                } else {
+                    break;
+                }
+            }
+            if let Some(&Reverse((size, _))) = heap.peek() {
+                res[qi] = size;
+            }
+        }
+        res
+    }
+  notes: |
+    Offline: process queries in ascending order. Push every interval that has begun
+    by the current query into a min-heap keyed on size, discard those that already
+    ended (`end < q`), and the heap top is the smallest interval still covering q.
+    Time O((n + m) log(n + m)), Space O(n + m), where n = intervals, m = queries.
+  walkthrough: |
+    @idea
+    <div class="wt-idea-box">
+      <div class="vz-lab">Core idea</div>
+      <p>Process queries in ascending order. Push every interval that has <b>started</b> into a min-heap keyed by size, drop those that already ended, and the heap top is the smallest interval still covering the query.</p>
+      <div class="vz-flow"><span class="vz-step">sort queries ascending</span><span class="vz-arr">&rarr;</span><span class="vz-step">add started intervals (min-heap by size)</span><span class="vz-arr">&rarr;</span><span class="vz-step">drop ended ones</span><span class="vz-arr">&rarr;</span><span class="vz-step win">heap top = smallest covering</span></div>
+    </div>
+    ===
+    8-14 | Process queries in ascending order (offline).
+    ===
+    15-20 | Add every interval that has started, keyed by size (min-heap).
+    ===
+    21-26 | Discard intervals that already ended.
+    ===
+    27-32 | The heap top is the smallest interval still covering q.
+  source: "NeetCode 150 · Intervals"
+  tags: [rust, neetcode, intervals]
+  tests: |
+    assert_eq!(
+        min_interval(&[[1, 4], [2, 4], [3, 6], [4, 4]], &[2, 3, 4, 5]),
+        vec![3, 3, 1, 4]
+    );
+    assert_eq!(
+        min_interval(&[[2, 3], [2, 5], [1, 8], [20, 25]], &[2, 19, 5, 22]),
+        vec![2, -1, 4, 6]
+    );
+    assert_eq!(min_interval(&[], &[1, 2]), vec![-1, -1]);

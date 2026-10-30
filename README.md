@@ -11,9 +11,9 @@ Anki decks for learning **Rust**, built from plain YAML. The idea is to create a
 ## Contributing
 
 **The primary goal is building the best possible Rust card set together.**
-The most valuable contribution is adding or improving cards in `cards/*.yaml` — no Rust toolchain is required just to edit YAML. See [CONTRIBUTING.md](CONTRIBUTING.md) for the full workflow (`lint_cards.py` / `check_cards.py` / `build.py`) and how to report card issues or suggest new ones. CI runs the same checks on every PR.
+The most valuable contribution is adding or improving cards in `cards/core/` and `cards/neetcode/` — no Rust toolchain is required just to edit YAML. See [CONTRIBUTING.md](CONTRIBUTING.md) for the workflow (`asl fix` / `asl lint` / `asl check`) and how to report card issues or suggest new ones. CI runs the same checks on every PR.
 
-My focus so far has been on the card content itself; the build system, templates, and check scripts were written quickly to serve that goal and haven't had much dedicated code-quality attention. If you'd like to dig into `build.py`, `check_cards.py`, `lint_cards.py`, or the templates and tighten them up, that's very welcome too.
+The build system, editor card and checks now live in [agentic-studying-loop](https://github.com/yungselm/agentic-studying-loop); improvements to those are welcome there. This repo is only the cards.
 
 ## The code base
 
@@ -29,20 +29,21 @@ Two card styles:
 - **Concept cards**: Simple question / answer recall (used for Big-O and other
   facts), with an optional highlighted example and images on the back.
 
-Cards live in `cards/*.yaml`. Each file becomes its own subdeck (`Rust Language Kata::<Topic>`).
+Cards live in `cards/core/*.yaml` and `cards/neetcode/*.yaml`; each file becomes its own subdeck
+(`Rust Language Kata::Core::<Topic>`, `Rust Language Kata::Neetcode::NN <Topic>`). The decks are built
+with [agentic-studying-loop](https://github.com/yungselm/agentic-studying-loop) (`asl`), which
+provides the editor card, the checks and the build.
 
 ## Quick start
 
 ```bash
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-python check_cards.py           # checks that clippy runs without warnings
-python build.py                 # writes output/CodeCards.apkg
+uv tool install git+https://github.com/yungselm/agentic-studying-loop   # or: pipx install ...
+asl check cards/core cards/neetcode       # clippy -D warnings + every card's tests (needs cargo + clippy)
+asl build cards/core cards/neetcode -o output/CodeCards.apkg
 ```
 
-Import `output/CodeCards.apkg` into Anki (keep "Update notetypes" checked).
-Preview the look without Anki by opening `preview.html` in a browser.
+Import `output/CodeCards.apkg` into Anki with **Update notetypes** and **Import any deck
+presets** ticked. Re-importing updates existing cards in place.
 
 ## Current decks (690 cards)
 
@@ -84,31 +85,31 @@ Preview the look without Anki by opening `preview.html` in a browser.
 
 | File | Cards | Pattern |
 |------|-------|---------|
-| `neetcode__arrays_hashing.yaml` | 9 | hashing, prefix products, dedup |
-| `neetcode__two_pointers.yaml` | 5 | opposite-end / fast-slow pointers |
-| `neetcode__sliding_window.yaml` | 6 | fixed & variable windows |
-| `neetcode__stack.yaml` | 7 | monotonic stacks, parsing |
-| `neetcode__binary_search.yaml` | 7 | search-on-answer, rotated arrays |
-| `neetcode__linked_list.yaml` | 11 | pointer rewiring, Floyd's cycle |
-| `neetcode__trees.yaml` | 15 | DFS/BFS, BST, recursion |
-| `neetcode__tries.yaml` | 3 | prefix trees |
-| `neetcode__heap.yaml` | 7 | top-k, two-heap median |
-| `neetcode__backtracking.yaml` | 9 | subsets, permutations, combinations |
-| `neetcode__graphs.yaml` | 13 | grid BFS/DFS, topological sort, union-find |
-| `neetcode__advanced_graphs.yaml` | 6 | Dijkstra, MST, Bellman-Ford, Euler |
-| `neetcode__dp_1d.yaml` | 12 | 1-D dynamic programming |
-| `neetcode__dp_2d.yaml` | 11 | grid & interval DP |
-| `neetcode__greedy.yaml` | 8 | greedy strategies |
-| `neetcode__intervals.yaml` | 6 | sort + sweep |
-| `neetcode__math_geometry.yaml` | 8 | matrix ops, number theory |
-| `neetcode__bit_manipulation.yaml` | 7 | XOR tricks, bit DP |
+| `01_arrays_hashing.yaml` | 9 | hashing, prefix products, dedup |
+| `02_two_pointers.yaml` | 5 | opposite-end / fast-slow pointers |
+| `03_sliding_window.yaml` | 6 | fixed & variable windows |
+| `04_stack.yaml` | 7 | monotonic stacks, parsing |
+| `05_binary_search.yaml` | 7 | search-on-answer, rotated arrays |
+| `06_linked_list.yaml` | 11 | pointer rewiring, Floyd's cycle |
+| `07_trees.yaml` | 15 | DFS/BFS, BST, recursion |
+| `08_tries.yaml` | 3 | prefix trees |
+| `09_heap.yaml` | 7 | top-k, two-heap median |
+| `10_backtracking.yaml` | 9 | subsets, permutations, combinations |
+| `11_graphs.yaml` | 13 | grid BFS/DFS, topological sort, union-find |
+| `12_advanced_graphs.yaml` | 6 | Dijkstra, MST, Bellman-Ford, Euler |
+| `13_dp_1d.yaml` | 12 | 1-D dynamic programming |
+| `14_dp_2d.yaml` | 11 | grid & interval DP |
+| `15_greedy.yaml` | 8 | greedy strategies |
+| `16_intervals.yaml` | 6 | sort + sweep |
+| `17_math_geometry.yaml` | 8 | matrix ops, number theory |
+| `18_bit_manipulation.yaml` | 7 | XOR tricks, bit DP |
 
 ## Sources & attribution
 
 Every card records where its content comes from in a `source:` field (shown small on the back).
 
 - **Core Rust decks** are grounded in primary, openly-licensed material: the [Rust standard library docs](https://doc.rust-lang.org/std/), [*The Rust Programming Language* ("the book")](https://doc.rust-lang.org/book/), [Rustlings](https://github.com/rust-lang/rustlings), and [Rust by Example](https://doc.rust-lang.org/rust-by-example/). Solutions are checked against `clippy` so they reflect current idiomatic style rather than any one author's habits.
-- **NeetCode 150 decks** follow the **[NeetCode 150](https://neetcode.io/practice)** list — a widely-used, pattern-organized index of common interview problems. We use that list **only as the index of which problems to cover and how to group them**. Every problem statement here is an **original paraphrase** written for this repo; LeetCode's problem text is copyrighted and is **not** reproduced, and nothing was scraped from LeetCode. Every solution is **original idiomatic Rust written and verified for this repo** (compiled, `clippy`-clean, and unit-tested via `check_cards.py`), implementing the standard well-known algorithm for each problem — not copied from LeetCode or NeetCode editorial solutions. A few problems are modeled to be testable in safe Rust (e.g. linked-list cycle and copy-with-random-pointer use index-based representations, binary trees use `Option<Box<TreeNode>>`, Clone Graph uses an adjacency list); each such card explains the modeling in its prompt.
+- **NeetCode 150 decks** follow the **[NeetCode 150](https://neetcode.io/practice)** list — a widely-used, pattern-organized index of common interview problems. We use that list **only as the index of which problems to cover and how to group them**. Every problem statement here is an **original paraphrase** written for this repo; LeetCode's problem text is copyrighted and is **not** reproduced, and nothing was scraped from LeetCode. Every solution is **original idiomatic Rust written and verified for this repo** (compiled, `clippy`-clean, and unit-tested via `asl check`), implementing the standard well-known algorithm for each problem — not copied from LeetCode or NeetCode editorial solutions. A few problems are modeled to be testable in safe Rust (e.g. linked-list cycle and copy-with-random-pointer use index-based representations, binary trees use `Option<Box<TreeNode>>`, Clone Graph uses an adjacency list); each such card explains the modeling in its prompt.
 
 ## Recommended deck settings
 
@@ -145,17 +146,20 @@ with `Rust Language Kata NeetCode` (1/day). Study the two groups as two separate
 > only see one subdeck at a time (e.g. all of `Datastructures`) until it empties.
 > NeetCode is the opposite — keep it on **Deck** so the `01`–`18` topics feed in order.
 
-(`build.py` also embeds these presets, but Anki's importer ignores embedded presets for
-non-Anki-generated `.apkg`s, so set them once as above — see `RELEASE.md` for shipping
-presets to others.)
+(The build also embeds both presets, from `cards/*/deck.yaml`; Anki applies them when you
+tick **Import any deck presets** on import. Otherwise set them once as above.)
 
 ## Adding / editing cards
 
+The card format is described in agentic-studying-loop's
+[card format](https://github.com/yungselm/agentic-studying-loop/blob/main/docs/card-format.md);
+the short version:
+
 ```yaml
-# code card (default) — you write the body; the diff checks it
+# code card (default): you type the gap; on flip, differing lines turn red
 - instruction: |
     What to write. Use `backticks` for inline code; generics like Vec<T> are fine.
-  starter: |          # optional pre-filled scaffold (signature, `use` lines)
+  starter: |          # pre-filled scaffold (signature, `use` lines)
     fn add_one(n: i32) -> i32 {
 
     }
@@ -165,104 +169,60 @@ presets to others.)
     }
   notes: |            # optional, shown on the back
     Why it works.
-  source: "std Iterator::map"   # optional provenance, shown on the back
+  source: "std Iterator::map"
   tags: [rust, iterators]
-  tests: |            # optional asserts run by `cargo test` (see check_cards.py)
+  tests: |            # asserts run by `asl check`
     assert_eq!(add_one(1), 2);
 
-# concept card — recall
+# concept card: recall, then grade yourself against the bold lead
 - type: concept
   question: |
     What is X?
   answer: |
-    **X is, in one direct sentence, the actual answer.** Then the supporting
-    detail, caveats, and "why" go here, in as many sentences as needed.
-  code: |             # optional snippet shown highlighted on the back
+    **X is, in one direct sentence, the actual answer.** Then the detail.
+  code: |             # optional snippet on the back (also compiled)
     let x = 1;
-  source: "book §8.3"  # optional
-  tags: [rust, concept]
 ```
 
-**Concept card answers should lead with one bolded (`**...**`) sentence that
-directly answers the question**, then elaborate below. Anki is self-graded —
-you decide "correct" or "wrong" yourself — and a long undifferentiated
-paragraph makes that easy to fudge: you skim it, spot a half-matching phrase,
-and let yourself off the hook instead of honestly checking what you actually
-recalled. A short bolded lead sentence gives you one crisp claim to check
-your recall against before you read the reasoning behind it. `**bold**` in
-any text field (`question`/`answer`/`notes`/`instruction`/`source`) renders as
-`<strong>` via `build.py`'s `text()` helper, the same way `` `backticks` ``
-become `<code>`.
+Leave out `id:`: `asl fix cards/core` assigns it (`rlk-NNN`, `nc-NNN` for NeetCode). The id
+drives the Anki note, so later edits, the front included, update the card in place. Existing
+cards also carry a frozen `guid:` from before the move to ids; leave it alone.
 
-Rebuild with `python build.py` (or `python build.py cards/match.yaml` for one
-file). Re-importing **updates** existing cards (guids are stable per instruction /
-question); changing that text creates a new card.
+**Concept answers lead with one bolded sentence that directly answers the question.** Anki is
+self-graded, and a long paragraph makes it easy to let yourself off the hook; one crisp claim
+gives you something to check your recall against before you read the reasoning.
+
+Before a PR:
+
+```bash
+asl fix   cards/core cards/neetcode                    # ids for new cards
+asl lint  -q --skip size cards/core cards/neetcode     # self-contained, no duplicates
+asl check cards/core cards/neetcode                    # clippy + tests
+```
+
+(`asl lint` without `--skip size` also reports cards over the data-derived size limits; many
+older cards are, and splitting them is welcome.) A recent stable toolchain is assumed: a couple
+of solutions use newer std APIs (`Option::is_none_or` needs Rust ≥ 1.82, `is_multiple_of` ≥ 1.87).
 
 ## Additional cards (your own topics)
 
-For topics that aren't for everyone (e.g. a framework like `iced`, patterns from your
-own project), drop YAML files in `additional_cards/`. They use the same format,
-note types and checks, but build into a **separate** `output/AdditionalCards.apkg`
-(`Rust Language Kata::Additional::<Topic>`), and they're gitignored so private code
-stays out of commits.
-
-- `additional_cards/checked/`: std-only cards, compiled and tested by `check_cards.py`.
-- `additional_cards/unchecked/`: external crates or code fragments, built but never compiled.
-
-See [additional_cards/README.md](additional_cards/README.md) for details and the
-`_example.yaml` templates.
-
-## Compile-checking the Rust
-
-`check_cards.py` extracts every code-card `solution` (plus concept `code`
-snippets), wraps each in its own module in a generated crate, and runs two gates:
-
-1. **`cargo clippy -- -D warnings`** — compile errors, ordinary warnings (unused
-   vars, needless `mut`, unused imports, ...), and clippy's idiomatic lints
-   (needless borrows, redundant clones, manual loops, ...), keeping solutions idiomatic.
-2. **`cargo test`** — runs each card's `tests:` asserts, so a solution must be
-   *correct*, not just compile. Dead-code from the wrapping is suppressed.
-
-```bash
-python check_cards.py                              # all cards + additional_cards/checked/ (needs cargo; clippy via `rustup component add clippy`)
-python check_cards.py cards/neetcode__trees.yaml   # just one file
-```
-
-A recent stable toolchain is assumed: a couple of solutions use newer std APIs
-(`Option::is_none_or` needs Rust ≥ 1.82, `is_multiple_of` needs ≥ 1.87).
-
-On failure, each block is in a module named `sol_<topic>_<n>` / `ex_<topic>_<n>`
-with a comment naming the card, so you can find the offending card fast. Run this
-after editing solutions, before rebuilding the deck.
-
-## How it works
-
-- `build.py`: reads the YAML, builds two note types, one subdeck per file,
-  HTML-escapes text fields (so `Vec<T>` renders) and turns `backticks` into
-  `<code>`, version-stamps the JS/CSS assets, writes `CodeCards.apkg` (and
-  `AdditionalCards.apkg` when `additional_cards/` has topics).
-- `card_paths.py`: which folders each script reads (core, checked, unchecked).
-- `templates/`: `front.html`/`back.html` (code), `front_concept.html`/
-  `back_concept.html` (concept), `_cards.js` (editor + line diff), `style.css`
-  (layout + the `vscdark` CodeMirror theme).
-- `vendor/_*.js`, `_*.css`: CodeMirror 5 bundled offline (the leading `_` keeps
-  Anki from deleting them). `_simple.js` must load before `_rust.js`.
-- Typed code passes front → back via `sessionStorage`. The diff compares line by
-  line, ignoring trailing whitespace.
+For topics that aren't for everyone (a framework like `iced`, patterns from your own project),
+make a deck folder in `additional_cards/`: copy `additional_cards/_example/` and edit its
+`deck.yaml`. Your folders are gitignored. See [additional_cards/README.md](additional_cards/README.md).
+For cards that follow a real project of yours, agentic-studying-loop's `asl init` sets up the
+whole loop (study notes, an agent that writes the cards, checks against your repo).
 
 ## Credits
 
 - **[CodeMirror 5](https://codemirror.net/5/)**: In-card code editor. Copyright © Marijn Haverbeke and contributors. [MIT License](https://codemirror.net/5/LICENSE).
-- **[genanki](https://github.com/kerricklong/genanki)**: Python library for generating Anki `.apkg` files. MIT License.
+- **[genanki](https://github.com/kerricklong/genanki)**: Python library for generating Anki `.apkg` files (used by agentic-studying-loop). MIT License.
 
-The card content and build tooling in this repository are released under the [MIT License](LICENSE).
+The card content in this repository is released under the [MIT License](LICENSE).
 
 ## Notes / gotchas
 
 - Built for **modern Anki desktop**. When you change a **template** (not just cards),
   import with "Update notetypes" enabled. If it won't update, delete the note
   type once (Tools → Manage Note Types) and re-import.
-- Bump `ASSET_VER` in `build.py` whenever you edit anything in `vendor/` or
-  `templates/_cards.js`, so Anki reliably reloads the changed static files.
 - `StarterCode`/`Solution`/`Code` fields are stored base64-encoded, so they look
   like gibberish in Anki's card browser. Edit cards via the YAML, not in Anki.

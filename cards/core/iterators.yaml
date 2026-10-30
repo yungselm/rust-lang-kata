@@ -1,0 +1,978 @@
+# Iterators — adaptors and consumers. Solutions are clippy-clean; verify with
+# `asl check cards/core`.
+- id: rlk-206
+  guid: "E7s1Xni~N1"
+  instruction: |
+    Write `double`: take a `Vec<i32>` by value and return a new `Vec<i32>`
+    with every element multiplied by 2, using iterator methods.
+  starter: |
+    fn double(v: Vec<i32>) -> Vec<i32> {
+
+    }
+  solution: |
+    fn double(v: Vec<i32>) -> Vec<i32> {
+        v.into_iter().map(|x| x * 2).collect()
+    }
+  notes: |
+    `into_iter()` consumes the Vec (yields owned `i32`), `map` transforms,
+    `collect()` rebuilds. The return type tells `collect` to make a Vec.
+  source: "std Iterator::map"
+  tags: [rust, iterators]
+  tests: |
+    assert_eq!(double(vec![1, 2, 3]), vec![2, 4, 6]);
+    assert_eq!(double(vec![]), Vec::<i32>::new());
+
+- id: rlk-207
+  guid: "iiE;euOD/)"
+  instruction: |
+    Write `evens(v: &[i32]) -> Vec<i32>` returning copies of the even elements.
+  starter: |
+    fn evens(v: &[i32]) -> Vec<i32> {
+
+    }
+  solution: |
+    fn evens(v: &[i32]) -> Vec<i32> {
+        v.iter().copied().filter(|&x| x % 2 == 0).collect()
+    }
+  notes: |
+    Idiom: `copied()` first turns `&i32` into `i32`, so the filter closure binds
+    a plain `|&x|` instead of the awkward `|&&x|`.
+  source: "std Iterator::filter"
+  tags: [rust, iterators]
+  tests: |
+    assert_eq!(evens(&[1, 2, 3, 4]), vec![2, 4]);
+    assert_eq!(evens(&[]), Vec::<i32>::new());
+
+- id: rlk-208
+  guid: "o[b>kI<6y0"
+  instruction: |
+    Write `sum_of_squares(v: &[i32]) -> i32` (sum of each element squared).
+  starter: |
+    fn sum_of_squares(v: &[i32]) -> i32 {
+
+    }
+  solution: |
+    fn sum_of_squares(v: &[i32]) -> i32 {
+        v.iter().map(|&x| x * x).sum()
+    }
+  notes: |
+    `sum()` consumes the iterator; the return type fixes the sum's type.
+  source: "std Iterator::sum"
+  tags: [rust, iterators]
+  tests: |
+    assert_eq!(sum_of_squares(&[1, 2, 3]), 14);
+    assert_eq!(sum_of_squares(&[]), 0);
+
+- id: rlk-209
+  guid: "v&i1*?b=~B"
+  instruction: |
+    Write `parse_all(items: &[&str]) -> Result<Vec<i32>, std::num::ParseIntError>`:
+    parse every string to i32, returning the first error if any fails.
+  starter: |
+    fn parse_all(items: &[&str]) -> Result<Vec<i32>, std::num::ParseIntError> {
+
+    }
+  solution: |
+    fn parse_all(items: &[&str]) -> Result<Vec<i32>, std::num::ParseIntError> {
+        items.iter().map(|s| s.parse()).collect()
+    }
+  notes: |
+    Collecting `Result`s into `Result<Vec<_>, _>` short-circuits on the first
+    `Err`. The return type lets `parse` infer its target without a turbofish.
+  source: "std FromIterator for Result"
+  tags: [rust, iterators, results]
+  tests: |
+    assert_eq!(parse_all(&["1", "2", "3"]), Ok(vec![1, 2, 3]));
+    assert!(parse_all(&["1", "x"]).is_err());
+
+- id: rlk-210
+  guid: "qNv1F!|ZV#"
+  instruction: |
+    Write `parse_ok(items: &[&str]) -> Vec<i32>`: parse to i32 but silently
+    drop any that fail.
+  starter: |
+    fn parse_ok(items: &[&str]) -> Vec<i32> {
+
+    }
+  solution: |
+    fn parse_ok(items: &[&str]) -> Vec<i32> {
+        items.iter().filter_map(|s| s.parse().ok()).collect()
+    }
+  notes: |
+    `filter_map` keeps only `Some` values; `Result::ok()` turns each
+    `Result<i32, _>` into `Option<i32>`. The Vec return type drives inference.
+  source: "std Iterator::filter_map"
+  tags: [rust, iterators]
+  tests: |
+    assert_eq!(parse_ok(&["1", "x", "3"]), vec![1, 3]);
+    assert_eq!(parse_ok(&[]), Vec::<i32>::new());
+
+- id: rlk-211
+  guid: "N|X[T0+$Y#"
+  instruction: |
+    Write `indexed(v: &[char]) -> Vec<(usize, char)>` pairing each element
+    with its index.
+  starter: |
+    fn indexed(v: &[char]) -> Vec<(usize, char)> {
+
+    }
+  solution: |
+    fn indexed(v: &[char]) -> Vec<(usize, char)> {
+        v.iter().copied().enumerate().collect()
+    }
+  notes: |
+    `copied()` before `enumerate()` gives owned `char`s, so the map closure is a
+    clean `|(i, c)|`. (`enumerate` yields `(index, item)`.)
+  source: "std Iterator::enumerate"
+  tags: [rust, iterators]
+  tests: |
+    assert_eq!(indexed(&['a', 'b']), vec![(0, 'a'), (1, 'b')]);
+    assert_eq!(indexed(&[]), Vec::<(usize, char)>::new());
+
+- id: rlk-212
+  guid: "pZi.E[lS1>"
+  instruction: |
+    Write `pair_sums(a: &[i32], b: &[i32]) -> Vec<i32>`: element-wise sums,
+    stopping at the shorter length.
+  starter: |
+    fn pair_sums(a: &[i32], b: &[i32]) -> Vec<i32> {
+
+    }
+  solution: |
+    fn pair_sums(a: &[i32], b: &[i32]) -> Vec<i32> {
+        a.iter().zip(b).map(|(x, y)| x + y).collect()
+    }
+  notes: |
+    `zip` accepts anything `IntoIterator`, so `b` (a slice) needs no `.iter()`.
+    It stops when either side ends. `x`/`y` are `&i32`; `x + y` uses the ref
+    `Add` impl.
+  source: "std Iterator::zip"
+  tags: [rust, iterators]
+  tests: |
+    assert_eq!(pair_sums(&[1, 2, 3], &[10, 20]), vec![11, 22]);
+    assert_eq!(pair_sums(&[], &[1]), Vec::<i32>::new());
+
+- id: rlk-213
+  guid: "lesT`hC{-("
+  instruction: |
+    Write `poly_eval(coeffs: &[f64], x: f64) -> f64` evaluating a polynomial at
+    `x` with Horner's method, using `fold`. `coeffs` is highest-degree first.
+  starter: |
+    fn poly_eval(coeffs: &[f64], x: f64) -> f64 {
+
+    }
+  solution: |
+    fn poly_eval(coeffs: &[f64], x: f64) -> f64 {
+        coeffs.iter().fold(0.0, |acc, &c| acc * x + c)
+    }
+  notes: |
+    `fold(init, |acc, item| ...)` threads an accumulator through the iterator.
+    (A fold that just adds or multiplies should be `sum`/`product` instead —
+    clippy will tell you; Horner's `acc * x + c` genuinely needs fold.)
+  source: "std Iterator::fold"
+  tags: [rust, iterators]
+  tests: |
+    assert!((poly_eval(&[1.0, 0.0, -1.0], 2.0) - 3.0).abs() < 1e-9);
+    assert!((poly_eval(&[], 5.0) - 0.0).abs() < 1e-9);
+
+- id: rlk-214
+  guid: "C.{hK.h]hN"
+  instruction: |
+    Write `longest_len(words: &[&str]) -> usize`: length of the longest word,
+    or 0 if empty.
+  starter: |
+    fn longest_len(words: &[&str]) -> usize {
+
+    }
+  solution: |
+    fn longest_len(words: &[&str]) -> usize {
+        words.iter().map(|s| s.len()).max().unwrap_or(0)
+    }
+  notes: |
+    `max()` returns `Option` (None on empty), so `unwrap_or(0)` supplies the
+    default. To compare by a key instead, use `max_by_key`.
+  source: "std Iterator::max"
+  tags: [rust, iterators]
+  tests: |
+    assert_eq!(longest_len(&["a", "bbb", "cc"]), 3);
+    assert_eq!(longest_len(&[]), 0);
+
+- id: rlk-215
+  guid: "dk)CP=xvEs"
+  instruction: |
+    Write `first_negative_index(v: &[i32]) -> Option<usize>`: index of the
+    first negative element.
+  starter: |
+    fn first_negative_index(v: &[i32]) -> Option<usize> {
+
+    }
+  solution: |
+    fn first_negative_index(v: &[i32]) -> Option<usize> {
+        v.iter().position(|&x| x < 0)
+    }
+  notes: |
+    `position` returns the first matching index as `Option`. Use `find` for the
+    element itself.
+  source: "std Iterator::position"
+  tags: [rust, iterators]
+  tests: |
+    assert_eq!(first_negative_index(&[1, 2, -3, 4]), Some(2));
+    assert_eq!(first_negative_index(&[1, 2]), None);
+
+- id: rlk-216
+  guid: "Jm(MXyTBOG"
+  instruction: |
+    Write `all_positive(v: &[i32]) -> bool`: true iff every element is > 0.
+  starter: |
+    fn all_positive(v: &[i32]) -> bool {
+
+    }
+  solution: |
+    fn all_positive(v: &[i32]) -> bool {
+        v.iter().all(|&x| x > 0)
+    }
+  notes: |
+    `all` short-circuits on the first false; `any` on the first true. On an empty
+    iterator `all` is true and `any` is false.
+  source: "std Iterator::all"
+  tags: [rust, iterators]
+  tests: |
+    assert!(all_positive(&[1, 2, 3]));
+    assert!(!all_positive(&[1, -2, 3]));
+    assert!(all_positive(&[]));
+
+- id: rlk-217
+  lint_allow: ["aeiou"]
+  guid: "fQ{xZ,Sfd^"
+  instruction: |
+    Write `count_vowels(s: &str) -> usize` counting ascii vowels.
+  starter: |
+    fn count_vowels(s: &str) -> usize {
+
+    }
+  solution: |
+    fn count_vowels(s: &str) -> usize {
+        s.chars().filter(|&c| "aeiou".contains(c)).count()
+    }
+  notes: |
+    `chars()` yields owned `char`, so `|&c|` binds a `char` and `contains(c)`
+    takes it directly (a `char` is a valid `str` pattern). `count()` consumes.
+  source: "std Iterator::count"
+  tags: [rust, iterators]
+  tests: |
+    assert_eq!(count_vowels("hello world"), 3);
+    assert_eq!(count_vowels(""), 0);
+
+- id: rlk-218
+  guid: "qXpQtF5Vwl"
+  instruction: |
+    Write `first_three(v: &[i32]) -> Vec<i32>`: copies of up to the first 3.
+  starter: |
+    fn first_three(v: &[i32]) -> Vec<i32> {
+
+    }
+  solution: |
+    fn first_three(v: &[i32]) -> Vec<i32> {
+        v.iter().take(3).copied().collect()
+    }
+  notes: |
+    `take(n)` yields at most n items. Its partner `skip(n)` drops the first n.
+  source: "std Iterator::take"
+  tags: [rust, iterators]
+  tests: |
+    assert_eq!(first_three(&[1, 2, 3, 4, 5]), vec![1, 2, 3]);
+    assert_eq!(first_three(&[1]), vec![1]);
+
+- id: rlk-219
+  guid: "HvJStK2!hZ"
+  instruction: |
+    Write `leading_positives(v: &[i32]) -> Vec<i32>`: copy elements from the
+    start while they stay > 0, stopping at the first non-positive.
+  starter: |
+    fn leading_positives(v: &[i32]) -> Vec<i32> {
+
+    }
+  solution: |
+    fn leading_positives(v: &[i32]) -> Vec<i32> {
+        v.iter().copied().take_while(|&x| x > 0).collect()
+    }
+  notes: |
+    `take_while` stops permanently at the first failing element (unlike `filter`,
+    which tests every one). Partner: `skip_while`.
+  source: "std Iterator::take_while"
+  tags: [rust, iterators]
+  tests: |
+    assert_eq!(leading_positives(&[1, 2, -1, 3]), vec![1, 2]);
+    assert_eq!(leading_positives(&[-1, 2]), Vec::<i32>::new());
+
+- id: rlk-220
+  guid: "hr!U#HA)LC"
+  instruction: |
+    Write `concat(a: &[i32], b: &[i32]) -> Vec<i32>` joining the two in order.
+  starter: |
+    fn concat(a: &[i32], b: &[i32]) -> Vec<i32> {
+
+    }
+  solution: |
+    fn concat(a: &[i32], b: &[i32]) -> Vec<i32> {
+        a.iter().chain(b).copied().collect()
+    }
+  notes: |
+    `chain` runs the first iterator to completion, then the second. `b` is
+    `IntoIterator`, so no `.iter()` needed.
+  source: "std Iterator::chain"
+  tags: [rust, iterators]
+  tests: |
+    assert_eq!(concat(&[1, 2], &[3, 4]), vec![1, 2, 3, 4]);
+    assert_eq!(concat(&[], &[1]), vec![1]);
+
+- id: rlk-221
+  guid: "IW]mnTRg`E"
+  instruction: |
+    Write `reversed(v: &[i32]) -> Vec<i32>` (elements in reverse order).
+  starter: |
+    fn reversed(v: &[i32]) -> Vec<i32> {
+
+    }
+  solution: |
+    fn reversed(v: &[i32]) -> Vec<i32> {
+        v.iter().rev().copied().collect()
+    }
+  notes: |
+    `rev()` needs a DoubleEndedIterator (slices/Vec qualify).
+  source: "std Iterator::rev"
+  tags: [rust, iterators]
+  tests: |
+    assert_eq!(reversed(&[1, 2, 3]), vec![3, 2, 1]);
+    assert_eq!(reversed(&[]), Vec::<i32>::new());
+
+- id: rlk-222
+  guid: "zK?PX/^Z@i"
+  instruction: |
+    Write `flatten(vv: Vec<Vec<i32>>) -> Vec<i32>` concatenating all inner vecs.
+  starter: |
+    fn flatten(vv: Vec<Vec<i32>>) -> Vec<i32> {
+
+    }
+  solution: |
+    fn flatten(vv: Vec<Vec<i32>>) -> Vec<i32> {
+        vv.into_iter().flatten().collect()
+    }
+  notes: |
+    `flatten()` turns an iterator-of-iterables into one flat stream.
+  source: "std Iterator::flatten"
+  tags: [rust, iterators]
+  tests: |
+    assert_eq!(flatten(vec![vec![1, 2], vec![3], vec![]]), vec![1, 2, 3]);
+    assert_eq!(flatten(vec![]), Vec::<i32>::new());
+
+- id: rlk-223
+  guid: "i3)3_Qydq%"
+  instruction: |
+    Write `repeat_each(v: &[i32]) -> Vec<i32>`: each element duplicated, e.g.
+    [1, 2] -> [1, 1, 2, 2].
+  starter: |
+    fn repeat_each(v: &[i32]) -> Vec<i32> {
+
+    }
+  solution: |
+    fn repeat_each(v: &[i32]) -> Vec<i32> {
+        v.iter().flat_map(|&x| [x, x]).collect()
+    }
+  notes: |
+    `flat_map` maps each item to an iterable and flattens. An array `[x, x]` is
+    `IntoIterator` (2021 edition) yielding owned values.
+  source: "std Iterator::flat_map"
+  tags: [rust, iterators]
+  tests: |
+    assert_eq!(repeat_each(&[1, 2]), vec![1, 1, 2, 2]);
+    assert_eq!(repeat_each(&[]), Vec::<i32>::new());
+
+- id: rlk-224
+  guid: "ts?R`6cG>G"
+  instruction: |
+    Write `shout(s: &str) -> String` uppercasing each ascii character.
+  starter: |
+    fn shout(s: &str) -> String {
+
+    }
+  solution: |
+    fn shout(s: &str) -> String {
+        s.chars().map(|c| c.to_ascii_uppercase()).collect()
+    }
+  notes: |
+    An iterator of `char` collects directly into a `String`.
+  source: "std str::chars"
+  tags: [rust, iterators]
+  tests: |
+    assert_eq!(shout("hi"), "HI");
+    assert_eq!(shout(""), "");
+
+- id: rlk-225
+  guid: "xD+e%NJ@|N"
+  instruction: |
+    Write `char_positions(s: &str) -> HashMap<char, usize>` mapping each char
+    to the index of its LAST occurrence.
+  starter: |
+    use std::collections::HashMap;
+
+    fn char_positions(s: &str) -> HashMap<char, usize> {
+
+    }
+  solution: |
+    use std::collections::HashMap;
+
+    fn char_positions(s: &str) -> HashMap<char, usize> {
+        s.chars().enumerate().map(|(i, c)| (c, i)).collect()
+    }
+  notes: |
+    An iterator of `(K, V)` tuples collects into a `HashMap`; later duplicate
+    keys overwrite earlier ones, recording the last index.
+  source: "std FromIterator for HashMap"
+  tags: [rust, iterators, hashmap]
+  tests: |
+    let m = char_positions("abcb");
+    assert_eq!(m.get(&'b'), Some(&3));
+    assert_eq!(m.get(&'a'), Some(&0));
+    assert_eq!(m.get(&'z'), None);
+
+- id: rlk-226
+  guid: "w]DrFtPy3s"
+  instruction: |
+    Write `split_parity(v: &[i32]) -> (Vec<i32>, Vec<i32>)` returning
+    (evens, odds).
+  starter: |
+    fn split_parity(v: &[i32]) -> (Vec<i32>, Vec<i32>) {
+
+    }
+  solution: |
+    fn split_parity(v: &[i32]) -> (Vec<i32>, Vec<i32>) {
+        v.iter().copied().partition(|&x| x % 2 == 0)
+    }
+  notes: |
+    `partition` splits by a predicate: trues first, falses second. The return
+    type tells it to build two `Vec<i32>`.
+  source: "std Iterator::partition"
+  tags: [rust, iterators]
+  tests: |
+    assert_eq!(split_parity(&[1, 2, 3, 4]), (vec![2, 4], vec![1, 3]));
+    assert_eq!(split_parity(&[]), (Vec::<i32>::new(), Vec::<i32>::new()));
+
+- id: rlk-227
+  guid: "xYZaU=^psT"
+  instruction: |
+    Write `running_sum(v: &[i32]) -> Vec<i32>`: the running cumulative total,
+    e.g. [1, 2, 3, 4] -> [1, 3, 6, 10].
+  starter: |
+    fn running_sum(v: &[i32]) -> Vec<i32> {
+
+    }
+  solution: |
+    fn running_sum(v: &[i32]) -> Vec<i32> {
+        v.iter().scan(0, |acc, &x| {
+            *acc += x;
+            Some(*acc)
+        }).collect()
+    }
+  notes: |
+    `scan` is like `fold` but yields the accumulator at each step. Returning
+    `None` would end iteration early.
+  source: "std Iterator::scan"
+  tags: [rust, iterators]
+  tests: |
+    assert_eq!(running_sum(&[1, 2, 3, 4]), vec![1, 3, 6, 10]);
+    assert_eq!(running_sum(&[]), Vec::<i32>::new());
+
+- id: rlk-228
+  guid: "Fc?|O[:m3t"
+  instruction: |
+    Write `every_other(v: &[i32]) -> Vec<i32>`: copies of elements at indices
+    0, 2, 4, ...
+  starter: |
+    fn every_other(v: &[i32]) -> Vec<i32> {
+
+    }
+  solution: |
+    fn every_other(v: &[i32]) -> Vec<i32> {
+        v.iter().step_by(2).copied().collect()
+    }
+  notes: |
+    `step_by(n)` yields the first element then every nth after it.
+  source: "std Iterator::step_by"
+  tags: [rust, iterators]
+  tests: |
+    assert_eq!(every_other(&[1, 2, 3, 4, 5]), vec![1, 3, 5]);
+    assert_eq!(every_other(&[]), Vec::<i32>::new());
+
+- id: rlk-229
+  guid: "i}hd8-7*#%"
+  instruction: |
+    Domain: write `step_distances(pts: &[(f64, f64)]) -> Vec<f64>` giving the
+    Euclidean distance between each consecutive pair of points (length n-1).
+  starter: |
+    fn step_distances(pts: &[(f64, f64)]) -> Vec<f64> {
+
+    }
+  solution: |
+    fn step_distances(pts: &[(f64, f64)]) -> Vec<f64> {
+        pts.windows(2)
+            .map(|w| ((w[1].0 - w[0].0).powi(2) + (w[1].1 - w[0].1).powi(2)).sqrt())
+            .collect()
+    }
+  notes: |
+    `slice::windows(2)` yields overlapping length-2 slices — ideal for spacing
+    along a centerline. See `chunks` for non-overlapping groups.
+  source: "std slice::windows"
+  tags: [rust, iterators, domain]
+  tests: |
+    let d = step_distances(&[(0.0, 0.0), (3.0, 4.0)]);
+    assert_eq!(d.len(), 1);
+    assert!((d[0] - 5.0).abs() < 1e-9);
+    assert_eq!(step_distances(&[(0.0, 0.0)]), Vec::<f64>::new());
+
+- id: rlk-230
+  guid: "Bu30cWg1c<"
+  instruction: |
+    Write `sum_parsed(items: &[&str]) -> Result<i32, std::num::ParseIntError>`:
+    parse all to i32 (fail on first bad one) then return their sum, using `?`.
+  starter: |
+    fn sum_parsed(items: &[&str]) -> Result<i32, std::num::ParseIntError> {
+
+    }
+  solution: |
+    fn sum_parsed(items: &[&str]) -> Result<i32, std::num::ParseIntError> {
+        let nums: Vec<i32> = items
+            .iter()
+            .map(|s| s.parse())
+            .collect::<Result<_, _>>()?;
+        Ok(nums.iter().sum())
+    }
+  notes: |
+    Collect into `Result<Vec<_>, _>`, then `?` unwraps it or returns the error.
+    The `Vec<i32>` binding lets `parse` infer its target.
+  source: "std FromIterator for Result"
+  tags: [rust, iterators, results]
+  tests: |
+    assert_eq!(sum_parsed(&["1", "2", "3"]), Ok(6));
+    assert!(sum_parsed(&["1", "x"]).is_err());
+
+- id: rlk-231
+  guid: "s}TTw6&0;="
+  instruction: |
+    Write `split_pairs(pairs: Vec<(i32, char)>) -> (Vec<i32>, Vec<char>)`
+    splitting a Vec of tuples into two parallel Vecs, using `unzip`.
+  starter: |
+    fn split_pairs(pairs: Vec<(i32, char)>) -> (Vec<i32>, Vec<char>) {
+
+    }
+  solution: |
+    fn split_pairs(pairs: Vec<(i32, char)>) -> (Vec<i32>, Vec<char>) {
+        pairs.into_iter().unzip()
+    }
+  notes: |
+    `unzip()` is the inverse of `zip`: an iterator of `(A, B)` pairs becomes a
+    `(Collection<A>, Collection<B>)` in one pass.
+  source: "std Iterator::unzip"
+  tags: [rust, iterators, unzip]
+  tests: |
+    let (nums, chars) = split_pairs(vec![(1, 'a'), (2, 'b'), (3, 'c')]);
+    assert_eq!(nums, vec![1, 2, 3]);
+    assert_eq!(chars, vec!['a', 'b', 'c']);
+    let (n2, c2): (Vec<i32>, Vec<char>) = split_pairs(vec![]);
+    assert!(n2.is_empty() && c2.is_empty());
+
+- id: rlk-232
+  guid: "g7lLn&.37{"
+  instruction: |
+    Write `overall_max(v: &[i32]) -> Option<i32>` returning the maximum via
+    `reduce` (not `.max()`), using `i32::max` as the combiner.
+  starter: |
+    fn overall_max(v: &[i32]) -> Option<i32> {
+
+    }
+  solution: |
+    fn overall_max(v: &[i32]) -> Option<i32> {
+        v.iter().copied().reduce(i32::max)
+    }
+  notes: |
+    `reduce(f)` is `fold` without a separate initial value: it uses the first
+    item as the seed, then combines the rest with `f`, returning `None` on an
+    empty iterator (unlike `fold`, which always returns something). Prefer the
+    built-in `.max()`/`.sum()` when they exist; reach for `reduce` when the
+    combining rule is custom.
+  source: "std Iterator::reduce"
+  tags: [rust, iterators, reduce]
+  tests: |
+    assert_eq!(overall_max(&[3, 7, 2, 9, 4]), Some(9));
+    assert_eq!(overall_max(&[]), None);
+
+# --- concept cards ---
+- id: rlk-233
+  guid: "bP{x7)O7nq"
+  type: concept
+  question: |
+    What do `iter()`, `iter_mut()`, and `into_iter()` each yield, and how do
+    they treat the underlying collection?
+  answer: |
+    **`iter()` yields `&T` (borrows), `iter_mut()` yields `&mut T` (mutably
+    borrows), and `into_iter()` yields `T` (consumes the collection).**
+
+    `iter()` -> `&T`: borrows; the collection stays usable.
+    `iter_mut()` -> `&mut T`: mutably borrows; edit elements in place.
+    `into_iter()` -> `T`: consumes, moving elements out (a `Vec` is gone after).
+    On a `&Vec`/slice, `into_iter()` yields `&T` — you can't move out of a borrow.
+  code: |
+    let v = vec![1, 2, 3];
+    let _refs: Vec<&i32> = v.iter().collect();        // borrow
+    let mut owned = v.clone();
+    for x in owned.iter_mut() { *x += 1; }            // mutate in place
+    let _moved: Vec<i32> = v.into_iter().collect();   // consumes v
+  source: "book §13.2"
+  tags: [rust, iterators, concept]
+
+- id: rlk-234
+  guid: "o>n&T(SLsJ"
+  type: concept
+  question: |
+    Are iterator adaptors like `map` and `filter` evaluated immediately?
+  answer: |
+    **No — iterator adaptors are lazy; they do no work until a consumer
+    drives them.**
+
+    Adaptors like `map`/`filter` build a description and run nothing until a
+    CONSUMER drives them: `collect`, `sum`, `count`, `for`, `fold`, `find`, etc.
+    A chain with no consumer does nothing (the compiler warns "unused iterator").
+  source: "book §13.2"
+  tags: [rust, iterators, concept]
+
+- id: rlk-235
+  guid: "m8sCXzb,6."
+  type: concept
+  question: |
+    Why does `collect()` often need a type annotation or turbofish?
+  answer: |
+    **Because `collect` is generic over its output type via `FromIterator`,
+    so the compiler can't always infer what you want without help.**
+
+    Specify it via the binding type (`let v: Vec<_> = ...`) or turbofish
+    (`.collect::<Vec<_>>()`).
+  source: "std Iterator::collect"
+  tags: [rust, iterators, concept]
+
+- id: rlk-236
+  guid: "m]U1VF1oXD"
+  type: concept
+  question: |
+    What happens when you `collect` an iterator of `Result<T, E>` into
+    `Result<Vec<T>, E>` (or `Option`)?
+  answer: |
+    **It short-circuits: collecting stops at the first `Err` and returns it;
+    otherwise it yields `Ok(all_values)`.**
+
+    The same works for `Option<Vec<T>>` (first `None` wins). Ideal for
+    "parse/validate all or fail".
+  source: "std FromIterator for Result"
+  tags: [rust, iterators, concept, results]
+
+# --- Rustlings iterators4 / iterators5 ---
+- id: rlk-237
+  guid: "dcU2(jvXG%"
+  instruction: |
+    Write `factorial(num: u64) -> u64` using an iterator and NO loop or mutable
+    variable. (factorial(0) = 1.)
+    Example: factorial(4) -> 24.
+  starter: |
+    fn factorial(num: u64) -> u64 {
+
+    }
+  solution: |
+    fn factorial(num: u64) -> u64 {
+        (1..=num).product()
+    }
+  notes: |
+    `product()` multiplies the range; the inclusive range `1..=num` is empty for
+    num = 0, and the product of an empty iterator is 1 — so 0! falls out correctly.
+    (Rustlings writes `(2..=num).product()`, which is equivalent since *1 is a no-op.)
+  source: "Rustlings iterators4 · std Iterator::product"
+  tags: [rust, iterators, rustlings]
+  tests: |
+    assert_eq!(factorial(0), 1);
+    assert_eq!(factorial(1), 1);
+    assert_eq!(factorial(4), 24);
+    assert_eq!(factorial(5), 120);
+
+- id: rlk-238
+  guid: "FB-4XdMJU<"
+  instruction: |
+    Given the `Progress` enum and a `HashMap<String, Progress>`, write
+    `count_iterator(map, value) -> usize`: how many values equal `value`. Use
+    iterators, no loop.
+  starter: |
+    use std::collections::HashMap;
+
+    #[derive(Clone, Copy, PartialEq, Eq)]
+    enum Progress {
+        None,
+        Some,
+        Complete,
+    }
+
+    fn count_iterator(map: &HashMap<String, Progress>, value: Progress) -> usize {
+
+    }
+  solution: |
+    use std::collections::HashMap;
+
+    #[derive(Clone, Copy, PartialEq, Eq)]
+    enum Progress {
+        None,
+        Some,
+        Complete,
+    }
+
+    fn count_iterator(map: &HashMap<String, Progress>, value: Progress) -> usize {
+        map.values().filter(|&&v| v == value).count()
+    }
+  notes: |
+    `values()` iterates `&Progress`; `filter` then `count` replaces the imperative
+    "loop and increment". `Progress` is `Copy`, so `|&&v|` binds a plain `Progress`.
+  source: "Rustlings iterators5 · std Iterator::filter/count"
+  tags: [rust, iterators, hashmap, rustlings]
+  tests: |
+    let mut map = HashMap::new();
+    map.insert("a".to_string(), Progress::Complete);
+    map.insert("b".to_string(), Progress::Complete);
+    map.insert("c".to_string(), Progress::Complete);
+    map.insert("d".to_string(), Progress::Some);
+    map.insert("e".to_string(), Progress::None);
+    map.insert("f".to_string(), Progress::None);
+    assert_eq!(count_iterator(&map, Progress::Complete), 3);
+    assert_eq!(count_iterator(&map, Progress::Some), 1);
+    assert_eq!(count_iterator(&map, Progress::None), 2);
+
+- id: rlk-239
+  guid: "H_/9q?:>eJ"
+  instruction: |
+    Given `count_iterator` (counts matching values in one map), write
+    `count_collection_iterator(collection: &[HashMap<String, Progress>], value)
+    -> usize` summing the counts across every map. Use iterators, no loop.
+  starter: |
+    use std::collections::HashMap;
+
+    #[derive(Clone, Copy, PartialEq, Eq)]
+    enum Progress {
+        None,
+        Some,
+        Complete,
+    }
+
+    fn count_iterator(map: &HashMap<String, Progress>, value: Progress) -> usize {
+        map.values().filter(|&&v| v == value).count()
+    }
+
+    fn count_collection_iterator(
+        collection: &[HashMap<String, Progress>],
+        value: Progress,
+    ) -> usize {
+
+    }
+  solution: |
+    use std::collections::HashMap;
+
+    #[derive(Clone, Copy, PartialEq, Eq)]
+    enum Progress {
+        None,
+        Some,
+        Complete,
+    }
+
+    fn count_iterator(map: &HashMap<String, Progress>, value: Progress) -> usize {
+        map.values().filter(|&&v| v == value).count()
+    }
+
+    fn count_collection_iterator(
+        collection: &[HashMap<String, Progress>],
+        value: Progress,
+    ) -> usize {
+        collection.iter().map(|map| count_iterator(map, value)).sum()
+    }
+  notes: |
+    Map each inner map to its count, then `sum()` — an iterator of iterators handled
+    by reusing the per-map counter.
+  source: "Rustlings iterators5 · std Iterator::map/sum"
+  tags: [rust, iterators, hashmap, rustlings]
+  tests: |
+    let mut a = HashMap::new();
+    a.insert("x".to_string(), Progress::Complete);
+    a.insert("y".to_string(), Progress::Complete);
+    a.insert("z".to_string(), Progress::None);
+    let mut b = HashMap::new();
+    b.insert("p".to_string(), Progress::Complete);
+    b.insert("q".to_string(), Progress::Some);
+    let coll = vec![a, b];
+    assert_eq!(count_collection_iterator(&coll, Progress::Complete), 3);
+    assert_eq!(count_collection_iterator(&coll, Progress::Some), 1);
+    assert_eq!(count_collection_iterator(&coll, Progress::None), 1);
+
+- id: rlk-240
+  guid: "xy]W_9U9d/"
+  instruction: |
+    Write `count_collection_iterator_flat(collection: &[HashMap<String, Progress>],
+    value) -> usize` that counts matching values across all maps by FLATTENING the
+    maps into one stream of values (`flat_map`), then filtering and counting.
+  starter: |
+    use std::collections::HashMap;
+
+    #[derive(Clone, Copy, PartialEq, Eq)]
+    enum Progress {
+        None,
+        Some,
+        Complete,
+    }
+
+    fn count_collection_iterator_flat(
+        collection: &[HashMap<String, Progress>],
+        value: Progress,
+    ) -> usize {
+
+    }
+  solution: |
+    use std::collections::HashMap;
+
+    #[derive(Clone, Copy, PartialEq, Eq)]
+    enum Progress {
+        None,
+        Some,
+        Complete,
+    }
+
+    fn count_collection_iterator_flat(
+        collection: &[HashMap<String, Progress>],
+        value: Progress,
+    ) -> usize {
+        collection
+            .iter()
+            .flat_map(HashMap::values)
+            .filter(|&&v| v == value)
+            .count()
+    }
+  notes: |
+    `flat_map(HashMap::values)` turns the slice of maps into one flat stream of
+    `&Progress`, so a single filter+count does the whole job — no inner helper.
+  source: "Rustlings iterators5 · std Iterator::flat_map"
+  tags: [rust, iterators, hashmap, rustlings]
+  tests: |
+    let mut a = HashMap::new();
+    a.insert("x".to_string(), Progress::Complete);
+    a.insert("y".to_string(), Progress::None);
+    let mut b = HashMap::new();
+    b.insert("p".to_string(), Progress::Complete);
+    b.insert("q".to_string(), Progress::Complete);
+    let coll = vec![a, b];
+    assert_eq!(count_collection_iterator_flat(&coll, Progress::Complete), 3);
+    assert_eq!(count_collection_iterator_flat(&coll, Progress::None), 1);
+
+- id: rlk-241
+  guid: "O5h{ve^:i,"
+  instruction: |
+    Write `capitalize_first(input: &str) -> String`: upper-case the first character
+    and keep the rest unchanged; an empty string stays "".
+    Example: "hello" -> "Hello".
+  starter: |
+    fn capitalize_first(input: &str) -> String {
+
+    }
+  solution: |
+    fn capitalize_first(input: &str) -> String {
+        let mut chars = input.chars();
+        match chars.next() {
+            None => String::new(),
+            Some(first) => first.to_uppercase().to_string() + chars.as_str(),
+        }
+    }
+  notes: |
+    Pull the first `char` off the iterator with `next()`, upper-case it, then append
+    the REST via `chars.as_str()` (the still-unconsumed tail of the iterator). `None`
+    means the input was empty.
+  source: "Rustlings iterators2 · std char::to_uppercase"
+  tags: [rust, iterators, strings, rustlings]
+  tests: |
+    assert_eq!(capitalize_first("hello"), "Hello");
+    assert_eq!(capitalize_first(""), "");
+    assert_eq!(capitalize_first("a"), "A");
+
+- id: rlk-242
+  guid: "C(U:1o*bSQ"
+  type: concept
+  question: |
+    Why does `v.windows(2).map(|&w| w[0] + w[1])` fail with "the size for values
+    of type `[i32]` cannot be known at compile time"?
+  answer: |
+    **Because `|&w|` tries to bind the pointee of `&[i32]` by value, making
+    `w` a bare `[i32]`, which is unsized and can't be stored in a local.**
+
+    `windows(2)` yields `&[i32]` — a reference to a slice. The pattern `|&w|`
+    says "peel the reference and bind the pointee by value", which would make
+    `w` a bare `[i32]`. But `[i32]` is unsized (`!Sized`): its length isn't
+    part of the type, so the compiler can't store one in a local or move it.
+    Keep the reference: write `|w|` (so `w: &[i32]`) and index through it —
+    `w[0]` auto-derefs to a sized `i32` and the arithmetic is fine.
+  source: "std slice::windows; std::marker::Sized"
+  tags: [rust, iterators, sized, concept]
+
+- id: rlk-243
+  guid: "wV:^`iD1`X"
+  type: concept
+  question: |
+    When can you use the reference-peeling closure pattern `|&x|` (binding the
+    value behind the reference), and when does it fail?
+  answer: |
+    **You can only use `|&x|` to peel the reference when the pointee is
+    `Sized`; over an unsized pointee like `[i32]` it fails to compile.**
+
+    - `v.iter().map(|&x| ...)` over `&i32`: peeling binds `x: i32`. `i32` is sized,
+      so this is fine (and idiomatic).
+    - `v.windows(2).map(|&w| ...)` over `&[i32]`: peeling would bind `w: [i32]`, a
+      bare slice — unsized -> compile error.
+    The deciding factor is SIZEDNESS, not `Copy`: you can only move a pointee out
+    by value if its size is known at compile time. A single `i32` qualifies; a
+    slice `[i32]` does not.
+  source: "std::marker::Sized"
+  tags: [rust, iterators, sized, concept]
+
+- id: rlk-244
+  guid: "lTScw.oac@"
+  type: concept
+  question: |
+    Safe default when you're unsure whether to peel the reference in a closure
+    pattern (`|&x|` vs `|x|`)?
+  answer: |
+    **Don't destructure — write `|w|` (or `|x|`) and reach inside the
+    reference (`w[0]`, `w.0`, `*x`, a method call) instead of peeling it.**
+
+    Indexing, field access, and method calls auto-deref, so this works
+    whether the item is a slice or a sized value, and it always compiles.
+    Reach for `|&x|` deliberately only when the item is an obvious `&i32`
+    / `&T: Copy` and you want the value directly. This single habit makes
+    `windows`, `chunks`, and `iter` all correct.
+  tags: [rust, iterators, concept]
+
+- id: rlk-245
+  guid: "cPfG`o`9#6"
+  type: concept
+  question: |
+    Does the "you can only peel `&` in a pattern if the pointee is `Sized`" rule
+    apply only to `.map()` closures, or more broadly?
+  answer: |
+    **It applies everywhere a pattern binds a value — `for` loops, `let`,
+    `match` arms, function parameters, and closures — not just `.map()`.**
+
+    A leading `&` in a pattern always means "match a reference and move the
+    pointee out by value", which only works if that pointee is `Sized`.
+    - `for &x in &nums {}` — pointee `i32`, sized -> OK.
+    - `for &w in nums.windows(2) {}` — pointee `[i32]`, unsized -> ERROR (use
+      `for w in ...` and index).
+    - `let &x = &5;` works; `let &s = &v[..];` does not.
+    Same rule, same fix everywhere: keep the reference (`w`, `x`) and reach inside.
+  source: "std::marker::Sized"
+  tags: [rust, iterators, sized, concept]

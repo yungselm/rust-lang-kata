@@ -7,12 +7,13 @@ assignees: ''
 ---
 
 **Describe the bug**
-A clear and concise description of what's broken (build script, `.apkg` import,
-card rendering in Anki, CodeMirror editor, etc.).
+A clear and concise description of what's broken (a card, `.apkg` import, rendering in Anki).
+Problems with the build, editor or checks themselves belong in
+https://github.com/yungselm/agentic-studying-loop/issues.
 
 **To Reproduce**
 Steps to reproduce:
-1. Run '...' (e.g. `python build.py`)
+1. Run '...' (e.g. `asl build cards/core`)
 2. See error / open card '...'
 
 **Expected behavior**

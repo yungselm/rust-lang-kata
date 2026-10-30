@@ -1,54 +1,40 @@
 # Additional cards
 
-Your own topics for a framework you're learning (`iced`, `axum`, `bevy`, …), patterns
-from a project at work, all written in the same YAML format as `cards/`, built with
-the same note types and editor, but shipped as a **separate**
-`output/AdditionalCards.apkg` so the main deck stays general.
+Your own topics (a framework you're learning like `iced`, `axum`, `bevy`; patterns from a
+project at work), in the same card format and with the same checks as `cards/`, but in
+their own decks so the main deck stays general.
 
-Put every file in exactly one of the two folders; the folder decides how it's
-verified:
+## Make a topic
 
-| Folder | Use for | `check_cards.py` | `lint_cards.py` | `build.py` |
-|---|---|---|---|---|
-| `checked/` | std-only code | compiled, `clippy -D warnings`, `tests:` run | ✓ | ✓ |
-| `unchecked/` | external crates, code fragments (a single `match` arm, a builder chain) | skipped | ✓ | ✓ |
+Each topic is a deck folder. Copy the example without the leading underscore:
 
 ```bash
-python check_cards.py     # cards/ + additional_cards/checked/
-python lint_cards.py      # cards/ + both additional folders
-python build.py           # CodeCards.apkg + AdditionalCards.apkg
+cp -r additional_cards/_example additional_cards/iced
 ```
 
-## Decks
+Then edit `additional_cards/iced/deck.yaml` (deck name, id prefix) and the two card files:
 
-`<topic>.yaml` becomes the subdeck `Rust Language Kata::Additional::<Topic>`;
-`a__b.yaml` nests as `Additional::A::B`. A file with the **same name in both
-folders lands in one deck**, so `checked/iced.yaml` (std-only helpers) and
-`unchecked/iced.yaml` (real `iced` code) study together as `Additional::Iced`.
+| File | Use for | `asl check` |
+|---|---|---|
+| `<topic>.yaml` | std-only code | compiled, `clippy -D warnings`, `tests:` run |
+| `<topic>_ext.yaml` (`check: false` in deck.yaml) | external crates, code fragments | skipped |
 
-Additional decks use the Core preset (14 new cards/day, random order); change it
-in Anki's Deck Options if you want a different pace.
+Both files study together in one deck if you set `subdecks: false` in deck.yaml.
+
+```bash
+asl fix   additional_cards/iced
+asl lint  -q additional_cards/iced
+asl check additional_cards/iced
+asl build additional_cards/iced -o output/Iced.apkg
+```
 
 ## Privacy
 
-Your topic files are **gitignored** — only the `_example.yaml` files are tracked —
-so project code you write cards about never ends up in a commit. If you fork the
-repo and *want* your topics versioned, remove the `additional_cards/` lines from
-`.gitignore`.
+Everything in `additional_cards/` except `_example/` and this README is gitignored, so
+project code you write cards about never ends up in a commit.
 
-## Examples
+## Cards that follow a real project
 
-`checked/_example.yaml` and `unchecked/_example.yaml` show one code card and one
-concept card each. Files starting with `_` are examples: they're checked and
-linted (so they stay valid), but **not** built into `AdditionalCards.apkg`. To
-preview one in Anki anyway, build it explicitly:
-
-```bash
-python build.py additional_cards/checked/_example.yaml
-```
-
-Start your own topic by copying an example without the `_`:
-
-```bash
-cp additional_cards/checked/_example.yaml additional_cards/checked/my_topic.yaml
-```
+If the cards come from a project you're working on, agentic-studying-loop's `asl init`
+sets that up properly: the deck lives in your notes vault next to your study notes, an AI
+agent writes the cards from your confirmed code, and `asl lint` checks them against the repo.

@@ -1,0 +1,498 @@
+# Async/await (book ch.17) — Future, Poll, Waker, a hand-rolled std-only
+# block_on executor, and the runtime-specific APIs (tokio) taught as prose
+# since this harness has no external crates / no network access to add any.
+- id: rlk-020
+  guid: "B@2,~8,Feh"
+  type: concept
+  question: |
+    When you call an `async fn`, does its body start running immediately?
+  answer: |
+    **No — calling an `async fn` (or writing an `async { ... }` block)
+    immediately builds a value implementing `Future` but runs none of its
+    body until something actually polls that future.**
+
+    The compiler builds the returned value as a state machine capturing the
+    function's locals. The body only executes once something POLLS it:
+    either an executor calling `.poll()` directly, or an `.await` inside
+    another async fn/block that's itself being polled. Async is lazy; a
+    `Future` you never poll or await simply never runs.
+  source: "book §17.1 (futures and the async syntax)"
+  tags: [rust, async, concept]
+
+- id: rlk-021
+  guid: "m8S{;utc^U"
+  type: concept
+  question: |
+    What do the two variants of `Poll<T>` mean, and who calls `.poll()`?
+  answer: |
+    **`Poll::Ready(T)` means the future has finished and here's its output;
+    `Poll::Pending` means it isn't done yet and has stashed a `Waker` so it
+    can ask to be polled again later — and only an executor (or `.await`'s
+    desugaring) ever calls `.poll()`.**
+
+    An executor is the thing that calls `.poll()` — a plain async fn body
+    never calls it directly; `.await` is sugar that calls `poll()` for you
+    and either unwraps a `Ready` value or yields control back to the
+    executor on `Pending`.
+  source: "std::task::Poll docs + book §17"
+  tags: [rust, async, concept]
+
+- id: rlk-022
+  guid: "O51K>(dJ{o"
+  instruction: |
+    Implement a `ReadyNow<T>` type that is a `Future` already complete on its
+    first poll (wraps `Option<T>`, returns the value via `Poll::Ready` and
+    takes it out of the `Option`). Then write a tiny `block_on` executor
+    (using only `std::task`/`std::pin`, no external crate) that spin-polls a
+    future with a no-op `Waker` until it's `Ready`, and use it to run
+    `ReadyNow`.
+  starter: |
+    use std::future::Future;
+    use std::pin::Pin;
+    use std::task::{Context, Poll, RawWaker, RawWakerVTable, Waker};
+
+    struct ReadyNow<T>(Option<T>);
+
+    impl<T: Unpin> Future for ReadyNow<T> {
+        type Output = T;
+
+        fn poll(self: Pin<&mut Self>, _cx: &mut Context<'_>) -> Poll<T> {
+
+        }
+    }
+
+    // add noop_raw_waker and block_on here
+  solution: |
+    use std::future::Future;
+    use std::pin::Pin;
+    use std::task::{Context, Poll, RawWaker, RawWakerVTable, Waker};
+
+    struct ReadyNow<T>(Option<T>);
+
+    impl<T: Unpin> Future for ReadyNow<T> {
+        type Output = T;
+
+        fn poll(self: Pin<&mut Self>, _cx: &mut Context<'_>) -> Poll<T> {
+            Poll::Ready(self.get_mut().0.take().expect("polled after completion"))
+        }
+    }
+
+    fn noop_raw_waker() -> RawWaker {
+        fn no_op(_: *const ()) {}
+        fn clone(_: *const ()) -> RawWaker {
+            noop_raw_waker()
+        }
+        const VTABLE: RawWakerVTable = RawWakerVTable::new(clone, no_op, no_op, no_op);
+        RawWaker::new(std::ptr::null(), &VTABLE)
+    }
+
+    fn block_on<F: Future>(mut fut: F) -> F::Output {
+        let waker = unsafe { Waker::from_raw(noop_raw_waker()) };
+        let mut cx = Context::from_waker(&waker);
+        let mut fut = unsafe { Pin::new_unchecked(&mut fut) };
+        loop {
+            if let Poll::Ready(val) = fut.as_mut().poll(&mut cx) {
+                return val;
+            }
+        }
+    }
+  notes: |
+    This is exactly the shape of a real executor, minus the "park the thread
+    until woken" part: `RawWakerVTable` needs four function pointers (clone,
+    wake, wake_by_ref, drop) — here they're all no-ops since our loop just
+    re-polls immediately instead of waiting for a wakeup. `Future::poll` takes
+    `Pin<&mut Self>`; `Pin::get_mut` needs `Self: Unpin` to hand back a plain
+    `&mut Self`, so the impl requires `T: Unpin` explicitly (the compiler
+    won't assume an unconstrained generic parameter is `Unpin` on its own,
+    even though `ReadyNow<T>` itself has no self-referential fields).
+  source: "book §17 (futures and the async trait) + std::task docs"
+  tags: [rust, async]
+  tests: |
+    assert_eq!(block_on(ReadyNow(Some(42))), 42);
+    assert_eq!(block_on(ReadyNow(Some("hi"))), "hi");
+
+- id: rlk-023
+  guid: "rFsoO]5S<D"
+  type: concept
+  question: |
+    What's the difference between `Waker::wake` and `Waker::wake_by_ref`, and
+    why does a `Future::poll` implementation need a `Waker` at all?
+  answer: |
+    **`wake` and `wake_by_ref` both tell the executor "this future may be
+    ready to make progress, please poll it again" — `wake` consumes the
+    `Waker`, `wake_by_ref` takes `&self` so it can be reused — and a `poll`
+    that returns `Pending` needs a `Waker` precisely so it can trigger that
+    later re-poll once real progress becomes possible.**
+
+    `wake` is cheaper if you're done with the waker, `wake_by_ref` lets you
+    call it again later. A correctly-written `poll` that returns `Pending`
+    MUST stash (a clone of) the `Waker` from its `Context` and call
+    `wake`/`wake_by_ref` once the future can actually progress (a socket
+    became readable, a timer fired) — otherwise a real executor (which
+    sleeps until woken, unlike a toy spin-loop) would never re-poll it.
+  source: "std::task::Waker docs"
+  tags: [rust, async, waker, concept]
+
+- id: rlk-024
+  guid: "P*T02gy~;>"
+  type: concept
+  question: |
+    Why can't you write `.await` inside an ordinary (non-`async`) function?
+  answer: |
+    **`.await` only compiles inside an `async fn`/`async { }` block because
+    it desugars to suspending that block's compiler-generated state machine,
+    and an ordinary synchronous function has no such state machine to
+    suspend.**
+
+    It's sugar for "poll this future, and if it's `Pending`, suspend THIS
+    function (saving its state) and yield control back to whatever is
+    driving it" — that suspend/resume machinery only exists for async
+    bodies, so the compiler rejects `.await` elsewhere with a `... only
+    allowed inside async functions and blocks` error.
+  source: "book §17.1 (the await keyword)"
+  tags: [rust, async, concept]
+
+- id: rlk-025
+  guid: "AML>#P/Nd>"
+  type: concept
+  question: |
+    What does `async fn` actually compile down to?
+  answer: |
+    **`async fn` compiles to an anonymous, compiler-generated `struct`
+    holding whatever locals are alive across `.await` points, plus a
+    `Future` impl whose `poll` is a state machine that resumes at the last
+    suspend point on each call.**
+
+    Each call runs until the next `.await` (or the end), and either returns
+    `Poll::Pending` (having stored a `Waker`) or falls through subsequent
+    `.await`s to `Poll::Ready` at the end. This is why fields captured
+    across an await point can make the generated future self-referential —
+    the reason `poll` takes `Pin<&mut Self>` instead of plain `&mut self`.
+  source: "book §17.1 (async fn as a state machine)"
+  tags: [rust, async, concept]
+
+- id: rlk-026
+  guid: "D{aF}G[&K4"
+  instruction: |
+    Implement `PollNTimes { remaining: u32 }` as a `Future<Output =
+    &'static str>` that returns `Poll::Pending` (decrementing `remaining` and
+    calling `cx.waker().wake_by_ref()`) until `remaining` hits 0, then
+    `Poll::Ready("done")`. Drive it with the `block_on` executor from before
+    (provided below unchanged).
+  starter: |
+    use std::future::Future;
+    use std::pin::Pin;
+    use std::task::{Context, Poll, RawWaker, RawWakerVTable, Waker};
+
+    struct PollNTimes {
+        remaining: u32,
+    }
+
+    impl Future for PollNTimes {
+        type Output = &'static str;
+
+        fn poll(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<&'static str> {
+
+        }
+    }
+
+    fn noop_raw_waker() -> RawWaker {
+        fn no_op(_: *const ()) {}
+        fn clone(_: *const ()) -> RawWaker {
+            noop_raw_waker()
+        }
+        const VTABLE: RawWakerVTable = RawWakerVTable::new(clone, no_op, no_op, no_op);
+        RawWaker::new(std::ptr::null(), &VTABLE)
+    }
+
+    fn block_on<F: Future>(mut fut: F) -> F::Output {
+        let waker = unsafe { Waker::from_raw(noop_raw_waker()) };
+        let mut cx = Context::from_waker(&waker);
+        let mut fut = unsafe { Pin::new_unchecked(&mut fut) };
+        loop {
+            if let Poll::Ready(val) = fut.as_mut().poll(&mut cx) {
+                return val;
+            }
+        }
+    }
+  solution: |
+    use std::future::Future;
+    use std::pin::Pin;
+    use std::task::{Context, Poll, RawWaker, RawWakerVTable, Waker};
+
+    struct PollNTimes {
+        remaining: u32,
+    }
+
+    impl Future for PollNTimes {
+        type Output = &'static str;
+
+        fn poll(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<&'static str> {
+            if self.remaining == 0 {
+                Poll::Ready("done")
+            } else {
+                self.remaining -= 1;
+                cx.waker().wake_by_ref();
+                Poll::Pending
+            }
+        }
+    }
+
+    fn noop_raw_waker() -> RawWaker {
+        fn no_op(_: *const ()) {}
+        fn clone(_: *const ()) -> RawWaker {
+            noop_raw_waker()
+        }
+        const VTABLE: RawWakerVTable = RawWakerVTable::new(clone, no_op, no_op, no_op);
+        RawWaker::new(std::ptr::null(), &VTABLE)
+    }
+
+    fn block_on<F: Future>(mut fut: F) -> F::Output {
+        let waker = unsafe { Waker::from_raw(noop_raw_waker()) };
+        let mut cx = Context::from_waker(&waker);
+        let mut fut = unsafe { Pin::new_unchecked(&mut fut) };
+        loop {
+            if let Poll::Ready(val) = fut.as_mut().poll(&mut cx) {
+                return val;
+            }
+        }
+    }
+  notes: |
+    A real executor calls `poll` again only after the `Waker` it was given is
+    actually invoked (`wake`/`wake_by_ref`) — it doesn't busy-spin. Our
+    `block_on` ignores that signal and just re-polls in a tight loop, so this
+    card's `wake_by_ref()` call is a no-op in practice here, but it's what a
+    correctly-behaved `Future::poll` must call before returning `Pending`, or
+    a real executor would never re-poll it.
+  source: "book §17 + std::task::Waker docs"
+  tags: [rust, async, waker]
+  tests: |
+    assert_eq!(block_on(PollNTimes { remaining: 3 }), "done");
+    assert_eq!(block_on(PollNTimes { remaining: 0 }), "done");
+
+- id: rlk-027
+  guid: "P/oxp&&l.V"
+  type: concept
+  question: |
+    Our hand-rolled `block_on` from earlier busy-spins, calling `.poll()` in
+    a tight loop regardless of `Pending`. Why don't real async runtimes
+    (tokio, async-std) do this?
+  answer: |
+    **Real executors don't spin because that would burn 100% of a CPU core
+    doing nothing useful whenever a future is waiting; instead they PARK the
+    thread after getting `Pending` and rely on the `Waker` being invoked
+    (typically by an I/O reactor) to wake the thread and re-poll only when
+    there's actual progress to make.**
+
+    Spinning wastes cycles the whole time a future is waiting (e.g. on
+    network I/O). Parking after `Pending`, and relying on the handed-off
+    `Waker` being called once the socket/timer/etc. is ready, means CPU is
+    spent only when there's real progress to make — the entire point of
+    async I/O over blocking threads.
+  source: "book §17 + tokio runtime design docs"
+  tags: [rust, async, concept]
+
+- id: rlk-028
+  guid: "p6=KvD@.:S"
+  type: concept
+  question: |
+    Does the Rust standard library ship an async executor/runtime?
+  answer: |
+    **No — `std` provides only the low-level building blocks (the `Future`
+    trait, `Poll`, `Context`, `Waker`), with no built-in way to actually run
+    a future to completion.**
+
+    Driving futures (an executor/reactor loop, I/O integration, timers) is
+    left to external crates — `tokio` is the most widely used, `async-std`
+    and `smol` are alternatives. This is why plain `cargo run`-ing a `fn
+    main()` that calls an async fn won't compile: `main` isn't async, and
+    even if it were, nothing would drive the resulting future without a
+    runtime.
+  source: "book §17 (async requires a runtime)"
+  tags: [rust, async, concept]
+
+- id: rlk-029
+  guid: "grP$G+/C~L"
+  type: concept
+  question: |
+    What does `#[tokio::main]` on `async fn main()` actually do?
+  answer: |
+    **`#[tokio::main]` rewrites `async fn main() { ... }` into a plain,
+    synchronous `fn main()` that builds a tokio runtime and then drives your
+    async body with a real, reactor-backed `block_on`.**
+
+    It first builds the runtime (a thread pool plus I/O/timer reactor), then
+    calls something equivalent to our own `block_on` — except a REAL one,
+    driven by the reactor, not a spin-loop. Without it (or an equivalent
+    manual `Runtime::new() ... block_on(...)` call), `async fn main()`
+    doesn't compile: `main` must be a plain synchronous function as far as
+    `rustc` is concerned.
+  source: "tokio documentation (#[tokio::main])"
+  tags: [rust, async, tokio, concept]
+
+- id: rlk-030
+  guid: "fd.!Y|FvHo"
+  type: concept
+  question: |
+    What does `tokio::spawn` do, and what bound does it put on the future you
+    give it?
+  answer: |
+    **`tokio::spawn` hands a future to the runtime as an independent,
+    concurrently-scheduled TASK, and requires that future be `Send +
+    'static` because the runtime may move it between worker threads and it
+    may outlive the calling scope.**
+
+    It's similar in spirit to `std::thread::spawn`, but scheduled onto the
+    runtime's (usually smaller) pool of OS threads instead of getting a
+    whole thread of its own. `Send + 'static` means all captured data must
+    be safely transferable across threads and not borrow anything
+    short-lived — the exact async analogue of `thread::spawn`'s `F: Send +
+    'static` bound.
+  source: "tokio documentation (tokio::spawn)"
+  tags: [rust, async, tokio, concept]
+
+- id: rlk-031
+  guid: "AZ7SM3+;q0"
+  type: concept
+  question: |
+    What does `tokio::join!(fut_a, fut_b)` do differently from writing
+    `fut_a.await; fut_b.await;`?
+  answer: |
+    **`join!(fut_a, fut_b)` polls all of its futures concurrently on the
+    same task, so waiting on one overlaps with progress on the others,
+    whereas sequential `.await`s run one future to completion before even
+    starting the next.**
+
+    Whenever one is `Pending`, `join!` moves on to poll the others, so time
+    spent waiting on one future (e.g. for a socket) overlaps with progress
+    on the rest, and it returns only once every one of them is `Ready` — the
+    exact idea our hand-rolled `JoinTwo` future implemented by hand,
+    generalized to any number of futures.
+  source: "tokio documentation (join!)"
+  tags: [rust, async, tokio, concept]
+
+- id: rlk-032
+  guid: "m=)=IUIIk6"
+  type: concept
+  question: |
+    What does `tokio::select!` do, and how is that different from `join!`?
+  answer: |
+    **`select!` races several futures concurrently and proceeds as soon as
+    the FIRST one completes, dropping the rest, whereas `join!` waits for
+    ALL of its futures to finish.**
+
+    Cancelling the rest means their in-progress work is dropped. `select!`
+    is the tool for "whichever happens first" patterns — a request racing a
+    timeout, or reading from whichever of several channels has a message
+    ready first — where `join!` would be the wrong shape (it would wait for
+    everything, including a timeout you wanted to race against, not wait
+    alongside).
+  source: "tokio documentation (select!)"
+  tags: [rust, async, tokio, concept]
+
+- id: rlk-033
+  guid: "Fh!LadCJ{@"
+  type: concept
+  question: |
+    Why must you use `tokio::time::sleep` instead of `std::thread::sleep`
+    inside an `async fn` running on a tokio runtime?
+  answer: |
+    **`std::thread::sleep` blocks the entire OS worker thread it runs on,
+    stalling every other task scheduled on it, whereas `tokio::time::sleep`
+    returns a `Future` that yields `Pending` and registers a timer, letting
+    the thread run other tasks until the timer fires.**
+
+    Since tokio schedules many tasks onto a small pool of worker threads,
+    blocking one stalls every other task also scheduled on that thread.
+    `tokio::time::sleep` registers a timer with the runtime's reactor, then
+    wakes the sleeping task's `Waker` once the timer fires — no thread is
+    blocked at any point.
+  source: "tokio documentation (time::sleep) + book §17"
+  tags: [rust, async, tokio, concept]
+
+- id: rlk-034
+  guid: "o[L9l|g]?J"
+  type: concept
+  question: |
+    What goes wrong if you run CPU-heavy or blocking (synchronous I/O) code
+    directly inside an `async fn` body on a tokio runtime, and how do you
+    avoid it?
+  answer: |
+    **Running CPU-heavy or blocking code directly inside an `async fn`
+    monopolizes its worker thread, starving every other task scheduled on
+    that thread; the fix is `tokio::task::spawn_blocking`, which moves that
+    work onto a separate thread pool dedicated to blocking operations.**
+
+    That code runs to completion without ever yielding — since it never
+    hits an actual `.await` on a future that returns `Pending`, it
+    monopolizes its worker thread the whole time (the same problem as
+    calling `std::thread::sleep`, but for CPU work or blocking calls instead
+    of a timer). `spawn_blocking` keeps the async worker threads free to
+    keep polling other tasks.
+  source: "tokio documentation (spawn_blocking)"
+  tags: [rust, async, tokio, concept]
+
+- id: rlk-035
+  guid: "AWD|9/r]f{"
+  type: concept
+  question: |
+    Can traits have `async fn` methods, and what's the historical catch?
+  answer: |
+    **Yes — native `async fn` in traits (and impls) is supported directly in
+    current Rust, but such a trait still isn't automatically usable as `dyn
+    Trait` since each call site's future is a differently-sized, anonymous
+    type.**
+
+    Earlier editions required the `async-trait` crate, which desugared each
+    async method into one returning `Pin<Box<dyn Future + Send>>`, at the
+    cost of a heap allocation per call. Using an async trait as a trait
+    object generally still needs boxing the returned future by hand or via
+    a crate, since object-safety requires a uniformly-sized return type.
+  source: "Rust async fn in traits (stabilized) + async-trait crate docs"
+  tags: [rust, async, traits, concept]
+
+- id: rlk-036
+  guid: "c(.or9Ix{r"
+  type: concept
+  question: |
+    When would you reach for `async`/an async runtime instead of plain OS
+    threads (`std::thread::spawn`), and vice versa?
+  answer: |
+    **Async shines for I/O-bound work with lots of concurrent waiting, since
+    a `Pending` future costs no thread time at all; plain OS threads remain
+    the simpler and often faster choice for CPU-bound work, where there's no
+    waiting to overlap.**
+
+    Async handles cases like thousands of open sockets or many outstanding
+    HTTP requests — a handful of OS threads can juggle far more concurrent
+    async tasks than concurrent OS threads. Plain OS threads (or a sync
+    thread pool) win for CPU-BOUND work (compute-heavy loops, hashing, image
+    processing), where async's extra machinery (state machines, executors)
+    buys nothing over plain parallel threads.
+  source: "book §16/§17 (comparing concurrency models)"
+  tags: [rust, async, concurrency, concept]
+
+- id: rlk-037
+  guid: "q2%Y:^_?p|"
+  type: concept
+  question: |
+    Why does `Future::poll` take `self: Pin<&mut Self>` instead of a plain
+    `&mut self`?
+  answer: |
+    **`poll` takes `Pin<&mut Self>` instead of `&mut self` because the
+    compiler-generated async state machine can be self-referential (holding
+    a pointer into its own other fields), and `Pin` is a compile-time
+    promise that the value will never move again, keeping such internal
+    pointers valid.**
+
+    The state machine the compiler builds for an async fn can hold a
+    reference into ITS OWN other fields (e.g. a local created before an
+    `.await`, then borrowed after it) — a self-referential struct. Moving
+    such a value in memory would invalidate that internal pointer. The
+    `Pin<&mut Self>` promise holds unless `Self: Unpin`, which rules out
+    self-references and makes the promise moot — letting `poll` safely rely
+    on internal pointers staying valid across multiple calls. Every custom
+    future we wrote above was `Unpin` (no self-references), which is why
+    `.get_mut()`/direct field access through the pin was always safe.
+  source: "book §17 + std::pin module docs"
+  tags: [rust, async, pin, concept]
